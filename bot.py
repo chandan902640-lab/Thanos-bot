@@ -151,7 +151,7 @@ class MainGreetingView(discord.ui.View):
             "✨ **THANOS BOT COMMANDS LIST:**\n\n"
             "🐲 **`/monster [नाम]`**\n"
             "🛡️ **`/shield [घंटे]`**\n"
-            "🧠 **AI Chat:** बॉट को टैग करके (`@Thanos Bot`) या नाम लिखकर सवाल पूछें!"
+            "🧠 **AI Chat:** बॉट को टैग करके (`@Thanos Bot`) लिखकर सवाल पूछें!"
         )
         await interaction.response.send_message(text, ephemeral=True)
 
@@ -217,20 +217,25 @@ async def shield(ctx, hours: int):
     except discord.Forbidden:
         await ctx.send(f"⚠️ {ctx.author.mention}, तुम्हारी शील्ड **खत्म हो चुकी है!** 🏰")
 
-# 🧠 AI चैट (स्मार्ट फिक्स के साथ)
+# 🧠 AI चैट (स्मार्ट फिक्स)
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
         return
 
+    # 1. पहले स्लैश (/) कमांड्स को प्रोसेस करेगा (जैसे /monster)
+    await bot.process_commands(message)
+
+    # 2. अगर मैसेज / से शुरू है, तो AI को इग्नोर करेगा
+    if message.content.startswith('/'):
+        return
+
     msg_lower = message.content.lower()
     
-    # स्मार्ट चेक: अगर असली में टैग किया हो, या सिर्फ "thanos bot" / "@thanos bot" लिखा हो
+    # 3. स्मार्ट चेक: अगर "thanos" नाम कहीं भी है (टैग हो या बिना टैग के)
     is_mentioned = (
         bot.user in message.mentions or 
-        f"<@{bot.user.id}>" in message.content or 
-        msg_lower.startswith("thanos bot") or
-        msg_lower.startswith("@thanos bot")
+        "thanos" in msg_lower
     )
 
     if is_mentioned:
@@ -238,13 +243,10 @@ async def on_message(message):
             await message.channel.send("⚠️ Gemini API Key सेट नहीं है!")
             return
 
-        # प्रोम्प्ट से बॉट का नाम और टैग साफ़ करना
-        prompt = message.content.replace(f'<@!{bot.user.id}>', '').replace(f'<@{bot.user.id}>', '')
-        if prompt.lower().startswith("@thanos bot"):
-            prompt = prompt[11:]
-        elif prompt.lower().startswith("thanos bot"):
-            prompt = prompt[10:]
-        
+        # प्रॉम्प्ट से बॉट का नाम साफ़ करना ताकि AI कंफ्यूज न हो
+        prompt = message.clean_content
+        for word in ["@Thanos bot", "@Thanos Bot", "Thanos bot", "thanos bot", "Thanos", "thanos"]:
+            prompt = prompt.replace(word, "")
         prompt = prompt.strip()
         
         if prompt:
@@ -263,9 +265,10 @@ async def on_message(message):
             await message.channel.send(f"हाँ भाई {message.author.mention}! बताइए, मुझसे क्या पूछना चाहते हैं?")
         return
 
+    # 4. अगर सिर्फ hi, hello लिखा है तो मेनू
     words = msg_lower.split()
     if words:
-        if any(w in words for w in ["hi", "hii", "hello", "hey", "namaste"]):
+        if any(w in words for w in ["hi", "hii", "hello", "hey", "namaste"]) and len(words) <= 2:
             view = MainGreetingView()
             await message.channel.send(
                 f"Hello / नमस्ते {message.author.mention}! 👋 \n"
@@ -274,8 +277,6 @@ async def on_message(message):
             )
         elif any(w in words for w in ["code", "command", "commands"]):
             await message.channel.send(f"💻 सभी कमांड्स देखने के लिए `/helpmenu` टाइप करें या `hii` लिखकर **🤖 Bot Commands** बटन दबाएं!")
-
-    await bot.process_commands(message)
 
 # बॉट चालू करें
 keep_alive()
