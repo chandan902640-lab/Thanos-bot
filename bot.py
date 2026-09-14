@@ -151,7 +151,7 @@ class MainGreetingView(discord.ui.View):
             "✨ **THANOS BOT COMMANDS LIST:**\n\n"
             "🐲 **`/monster [नाम]`**\n"
             "🛡️ **`/shield [घंटे]`**\n"
-            "🧠 **AI Chat:** बॉट को टैग करके (`@Thanos Bot`) लिखकर सवाल पूछें!"
+            "🧠 **AI Chat:** बॉट को टैग करके (`@Thanos Bot`)  लिखकर सवाल पूछें!"
         )
         await interaction.response.send_message(text, ephemeral=True)
 
@@ -185,7 +185,7 @@ async def monster(ctx, *, monster_name: str = None):
     async with ctx.typing():
         try:
             response = ai_client.models.generate_content(
-                model='gemini-1.5-flash',
+                model='gemini-3.6-flash',
                 contents=prompt,
             )
             await ctx.send(f"👾 **{monster_name.title()}** को मारने के बेस्ट हीरोज:\n{response.text}")
@@ -253,7 +253,7 @@ async def on_message(message):
             async with message.channel.typing():
                 try:
                     response = ai_client.models.generate_content(
-                        model='gemini-1.5-flash',
+                        model='gemini-3.6-flash',
                         contents=prompt,
                     )
                     full_response = f"{message.author.mention} \n{response.text}"
