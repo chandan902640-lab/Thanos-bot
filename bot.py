@@ -7,7 +7,7 @@ import discord
 from discord.ext import commands, tasks
 from google import genai
 
-# Gemini AI सेटअप (नया google-genai पैकेज)
+# Gemini AI सेटअप
 GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
 if GEMINI_KEY:
     ai_client = genai.Client(api_key=GEMINI_KEY)
@@ -132,7 +132,7 @@ async def on_message(message):
             async with message.channel.typing():
                 try:
                     response = ai_client.models.generate_content(
-                        model='gemini-2.5-flash',
+                        model='gemini-3.6-flash',
                         contents=prompt,
                     )
                     await message.channel.send(f"{message.author.mention} \n{response.text}")
