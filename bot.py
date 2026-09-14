@@ -44,21 +44,85 @@ async def on_ready():
     if not auto_clear_chat.is_running():
         auto_clear_chat.start()
 
-# 🌍 सही किया हुआ मल्टी-लैंग्वेज चैट फीचर
+# 🔵 नीले रंग के बटन वाला हेल्प मेनू
+class HelpButtonView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="🤖 Bot Commands & Info", style=discord.ButtonStyle.primary, emoji="📋")
+    async def help_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message(
+            "✨ **Thanos Bot की सभी कमांड्स और फीचर्स:**\n\n"
+            "🛡️ `/shield [घंटे]` - गेम के लिए शील्ड टाइमर सेट करता है (जैसे `/shield 1`)।\n"
+            "🗑️ `/clearall` - इस चैनल के सारे मैसेज एक साथ डिलीट करने के लिए (बटन के साथ)।\n"
+            "📋 `/helpmenu` - यह हेल्प मेनू दोबारा मंगाने के लिए।\n"
+            "💬 `Hi / Hello` - बॉट से बातचीत करने के लिए।\n"
+            "🧹 **Auto-Cleanup** - हर 4 घंटे में पुराने मैसेज अपने आप साफ़ होते हैं!",
+            ephemeral=True
+        )
+
+@bot.command()
+async def helpmenu(ctx):
+    view = HelpButtonView()
+    await ctx.send("👇 नीचे दिए गए **नीले बटन** पर क्लिक करके देखें कि कौन सी कमांड क्या करती है!", view=view)
+
+# ⚠️ चैट डिलीट करने के लिए कंफर्मेशन बटन व्यू (सिर्फ कमांड चलाने वाला ही क्लिक कर पाएगा)
+class ClearConfirmView(discord.ui.View):
+    def __init__(self, ctx):
+        super().__init__(timeout=60)
+        self.ctx = ctx
+
+    @discord.ui.button(label="✅ Confirm (OK) - Delete All", style=discord.ButtonStyle.danger)
+    async def confirm_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # जाँच करें कि क्या बटन दबाने वाला वही व्यक्ति है जिसने कमांड चलाई थी
+        if interaction.user != self.ctx.author:
+            await interaction.response.send_message("❌ आप इस बटन का उपयोग नहीं कर सकते!", ephemeral=True)
+            return
+        
+        await interaction.response.send_message("🧹 चैनल के मैसेज साफ किए जा रहे हैं...", ephemeral=True)
+        try:
+            deleted = await self.ctx.channel.purge(limit=1000)
+            print(f"🧹 {self.ctx.channel.name} से {len(deleted)} मैसेज डिलीट किए गए।")
+        except Exception as e:
+            await self.ctx.send(f"❌ एरर आ गया: {e}", delete_after=5)
+
+    @discord.ui.button(label="❌ Cancel", style=discord.ButtonStyle.secondary)
+    async def cancel_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+            await interaction.response.send_message("❌ आप इस बटन का उपयोग नहीं कर सकते!", ephemeral=True)
+            return
+        await interaction.response.edit_message(content="❌ चैट डिलीट करने का प्रोसेस रद्द कर दिया गया है।", view=None)
+
+# 🗑️ नया कमांड: /clearall
+@bot.command()
+async def clearall(ctx):
+    # सुरक्षा जाँच: इसे सिर्फ एडमिन या बॉट का मालिक ही चला सकता है
+    if not ctx.author.guild_permissions.administrator:
+        await ctx.send("❌ आपके पास इस कमांड को चलाने की परमिशन नहीं है!", delete_after=5)
+        return
+    
+    view = ClearConfirmView(ctx)
+    await ctx.send("⚠️ **चेतावनी:** क्या आप इस चैनल के सारे मैसेज डिलीट करना चाहते हैं? पुष्टि करने के लिए नीचे दिए गए **Confirm (OK)** बटन पर क्लिक करें:", view=view)
+
+# स्मार्ट चैट फीचर
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
         return
 
-    msg = message.content.lower()
+    words = message.content.lower().split()
+    if not words:
+        await bot.process_commands(message)
+        return
 
-    # अगर कोई हेलो या नमस्ते कहे
-    if any(word in msg for word in ["hi", "hii", "hello", "hey", "namaste"]):
-        await message.channel.send(f"Hello / नमस्ते {message.author.mention}! 👋 How can I help you today? / बोलिए, कैसे मदद कर सकता हूँ?")
+    if any(w in words for w in ["hi", "hii", "hello", "hey", "namaste"]):
+        await message.channel.send(f"Hello / नमस्ते {message.author.mention}! 👋 बताइए भाई, आज क्या मदद चाहिए? (कमांड देखने के लिए `/helpmenu` टाइप करें)")
 
-    # अगर कोई हालचाल पूछे
-    elif any(word in msg for word in ["kaise ho", "how are you", "kya haal"]):
-        await message.channel.send(f"I'm doing great {message.author.mention}! 🤖 मैं एकदम मस्त हूँ। Lords Mobile कैसा चल रहा है?")
+    elif any(w in words for w in ["kaise", "haal", "how"]):
+        await message.channel.send(f"मैं एकदम फर्स्ट क्लास हूँ {message.author.mention}! 🤖 आप सुनाओ, Lords Mobile कैसा चल रहा है?")
+
+    elif any(w in words for w in ["code", "command", "commands"]):
+        await message.channel.send(f"💻 भाई, सभी कमांड्स देखने के लिए `/helpmenu` टाइप करें!")
 
     await bot.process_commands(message)
 
