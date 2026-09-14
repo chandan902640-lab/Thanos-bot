@@ -51,32 +51,6 @@ async def on_ready():
     if not auto_clear_chat.is_running():
         auto_clear_chat.start()
 
-# ⚠️ चैट डिलीट करने के लिए मजबूत कंफर्मेशन बटन व्यू
-class ClearConfirmView(discord.ui.View):
-    def __init__(self, author, channel):
-        super().__init__(timeout=60)
-        self.author = author
-        self.channel = channel
-
-    @discord.ui.button(label="✅ Confirm (OK) - Delete All", style=discord.ButtonStyle.danger)
-    async def confirm_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.author:
-            await interaction.response.send_message("❌ आप इस बटन का उपयोग नहीं कर सकते!", ephemeral=True)
-            return
-        await interaction.response.edit_message(content="🧹 चैनल के मैसेज साफ किए जा रहे हैं...", view=None)
-        try:
-            deleted = await self.channel.purge(limit=1000)
-            print(f"🧹 {self.channel.name} से {len(deleted)} मैसेज डिलीट किए गए।")
-        except Exception as e:
-            await self.channel.send(f"❌ एरर आ गया: {e}", delete_after=5)
-
-    @discord.ui.button(label="❌ Cancel", style=discord.ButtonStyle.secondary)
-    async def cancel_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.author:
-            await interaction.response.send_message("❌ आप इस बटन का उपयोग नहीं कर सकते!", ephemeral=True)
-            return
-        await interaction.response.edit_message(content="❌ चैट डिलीट करने का प्रोसेस रद्द कर दिया गया है।", view=None)
-
 # 🔵 हेल्प मेनू व्यू
 class HelpButtonView(discord.ui.View):
     def __init__(self):
@@ -99,13 +73,37 @@ async def helpmenu(ctx):
     view = HelpButtonView()
     await ctx.send("👇 नीचे दिए गए **नीले बटन** पर क्लिक करके देखें कि कौन सी कमांड क्या करती है!", view=view)
 
-# 🟢 बैंक कमांड्स और क्लियर चैट का नया व्यू 
-class BankCommandsView(discord.ui.View):
+# ⚠️ चैट डिलीट करने के लिए कंफर्मेशन बटन व्यू
+class ClearConfirmView(discord.ui.View):
+    def __init__(self, author):
+        super().__init__(timeout=60)
+        self.author = author
+
+    @discord.ui.button(label="✅ Confirm (OK) - Delete All", style=discord.ButtonStyle.danger)
+    async def confirm_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.author:
+            await interaction.response.send_message("❌ आप इस बटन का उपयोग नहीं कर सकते!", ephemeral=True)
+            return
+        await interaction.response.send_message("🧹 चैनल के मैसेज साफ किए जा रहे हैं...", ephemeral=True)
+        try:
+            deleted = await interaction.channel.purge(limit=1000)
+            print(f"🧹 {interaction.channel.name} से {len(deleted)} मैसेज डिलीट किए गए।")
+        except Exception as e:
+            await interaction.channel.send(f"❌ एरर आ गया: {e}", delete_after=5)
+
+    @discord.ui.button(label="❌ Cancel", style=discord.ButtonStyle.secondary)
+    async def cancel_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.author:
+            await interaction.response.send_message("❌ आप इस बटन का उपयोग नहीं कर सकते!", ephemeral=True)
+            return
+        await interaction.response.edit_message(content="❌ चैट डिलीट करने का प्रोसेस रद्द कर दिया गया है。", view=None)
+
+# 🟡 अंदर खुलने वाला 5 बटन का मेनू (Bank Categories)
+class BankCategoryView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    # --- पहली लाइन के 5 बैंक बटन (row=0) ---
-    @discord.ui.button(label="Tips", style=discord.ButtonStyle.secondary, emoji="📝", row=0)
+    @discord.ui.button(label="Tips", style=discord.ButtonStyle.secondary, emoji="📝")
     async def tips_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text = (
             "**💡 BANK TIPS & TRICKS:**\n\n"
@@ -116,7 +114,7 @@ class BankCommandsView(discord.ui.View):
         )
         await interaction.response.send_message(text, ephemeral=True)
 
-    @discord.ui.button(label="General", style=discord.ButtonStyle.success, emoji="📌", row=0)
+    @discord.ui.button(label="General", style=discord.ButtonStyle.success, emoji="📌")
     async def general_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text = (
             "**📌 GENERAL COMMANDS:**\n"
@@ -138,7 +136,7 @@ class BankCommandsView(discord.ui.View):
         )
         await interaction.response.send_message(text, ephemeral=True)
 
-    @discord.ui.button(label="Search", style=discord.ButtonStyle.primary, emoji="🔍", row=0)
+    @discord.ui.button(label="Search", style=discord.ButtonStyle.primary, emoji="🔍")
     async def search_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text = (
             "**🔍 SEARCH COMMANDS**\n"
@@ -157,7 +155,7 @@ class BankCommandsView(discord.ui.View):
         )
         await interaction.response.send_message(text, ephemeral=True)
 
-    @discord.ui.button(label="Balance", style=discord.ButtonStyle.secondary, emoji="⚖️", row=0)
+    @discord.ui.button(label="Balance", style=discord.ButtonStyle.secondary, emoji="⚖️")
     async def balance_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text = (
             "**⚖️ BALANCE COMMANDS:**\n"
@@ -171,7 +169,7 @@ class BankCommandsView(discord.ui.View):
         )
         await interaction.response.send_message(text, ephemeral=True)
 
-    @discord.ui.button(label="Resource", style=discord.ButtonStyle.danger, emoji="🌾", row=0)
+    @discord.ui.button(label="Resource", style=discord.ButtonStyle.danger, emoji="🌾")
     async def resource_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text = (
             "**🌾 RESOURCE COMMANDS:**\n"
@@ -183,23 +181,34 @@ class BankCommandsView(discord.ui.View):
         )
         await interaction.response.send_message(text, ephemeral=True)
 
-    # --- दूसरी लाइन का क्लियर चैट बटन (row=1) ---
-    @discord.ui.button(label="Clear Chat", style=discord.ButtonStyle.danger, emoji="🗑️", row=1)
+# 🟢 मुख्य 2 बटन वाला मेनू (जो hii लिखने पर आएगा)
+class MainGreetingView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="Guild Bank Commands", style=discord.ButtonStyle.success, emoji="🏦")
+    async def open_bank_menu_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # इस बटन को दबाने पर 5 बटन वाला नया मेनू खुलेगा
+        view = BankCategoryView()
+        await interaction.response.send_message("👇 **किस तरह की कमांड्स देखनी हैं? नीचे से कैटेगरी चुनें:**", view=view, ephemeral=True)
+
+    @discord.ui.button(label="Clear Chat", style=discord.ButtonStyle.danger, emoji="🗑️")
     async def clear_chat_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        # चेक करें कि यूजर के पास डिलीट करने का पावर (Admin) है या नहीं
+        # इस बटन को दबाने पर चैट डिलीट करने का कन्फर्मेशन खुलेगा (सिर्फ एडमिन के लिए)
         if not interaction.user.guild_permissions.administrator:
             await interaction.response.send_message("❌ आपके पास मैसेज डिलीट करने की परमिशन नहीं है!", ephemeral=True)
             return
         
-        view = ClearConfirmView(interaction.user, interaction.channel)
-        await interaction.response.send_message("⚠️ **चेतावनी:** क्या आप इस चैनल के सारे मैसेज डिलीट करना चाहते हैं? पुष्टि करने के लिए नीचे दिए गए **Confirm (OK)** बटन पर क्लिक करें:", view=view, ephemeral=True)
+        view = ClearConfirmView(interaction.user)
+        await interaction.response.send_message("⚠️ **चेतावनी:** क्या आप इस चैनल के सारे मैसेज डिलीट करना चाहते हैं? पुष्टि करने के लिए **Confirm** बटन पर क्लिक करें:", view=view, ephemeral=True)
+
 
 @bot.command()
 async def clearall(ctx):
     if not ctx.author.guild_permissions.administrator:
         await ctx.send("❌ आपके पास इस कमांड को चलाने की परमिशन नहीं है!", delete_after=5)
         return
-    view = ClearConfirmView(ctx.author, ctx.channel)
+    view = ClearConfirmView(ctx.author)
     await ctx.send("⚠️ **चेतावनी:** क्या आप इस चैनल के सारे मैसेज डिलीट करना चाहते हैं? पुष्टि करने के लिए नीचे दिए गए **Confirm (OK)** बटन पर क्लिक करें:", view=view)
 
 @bot.event
@@ -238,8 +247,14 @@ async def on_message(message):
     words = message.content.lower().split()
     if words:
         if any(w in words for w in ["hi", "hii", "hello", "hey", "namaste"]):
-            view = BankCommandsView()
-            await message.channel.send(f"Hello / नमस्ते {message.author.mention}! 👋 \nमुझे कुछ भी पूछने के लिए मुझे टैग करें (जैसे `@Thanos Bot सवाल`)।\n👇 **Bank Commands** या **चैट डिलीट** करने के लिए नीचे दिए गए बटनों का उपयोग करें:", view=view)
+            # यहाँ अब MainGreetingView भेजा जा रहा है (सिर्फ 2 बटन वाला)
+            view = MainGreetingView()
+            await message.channel.send(
+                f"Hello / नमस्ते {message.author.mention}! 👋 \n"
+                f"मुझे कुछ भी पूछने के लिए मुझे टैग करें (जैसे `@Thanos Bot सवाल`)।\n"
+                f"👇 **Guild Bank Commands** और **Clear Chat** के लिए नीचे बटन दबाएं:", 
+                view=view
+            )
         elif any(w in words for w in ["code", "command", "commands"]):
             await message.channel.send(f"💻 भाई, सभी कमांड्स देखने के लिए `/helpmenu` टाइप करें!")
 
