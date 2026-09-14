@@ -14,7 +14,7 @@ if GEMINI_KEY:
 else:
     ai_client = None
 
-# Render और UptimeRobot के लिए 24/7 वेब सर्वर (502 Bad Gateway एरर हटाने के लिए)
+# Render और UptimeRobot के लिए 24/7 वेब सर्वर
 class DummyHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -22,7 +22,6 @@ class DummyHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(b"Thanos Bot is online and running 24/7!")
 
-    # UptimeRobot की पिंग (HEAD request) का जवाब देने के लिए
     def do_HEAD(self):
         self.send_response(200)
         self.send_header('Content-type', 'text/plain')
@@ -67,12 +66,12 @@ class HelpButtonView(discord.ui.View):
     async def help_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message(
             "✨ **Thanos Bot की सभी कमांड्स और फीचर्स:**\n\n"
-            "🧠 **Gemini AI Chat:** बॉट को टैग करके (`@Thanos Bot`) इससे कुछ भी सवाल पूछ सकते हैं!\n"
+            "🧠 **Gemini AI Chat:** बॉट को टैग करके या सिर्फ `Thanos bot` लिखकर इससे कुछ भी सवाल पूछ सकते हैं!\n"
             "🐲 **`/monster [नाम]`** - किसी भी मॉन्स्टर के F2P और P2P हीरोज पता करें (उदा. `/monster hardrox`)\n"
             "🛡️ **`/shield [घंटे]`** - एडवांस शील्ड टाइमर (15 मिनट पहले प्राइवेट DM में अलर्ट देगा)।\n"
             "🗑️ **`/clearall`** - चैनल के सारे मैसेज डिलीट करने के लिए (सिर्फ एडमिन के लिए)।\n"
             "📋 **`/helpmenu`** - यह हेल्प मेनू मंगाने के लिए।\n"
-            "🧹 **Auto-Cleanup:** हर 4 घंटे में पुराने मैसेज अपने আজি साफ़ होते हैं!",
+            "🧹 **Auto-Cleanup:** हर 4 घंटे में पुराने मैसेज अपने आप साफ़ होते हैं!",
             ephemeral=True
         )
 
@@ -106,37 +105,37 @@ class ClearConfirmView(discord.ui.View):
             return
         await interaction.response.edit_message(content="❌ चैट डिलीट करने का प्रोसेस रद्द कर दिया गया है।", view=None)
 
-# 🟡 अंदर खुलने वाला 5 बटन का मेनू (Bank Categories)
+# 🟡 बैंक मेनू
 class BankCategoryView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
     @discord.ui.button(label="Tips", style=discord.ButtonStyle.secondary, emoji="📝")
     async def tips_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        text = "**💡 BANK TIPS & TRICKS:**\n\n• **Space in name?** Use underscore (`!setacc Player_1`) OR quotes (`!setacc \"Player 1\"`).\n• **Authorized users:** Balances are non-deductible (Unlimited). They cannot use Donate.\n• **R4 Access:** By default, R4+ have similar access to Authorized users.\n• **Hero Stages:** Bank will not respond during long hero stages. Set custom chapter, 3☆, and use Sweep x10."
+        text = "**💡 BANK TIPS & TRICKS:**\n\n• Use underscore (`!setacc Player_1`).\n• Hero Stages: Bank will not respond during long hero stages."
         await interaction.response.send_message(text, ephemeral=True)
 
     @discord.ui.button(label="General", style=discord.ButtonStyle.success, emoji="📌")
     async def general_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        text = "**📌 GENERAL COMMANDS:**\n`!pos` - Bank location | `!shield` / `!shield deploy` - Shield bank\n`!relocate [X] [Y]` / `!relocate rand` / `!migrate [K][X][Y]` - Relocate bank\n`!buildspam [amount] [delay]` / `!buildspam stop` - Spam GF helps\n`!hunt [x] [y]` / `!hunt [on/off]` - Monster hunting\n`!payransom` - Pay leader ransom | `!clearboard` - Clear GF board\n`!stats` / `!stats all` / `!pstats [name]` - Gift statistics\n`!gryphon` / `!snowbeast` - Familiar skills\n`!whitelist [name] [Rank]` / `!blacklist [name]` - Manage members\n`!addtitle [name] [title]` / `!deltitle [title]` - Manage titles\n`!purge` - Clear chat | `!abort` - Abort RSS shipments\n`!yell [msg]` - Write in chat | `!quest` - GF status | `!guild [tag]` - Change guild\n`!recall` - Recall troops | `!camp [x] [y]` - Send camp\n`!setgather [on/off]` - Gathering | `!stop [time]` - Offline\n`!reloadacc` / `!members` / `!resetstats` - Refresh & Reset\n**Events:** `!joingvg`, `!joinca`, `!joinda`"
+        text = "**📌 GENERAL COMMANDS:**\n`!pos`, `!shield`, `!relocate`, `!hunt`, `!stats` etc."
         await interaction.response.send_message(text, ephemeral=True)
 
     @discord.ui.button(label="Search", style=discord.ButtonStyle.primary, emoji="🔍")
     async def search_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        text = "**🔍 SEARCH COMMANDS**\n*(Tip: Write `chat` at the end to post result in guild. Radius: ~70 tiles)*\n\n**Tiles:**\n`!findtile [type] [level]` - e.g. `!findtile food 4`\n`!findtile any [level]` - Find any tile\n`!findtilelocal [type] [level]` - Find tile around YOU\n\n**Monsters:**\n`!findmonster [name] [level]` - e.g. `!findmonster hardrox 2`\n`!findmonster any [level]` - Find any monster\n`!findmonsterlocal [name] [level]` - Find monster around YOU\n\n**Darknests:**\n`!findnest [level]` - Find darknest near bank\n`!findnestlocal [level]` - Find darknest near YOU"
+        text = "**🔍 SEARCH COMMANDS:**\nTiles: `!findtile food 4`\nMonsters: `!findmonster hardrox 2`\nDarknests: `!findnest 5`"
         await interaction.response.send_message(text, ephemeral=True)
 
     @discord.ui.button(label="Balance", style=discord.ButtonStyle.secondary, emoji="⚖️")
     async def balance_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        text = "**⚖️ BALANCE COMMANDS:**\n`!bal` - Checks your balance sent to the bank\n`!adminbal [player]` - Check player's balance (e.g. `!adminbal Shark`)\n`!adminbal` / `!adminbag` - Checks Bank's RSS balance / Bag balance\n`!setbal [player] [type] [amount]` - Manually sets RSS balance\n`!setacc [player]` - Credit your sent RSS to another account\n`!transfer [player] [type] [amount]` - Transfer balance to another player\n`!setrsslimit [type] [amount]` - Sets a limit bank won't go below"
+        text = "**⚖️ BALANCE COMMANDS:**\n`!bal`, `!adminbal`, `!setbal`, `!transfer`"
         await interaction.response.send_message(text, ephemeral=True)
 
     @discord.ui.button(label="Resource", style=discord.ButtonStyle.danger, emoji="🌾")
     async def resource_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        text = "**🌾 RESOURCE COMMANDS:**\n`![type] [amount]` - Sends specific RSS (e.g. `!food 5M`)\n`!rss [F] [S] [W] [O] [G]` - Sends all RSS (e.g. `!rss 5M 5M 5M 5M 0`)\n`!donate[type] [player] [amount]` - Sends RSS to specific player (e.g. `!donatefood Shark 5M`)\n`!admin[type] [player] [amount]` - Admin sends RSS to player\n`!adminrss [F] [S] [W] [O] [G] [player]` - Admin sends all types of RSS to player"
+        text = "**🌾 RESOURCE COMMANDS:**\n`!food 5M`, `!rss 5M 5M 5M 5M 0`, `!donatefood Shark 5M`"
         await interaction.response.send_message(text, ephemeral=True)
 
-# 🟢 मुख्य 3 बटन वाला मेनू (जो hii लिखने पर आएगा)
+# 🟢 मुख्य मेनू
 class MainGreetingView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -144,139 +143,141 @@ class MainGreetingView(discord.ui.View):
     @discord.ui.button(label="Guild Bank Commands", style=discord.ButtonStyle.success, emoji="🏦")
     async def open_bank_menu_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = BankCategoryView()
-        await interaction.response.send_message("👇 **किस तरह की बैंक कमांड्स देखनी हैं? नीचे से कैटेगरी चुनें:**", view=view, ephemeral=True)
+        await interaction.response.send_message("👇 **किस तरह की बैंक कमांड्स देखनी हैं?**", view=view, ephemeral=True)
 
     @discord.ui.button(label="Bot Commands", style=discord.ButtonStyle.primary, emoji="🤖")
     async def bot_commands_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text = (
             "✨ **THANOS BOT COMMANDS LIST:**\n\n"
             "🐲 **`/monster [नाम]`**\n"
-            "किसी भी मॉन्स्टर के F2P और P2P हीरोज पता करें।\n"
-            "👉 *ऐसे लिखें:* `/monster hardrox`\n\n"
             "🛡️ **`/shield [घंटे]`**\n"
-            "एडवांस शील्ड टाइमर सेट करें (खत्म होने से 15 मिनट पहले आपको मैसेज आ जाएगा!)।\n"
-            "👉 *ऐसे लिखें:* `/shield 24` या `/shield 8`\n\n"
-            "🧠 **AI Chat**\n"
-            "बॉट को टैग करके (`@Thanos Bot`) गेम या दुनिया का कोई भी सवाल पूछें!"
+            "🧠 **AI Chat:** बॉट को टैग करके (`@Thanos Bot`) या नाम लिखकर सवाल पूछें!"
         )
         await interaction.response.send_message(text, ephemeral=True)
 
     @discord.ui.button(label="Clear Chat", style=discord.ButtonStyle.danger, emoji="🗑️")
     async def clear_chat_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not interaction.user.guild_permissions.administrator:
-            await interaction.response.send_message("❌ आपके पास मैसेज डिलीट करने की परमिशन नहीं है!", ephemeral=True)
+            await interaction.response.send_message("❌ आपके पास परमिशन नहीं है!", ephemeral=True)
             return
         view = ClearConfirmView(interaction.user)
-        await interaction.response.send_message("⚠️ **चेतावनी:** क्या आप इस चैनल के सारे मैसेज डिलीट करना चाहते हैं? पुष्टि करने के लिए **Confirm** बटन पर क्लिक करें:", view=view, ephemeral=True)
+        await interaction.response.send_message("⚠️ **चेतावनी:** मैसेज डिलीट करें?", view=view, ephemeral=True)
 
 @bot.command()
 async def clearall(ctx):
     if not ctx.author.guild_permissions.administrator:
-        await ctx.send("❌ आपके पास इस कमांड को चलाने की परमिशन नहीं है!", delete_after=5)
+        await ctx.send("❌ परमिशन नहीं है!", delete_after=5)
         return
     view = ClearConfirmView(ctx.author)
-    await ctx.send("⚠️ **चेतावनी:** क्या आप इस चैनल के सारे मैसेज डिलीट करना चाहते हैं? पुष्टि करने के लिए नीचे दिए गए **Confirm (OK)** बटन पर क्लिक करें:", view=view)
+    await ctx.send("⚠️ **चेतावनी:** मैसेज डिलीट करें?", view=view)
 
-# 🐲 मॉन्स्टर कमांड (Gemini AI के साथ)
+# 🐲 मॉन्स्टर कमांड
 @bot.command()
 async def monster(ctx, *, monster_name: str = None):
     if not monster_name:
-        await ctx.send("⚠️ भाई, किसी मॉन्स्टर का नाम तो बताओ! (जैसे: `/monster hardrox` या `/monster snow beast`)")
+        await ctx.send("⚠️ भाई, किसी मॉन्स्टर का नाम तो बताओ!")
         return
-
     if not ai_client:
-        await ctx.send("⚠️ Gemini API Key सेट नहीं है भाई!")
+        await ctx.send("⚠️ Gemini API Key सेट नहीं है!")
         return
 
-    prompt = f"Lords Mobile game में '{monster_name}' monster को मारने के लिए Best F2P (Free to play) और P2P (Pay to play) heroes की लिस्ट बताओ. जवाब हिंदी और इंग्लिश मिक्स (Hinglish) में एकदम साफ़ बुलेट पॉइंट्स में देना."
-
+    prompt = f"Lords Mobile game में '{monster_name}' monster को मारने के लिए Best F2P और P2P heroes की लिस्ट बताओ. जवाब हिंदी और इंग्लिश मिक्स में बुलेट पॉइंट्स में देना."
     async with ctx.typing():
         try:
             response = ai_client.models.generate_content(
-                model='gemini-3.6-flash',
+                model='gemini-1.5-flash',
                 contents=prompt,
             )
             await ctx.send(f"👾 **{monster_name.title()}** को मारने के बेस्ट हीरोज:\n{response.text}")
         except Exception as e:
-            await ctx.send(f"❌ कुछ गड़बड़ हो गई: {e}")
+            await ctx.send(f"❌ एरर: {e}")
 
-# 🛡️ एडवांस शील्ड कमांड (15 मिनट पहले DM अलर्ट के साथ)
+# 🛡️ शील्ड कमांड
 @bot.command()
 async def shield(ctx, hours: int):
     if hours <= 0:
         await ctx.send("❌ भाई, सही टाइम बताओ! (जैसे 4, 8, 24)")
         return
-
     total_seconds = hours * 3600
-    warning_seconds = total_seconds - 900 # 15 मिनट (900 सेकंड) पहले का टाइम
-
-    await ctx.send(f"🛡️ {ctx.author.mention}, मैंने **{hours} घंटे** का शील्ड टाइमर सेट कर दिया है। खत्म होने से ठीक 15 मिनट पहले मैं तुम्हें **प्राइवेट मैसेज (DM)** में अलर्ट कर दूंगा! ⏰")
+    warning_seconds = total_seconds - 900 
+    await ctx.send(f"🛡️ {ctx.author.mention}, मैंने **{hours} घंटे** का शील्ड टाइमर सेट कर दिया है। 15 मिनट पहले अलर्ट आ जाएगा! ⏰")
 
     if warning_seconds > 0:
         await asyncio.sleep(warning_seconds)
-        
         try:
-            await ctx.author.send(f"🚨 **चेतावनी:** भाई! तुम्हारी **{hours} घंटे** वाली Lords Mobile शील्ड खत्म होने में सिर्फ **15 मिनट** बचे हैं! जल्दी गेम खोलो वरना कोई अटैक कर देगा! ⚔️")
+            await ctx.author.send(f"🚨 **चेतावनी:** भाई! तुम्हारी शील्ड में सिर्फ **15 मिनट** बचे हैं!")
         except discord.Forbidden:
-            await ctx.send(f"🚨 {ctx.author.mention}, तुम्हारी शील्ड 15 मिनट में खत्म होने वाली है! (तुम्हारे DM बंद हैं, इसलिए यहाँ बता रहा हूँ)")
-            
+            await ctx.send(f"🚨 {ctx.author.mention}, तुम्हारी शील्ड 15 मिनट में खत्म होने वाली है!")
         await asyncio.sleep(900)
     else:
         await asyncio.sleep(total_seconds)
 
     try:
-        await ctx.author.send(f"⚠️ **अलर्ट:** भाई! तुम्हारी शील्ड **खत्म हो चुकी है!** तुरंत गेम चेक करो! 🏰")
+        await ctx.author.send(f"⚠️ **अलर्ट:** शील्ड **खत्म हो चुकी है!** 🏰")
     except discord.Forbidden:
-        await ctx.send(f"⚠️ {ctx.author.mention}, तुम्हारी शील्ड **खत्म हो चुकी है!** तुरंत गेम चेक करो! 🏰")
+        await ctx.send(f"⚠️ {ctx.author.mention}, तुम्हारी शील्ड **खत्म हो चुकी है!** 🏰")
 
+# 🧠 AI चैट (स्मार्ट फिक्स के साथ)
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
         return
 
-    is_mentioned = bot.user in message.mentions or f"<@{bot.user.id}>" in message.content or f"<@!{bot.user.id}>" in message.content
+    msg_lower = message.content.lower()
+    
+    # स्मार्ट चेक: अगर असली में टैग किया हो, या सिर्फ "thanos bot" / "@thanos bot" लिखा हो
+    is_mentioned = (
+        bot.user in message.mentions or 
+        f"<@{bot.user.id}>" in message.content or 
+        msg_lower.startswith("thanos bot") or
+        msg_lower.startswith("@thanos bot")
+    )
 
     if is_mentioned:
         if not ai_client:
-            await message.channel.send("⚠️ Gemini API Key सेट नहीं है भाई! कृपया Render में `GEMINI_API_KEY` जोड़ें।")
+            await message.channel.send("⚠️ Gemini API Key सेट नहीं है!")
             return
 
-        prompt = message.content.replace(f'<@!{bot.user.id}>', '').replace(f'<@{bot.user.id}>', '').strip()
+        # प्रोम्प्ट से बॉट का नाम और टैग साफ़ करना
+        prompt = message.content.replace(f'<@!{bot.user.id}>', '').replace(f'<@{bot.user.id}>', '')
+        if prompt.lower().startswith("@thanos bot"):
+            prompt = prompt[11:]
+        elif prompt.lower().startswith("thanos bot"):
+            prompt = prompt[10:]
+        
+        prompt = prompt.strip()
         
         if prompt:
             async with message.channel.typing():
                 try:
                     response = ai_client.models.generate_content(
-                        model='gemini-3.6-flash',
+                        model='gemini-1.5-flash',
                         contents=prompt,
                     )
-                    
                     full_response = f"{message.author.mention} \n{response.text}"
-                    
                     for i in range(0, len(full_response), 1900):
                         await message.channel.send(full_response[i:i+1900])
-                        
                 except Exception as e:
                     await message.channel.send(f"❌ कुछ गड़बड़ हो गई: {e}")
         else:
             await message.channel.send(f"हाँ भाई {message.author.mention}! बताइए, मुझसे क्या पूछना चाहते हैं?")
         return
 
-    words = message.content.lower().split()
+    words = msg_lower.split()
     if words:
         if any(w in words for w in ["hi", "hii", "hello", "hey", "namaste"]):
             view = MainGreetingView()
             await message.channel.send(
                 f"Hello / नमस्ते {message.author.mention}! 👋 \n"
-                f"👇 **बॉट की सभी कमांड्स (Monster, Shield आदि)** और **Guild Bank** के लिए नीचे बटन दबाएं:", 
+                f"👇 **बॉट की सभी कमांड्स और Guild Bank** के लिए नीचे बटन दबाएं:", 
                 view=view
             )
         elif any(w in words for w in ["code", "command", "commands"]):
-            await message.channel.send(f"💻 भाई, सभी कमांड्स देखने के लिए `/helpmenu` टाइप करें या `hii` लिखकर **🤖 Bot Commands** बटन दबाएं!")
+            await message.channel.send(f"💻 सभी कमांड्स देखने के लिए `/helpmenu` टाइप करें या `hii` लिखकर **🤖 Bot Commands** बटन दबाएं!")
 
     await bot.process_commands(message)
 
-# कीप अलाइव सर्वर चालू करें और बॉट रन करें
+# बॉट चालू करें
 keep_alive()
 token = os.environ.get("DISCORD_TOKEN")
 if token:
