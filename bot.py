@@ -5,15 +5,14 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from datetime import datetime, timedelta, timezone
 import discord
 from discord.ext import commands, tasks
-import google.generativeai as genai
+from google import genai
 
-# Gemini AI सेटअप
+# Gemini AI सेटअप (नया google-genai पैकेज)
 GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
 if GEMINI_KEY:
-    genai.configure(api_key=GEMINI_KEY)
-    ai_model = genai.GenerativeModel('gemini-pro')
+    ai_client = genai.Client(api_key=GEMINI_KEY)
 else:
-    ai_model = None
+    ai_client = None
 
 # यह डमी वेबसाइट है ताकि Render इसे 24/7 ऑनलाइन रख सके
 class DummyHandler(BaseHTTPRequestHandler):
@@ -120,21 +119,22 @@ async def on_message(message):
     if message.author == bot.user:
         return
 
-    # बॉट को टैग किया गया है या नहीं, इसे चेक करने का पक्का तरीका
     is_mentioned = bot.user in message.mentions or f"<@{bot.user.id}>" in message.content or f"<@!{bot.user.id}>" in message.content
 
     if is_mentioned:
-        if not ai_model:
+        if not ai_client:
             await message.channel.send("⚠️ Gemini API Key सेट नहीं है भाई! कृपया Render में `GEMINI_API_KEY` जोड़ें।")
             return
 
-        # मैसेज से बॉट का टैग हटाकर सिर्फ सवाल निकालें
         prompt = message.content.replace(f'<@!{bot.user.id}>', '').replace(f'<@{bot.user.id}>', '').strip()
         
         if prompt:
             async with message.channel.typing():
                 try:
-                    response = ai_model.generate_content(prompt)
+                    response = ai_client.models.generate_content(
+                        model='gemini-2.5-flash',
+                        contents=prompt,
+                    )
                     await message.channel.send(f"{message.author.mention} \n{response.text}")
                 except Exception as e:
                     await message.channel.send(f"❌ कुछ गड़बड़ हो गई: {e}")
@@ -142,7 +142,6 @@ async def on_message(message):
             await message.channel.send(f"हाँ भाई {message.author.mention}! बताइए, मुझसे क्या पूछना चाहते हैं?")
         return
 
-    # सामान्य बातचीत के लिए
     words = message.content.lower().split()
     if words:
         if any(w in words for w in ["hi", "hii", "hello", "hey", "namaste"]):
