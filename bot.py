@@ -171,7 +171,7 @@ async def clearall(ctx):
     view = ClearConfirmView(ctx.author)
     await ctx.send("⚠️ **चेतावनी:** मैसेज डिलीट करें?", view=view)
 
-# 🐲 मॉन्स्टर कमांड (Fixed Model & Length)
+# 🐲 मॉन्स्टर कमांड (Fixed Limits)
 @bot.command()
 async def monster(ctx, *, monster_name: str = None):
     if not monster_name:
@@ -195,7 +195,7 @@ async def monster(ctx, *, monster_name: str = None):
                 
         except Exception as e:
             error_msg = str(e)[:1800]
-            await ctx.send(f"❌ गूगल सर्वर एरर: {error_msg}")
+            await ctx.send(f"❌ गूगल सर्वर एरर या बिजी: {error_msg}")
 
 # 🛡️ शील्ड कमांड
 @bot.command()
@@ -222,7 +222,7 @@ async def shield(ctx, hours: int):
     except discord.Forbidden:
         await ctx.send(f"⚠️ {ctx.author.mention}, तुम्हारी शील्ड **खत्म हो चुकी है!** 🏰")
 
-# 🧠 AI चैट (Fixed Model & Length)
+# 🧠 AI चैट (SMART TAG FIX - अब बिना नीले टैग के भी काम करेगा)
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
@@ -235,9 +235,11 @@ async def on_message(message):
 
     msg_lower = message.content.lower()
     
+    # यह है वो जादुई लाइन जो सादे टेक्स्ट और स्पेलिंग मिस्टेक को भी पहचान लेगी:
     is_mentioned = (
         bot.user in message.mentions or 
-        "thanos" in msg_lower
+        "thanos" in msg_lower or
+        "thanod" in msg_lower
     )
 
     if is_mentioned:
@@ -245,8 +247,9 @@ async def on_message(message):
             await message.channel.send("⚠️ Gemini API Key सेट नहीं है!")
             return
 
+        # बॉट का नाम हटाकर सिर्फ आपका सवाल निकालने के लिए
         prompt = message.clean_content
-        for word in ["@Thanos bot", "@Thanos Bot", "Thanos bot", "thanos bot", "Thanos", "thanos"]:
+        for word in ["@Thanos bot", "@Thanos Bot", "Thanos bot", "thanos bot", "thanod bot", "Thanos", "thanos", "thanod"]:
             prompt = prompt.replace(word, "")
         prompt = prompt.strip()
         
@@ -264,11 +267,12 @@ async def on_message(message):
                         
                 except Exception as e:
                     error_msg = str(e)[:1800]
-                    await message.channel.send(f"❌ गूगल सर्वर बिजी है: {error_msg}")
+                    await message.channel.send(f"❌ गूगल सर्वर बिजी है, कृपया थोड़ी देर में पूछें: {error_msg}")
         else:
             await message.channel.send(f"हाँ भाई {message.author.mention}! बताइए, मुझसे क्या पूछना चाहते हैं?")
         return
 
+    # अगर सिर्फ hi, hello लिखा है
     words = msg_lower.split()
     if words:
         if any(w in words for w in ["hi", "hii", "hello", "hey", "namaste"]) and len(words) <= 2:
