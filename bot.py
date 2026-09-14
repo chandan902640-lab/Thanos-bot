@@ -24,14 +24,13 @@ intents.message_content = True
 intents.guilds = True
 bot = commands.Bot(command_prefix='/', intents=intents)
 
-# हर 4 घंटे में चलने वाला ऑटो-क्लीनअप लूप
+# हर 4 घंटे में पुराने मैसेज डिलीट करने वाला लूप
 @tasks.loop(hours=4)
 async def auto_clear_chat():
     for guild in bot.guilds:
         for channel in guild.text_channels:
             try:
                 now = datetime.now(timezone.utc)
-                # 4 घंटे से पुराने मैसेज डिलीट करेगा (एक बार में 100 मैसेज तक)
                 deleted = await channel.purge(limit=100, check=lambda m: (now - m.created_at) > timedelta(hours=4))
                 if len(deleted) > 0:
                     print(f"🧹 {channel.name} से {len(deleted)} पुराने मैसेज डिलीट कर दिए गए।")
@@ -41,11 +40,27 @@ async def auto_clear_chat():
 @bot.event
 async def on_ready():
     print(f'✅ {bot.user} ऑनलाइन आ गया है!')
-    # बॉट का स्टेटस सेट करें
     await bot.change_presence(activity=discord.Game(name="Lords Mobile"))
-    # ऑटो-डिलीट टास्क शुरू करें (अगर पहले से शुरू नहीं है)
     if not auto_clear_chat.is_running():
         auto_clear_chat.start()
+
+# 🌍 मल्टी-लैंग्वेज चैट फीचर (हिंदी और अंग्रेजी दोनों के लिए)
+@bot.event
+async def on_message(message):
+    if message.author == bot.user:
+        return
+
+    msg = message.content.lower()
+
+    # अगर कोई हेलो या नमस्ते कहे
+    if any(word in msg for in ["hi", "hii", "hello", "hey", "namaste"]):
+        await message.channel.send(f"Hello / नमस्ते {message.author.mention}! 👋 How can I help you today? / बोलिए, कैसे मदद कर सकता हूँ?")
+
+    # अगर कोई हालचाल पूछे (English या Hindi में)
+    elif any(word in msg for word in ["kaise ho", "how are you", "kya haal"]):
+        await message.channel.send(f"I'm doing great {message.author.mention}! 🤖 मैं एकदम मस्त हूँ। Lords Mobile कैसा चल रहा है?")
+
+    await bot.process_commands(message)
 
 @bot.command()
 async def shield(ctx, hours: int):
