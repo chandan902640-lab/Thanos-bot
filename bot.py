@@ -14,12 +14,13 @@ if GEMINI_KEY:
 else:
     ai_client = None
 
+# Render और UptimeRobot के लिए 24/7 वेब सर्वर (502 Bad Gateway एरर हटाने के लिए)
 class DummyHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.send_header('Content-type', 'text/plain')
         self.end_headers()
-        self.wfile.write(b"Bot is running 24/7")
+        self.wfile.write(b"Thanos Bot is online and running 24/7!")
 
 def keep_alive():
     port = int(os.environ.get("PORT", 8080))
@@ -97,7 +98,7 @@ class ClearConfirmView(discord.ui.View):
         if interaction.user != self.author:
             await interaction.response.send_message("❌ आप इस बटन का उपयोग नहीं कर सकते!", ephemeral=True)
             return
-        await interaction.response.edit_message(content="❌ चैट डिलीट करने का प्रोसेस रद्द कर दिया गया है。", view=None)
+        await interaction.response.edit_message(content="❌ चैट डिलीट करने का प्रोसेस रद्द कर दिया गया है।", view=None)
 
 # 🟡 अंदर खुलने वाला 5 बटन का मेनू (Bank Categories)
 class BankCategoryView(discord.ui.View):
@@ -139,7 +140,6 @@ class MainGreetingView(discord.ui.View):
         view = BankCategoryView()
         await interaction.response.send_message("👇 **किस तरह की बैंक कमांड्स देखनी हैं? नीचे से कैटेगरी चुनें:**", view=view, ephemeral=True)
 
-    # 🎮 नया बटन: प्लेयर्स को कमांड्स बताने के लिए
     @discord.ui.button(label="Bot Commands", style=discord.ButtonStyle.primary, emoji="🤖")
     async def bot_commands_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text = (
@@ -163,7 +163,6 @@ class MainGreetingView(discord.ui.View):
         view = ClearConfirmView(interaction.user)
         await interaction.response.send_message("⚠️ **चेतावनी:** क्या आप इस चैनल के सारे मैसेज डिलीट करना चाहते हैं? पुष्टि करने के लिए **Confirm** बटन पर क्लिक करें:", view=view, ephemeral=True)
 
-
 @bot.command()
 async def clearall(ctx):
     if not ctx.author.guild_permissions.administrator:
@@ -172,8 +171,7 @@ async def clearall(ctx):
     view = ClearConfirmView(ctx.author)
     await ctx.send("⚠️ **चेतावनी:** क्या आप इस चैनल के सारे मैसेज डिलीट करना चाहते हैं? पुष्टि करने के लिए नीचे दिए गए **Confirm (OK)** बटन पर क्लिक करें:", view=view)
 
-
-# 🐲 नया फीचर 1: मॉन्स्टर कमांड (Gemini AI के साथ)
+# 🐲 मॉन्स्टर कमांड (Gemini AI के साथ)
 @bot.command()
 async def monster(ctx, *, monster_name: str = None):
     if not monster_name:
@@ -184,20 +182,19 @@ async def monster(ctx, *, monster_name: str = None):
         await ctx.send("⚠️ Gemini API Key सेट नहीं है भाई!")
         return
 
-    prompt = f"Lords Mobile game में '{monster_name}' monster को मारने के लिए Best F2P (Free to play) और P2P (Pay to play) heroes की लिस्ट बताओ. जवाब हिंदी और इंग्लिश मिक्स (Hinglish) में एकदम साफ़ बुलेट पॉइंट्स में देना."
+    prompt = f"Lords Mobile game में '{monster_name}' monster को मारने के लिए Best F2P (Free to play) और P2P (Pay to play) heroes की लिस्ट बताओ. जवाब हिंदी और इंग्लिश मिक्स (Hinglish) में एकदम साफ़ बुलेट पॉइंट्स में देना."
 
     async with ctx.typing():
         try:
             response = ai_client.models.generate_content(
-                model='gemini-3.6-flash',
+                model='gemini-2.5-flash',
                 contents=prompt,
             )
             await ctx.send(f"👾 **{monster_name.title()}** को मारने के बेस्ट हीरोज:\n{response.text}")
         except Exception as e:
             await ctx.send(f"❌ कुछ गड़बड़ हो गई: {e}")
 
-
-# 🛡️ नया फीचर 2: एडवांस शील्ड कमांड (15 मिनट पहले DM अलर्ट के साथ)
+# 🛡️ एडवांस शील्ड कमांड (15 मिनट पहले DM अलर्ट के साथ)
 @bot.command()
 async def shield(ctx, hours: int):
     if hours <= 0:
@@ -212,23 +209,19 @@ async def shield(ctx, hours: int):
     if warning_seconds > 0:
         await asyncio.sleep(warning_seconds)
         
-        # 15 मिनट पहले का अलर्ट (DM में भेजने की कोशिश)
         try:
             await ctx.author.send(f"🚨 **चेतावनी:** भाई! तुम्हारी **{hours} घंटे** वाली Lords Mobile शील्ड खत्म होने में सिर्फ **15 मिनट** बचे हैं! जल्दी गेम खोलो वरना कोई अटैक कर देगा! ⚔️")
         except discord.Forbidden:
-            # अगर यूज़र के DM बंद हुए, तो चैनल में ही टैग करके बता देगा
             await ctx.send(f"🚨 {ctx.author.mention}, तुम्हारी शील्ड 15 मिनट में खत्म होने वाली है! (तुम्हारे DM बंद हैं, इसलिए यहाँ बता रहा हूँ)")
             
         await asyncio.sleep(900)
     else:
         await asyncio.sleep(total_seconds)
 
-    # शील्ड खत्म होने का फाइनल अलर्ट
     try:
         await ctx.author.send(f"⚠️ **अलर्ट:** भाई! तुम्हारी शील्ड **खत्म हो चुकी है!** तुरंत गेम चेक करो! 🏰")
     except discord.Forbidden:
         await ctx.send(f"⚠️ {ctx.author.mention}, तुम्हारी शील्ड **खत्म हो चुकी है!** तुरंत गेम चेक करो! 🏰")
-
 
 @bot.event
 async def on_message(message):
@@ -248,7 +241,7 @@ async def on_message(message):
             async with message.channel.typing():
                 try:
                     response = ai_client.models.generate_content(
-                        model='gemini-3.6-flash',
+                        model='gemini-2.5-flash',
                         contents=prompt,
                     )
                     
@@ -277,6 +270,10 @@ async def on_message(message):
 
     await bot.process_commands(message)
 
+# कीप अलाइव सर्वर चालू करें और बॉट रन करें
 keep_alive()
 token = os.environ.get("DISCORD_TOKEN")
-bot.run(token)
+if token:
+    bot.run(token)
+else:
+    print("❌ Error: DISCORD_TOKEN environment variable not found!")
