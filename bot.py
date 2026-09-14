@@ -151,7 +151,7 @@ class MainGreetingView(discord.ui.View):
             "✨ **THANOS BOT COMMANDS LIST:**\n\n"
             "🐲 **`/monster [नाम]`**\n"
             "🛡️ **`/shield [घंटे]`**\n"
-            "🧠 **AI Chat:** बॉट को टैग करके (`@Thanos Bot`) या नाम लिखकर सवाल पूछें!"
+            "🧠 **AI Chat:** बॉट को टैग करके (`Thanos Bot`)  लिखकर सवाल पूछें!"
         )
         await interaction.response.send_message(text, ephemeral=True)
 
