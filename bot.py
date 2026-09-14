@@ -44,7 +44,7 @@ async def on_ready():
     if not auto_clear_chat.is_running():
         auto_clear_chat.start()
 
-# 🌍 मल्टी-लैंग्वेज चैट फीचर (हिंदी और अंग्रेजी दोनों के लिए)
+# 🌍 सही किया हुआ मल्टी-लैंग्वेज चैट फीचर
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
@@ -53,10 +53,10 @@ async def on_message(message):
     msg = message.content.lower()
 
     # अगर कोई हेलो या नमस्ते कहे
-    if any(word in msg for in ["hi", "hii", "hello", "hey", "namaste"]):
+    if any(word in msg for word in ["hi", "hii", "hello", "hey", "namaste"]):
         await message.channel.send(f"Hello / नमस्ते {message.author.mention}! 👋 How can I help you today? / बोलिए, कैसे मदद कर सकता हूँ?")
 
-    # अगर कोई हालचाल पूछे (English या Hindi में)
+    # अगर कोई हालचाल पूछे
     elif any(word in msg for word in ["kaise ho", "how are you", "kya haal"]):
         await message.channel.send(f"I'm doing great {message.author.mention}! 🤖 मैं एकदम मस्त हूँ। Lords Mobile कैसा चल रहा है?")
 
