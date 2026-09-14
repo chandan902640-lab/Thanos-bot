@@ -14,7 +14,6 @@ if GEMINI_KEY:
 else:
     ai_client = None
 
-# यह डमी वेबसाइट है ताकि Render इसे 24/7 ऑनलाइन रख सके
 class DummyHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -30,10 +29,9 @@ def keep_alive():
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
-intents.presences = True  # 🟢 ऑनलाइन स्टेटस दिखाने के लिए
+intents.presences = True
 bot = commands.Bot(command_prefix='/', intents=intents)
 
-# हर 4 घंटे में पुराने मैसेज डिलीट करने वाला लूप
 @tasks.loop(hours=4)
 async def auto_clear_chat():
     for guild in bot.guilds:
@@ -49,14 +47,10 @@ async def auto_clear_chat():
 @bot.event
 async def on_ready():
     print(f'✅ {bot.user} ऑनलाइन आ गया है!')
-    await bot.change_presence(
-        status=discord.Status.online,
-        activity=discord.Game(name="Lords Mobile")
-    )
+    await bot.change_presence(status=discord.Status.online, activity=discord.Game(name="Lords Mobile"))
     if not auto_clear_chat.is_running():
         auto_clear_chat.start()
 
-# 🔵 नीले रंग के बटन वाला हेल्प मेनू
 class HelpButtonView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -78,7 +72,6 @@ async def helpmenu(ctx):
     view = HelpButtonView()
     await ctx.send("👇 नीचे दिए गए **नीले बटन** पर क्लिक करके देखें कि कौन सी कमांड क्या करती है!", view=view)
 
-# ⚠️ चैट डिलीट करने के लिए कंफर्मेशन बटन व्यू
 class ClearConfirmView(discord.ui.View):
     def __init__(self, ctx):
         super().__init__(timeout=60)
@@ -89,7 +82,6 @@ class ClearConfirmView(discord.ui.View):
         if interaction.user != self.ctx.author:
             await interaction.response.send_message("❌ आप इस बटन का उपयोग नहीं कर सकते!", ephemeral=True)
             return
-        
         await interaction.response.send_message("🧹 चैनल के मैसेज साफ किए जा रहे हैं...", ephemeral=True)
         try:
             deleted = await self.ctx.channel.purge(limit=1000)
@@ -109,11 +101,9 @@ async def clearall(ctx):
     if not ctx.author.guild_permissions.administrator:
         await ctx.send("❌ आपके पास इस कमांड को चलाने की परमिशन नहीं है!", delete_after=5)
         return
-    
     view = ClearConfirmView(ctx)
     await ctx.send("⚠️ **चेतावनी:** क्या आप इस चैनल के सारे मैसेज डिलीट करना चाहते हैं? पुष्टि करने के लिए नीचे दिए गए **Confirm (OK)** बटन पर क्लिक करें:", view=view)
 
-# 🧠 Gemini AI चैट और मजबूत मेंशन चेक फीचर
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
@@ -135,7 +125,13 @@ async def on_message(message):
                         model='gemini-3.6-flash',
                         contents=prompt,
                     )
-                    await message.channel.send(f"{message.author.mention} \n{response.text}")
+                    
+                    full_response = f"{message.author.mention} \n{response.text}"
+                    
+                    # 💡 नया जादू: अगर मैसेज बहुत बड़ा है, तो उसे 1900 कैरेक्टर के टुकड़ों में बांटकर भेजेगा
+                    for i in range(0, len(full_response), 1900):
+                        await message.channel.send(full_response[i:i+1900])
+                        
                 except Exception as e:
                     await message.channel.send(f"❌ कुछ गड़बड़ हो गई: {e}")
         else:
@@ -157,7 +153,6 @@ async def shield(ctx, hours: int):
     await asyncio.sleep(hours * 3600) 
     await ctx.send(f"⚠️ {ctx.author.mention}, आपका शील्ड खत्म होने वाला है! तुरंत गेम चेक करें।")
 
-# डमी वेबसाइट चालू करें और फिर बॉट रन करें
 keep_alive()
 token = os.environ.get("DISCORD_TOKEN")
 bot.run(token)
