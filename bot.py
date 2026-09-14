@@ -96,14 +96,14 @@ class ClearConfirmView(discord.ui.View):
             deleted = await interaction.channel.purge(limit=1000)
             print(f"🧹 {interaction.channel.name} से {len(deleted)} मैसेज डिलीट किए गए।")
         except Exception as e:
-            await interaction.channel.send(f"❌ एरर आ गया: {e}", delete_after=5)
+            await interaction.channel.send(f"❌ एरर आ गया: {str(e)[:1800]}", delete_after=5)
 
     @discord.ui.button(label="❌ Cancel", style=discord.ButtonStyle.secondary)
     async def cancel_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.author:
             await interaction.response.send_message("❌ आप इस बटन का उपयोग नहीं कर सकते!", ephemeral=True)
             return
-        await interaction.response.edit_message(content="❌ चैट डिलीट करने का प्रोसेस रद्द कर दिया गया है।", view=None)
+        await interaction.response.edit_message(content="❌ चैट डिलीट करने का प्रोसेस रद्द कर दिया गया है。", view=None)
 
 # 🟡 बैंक मेनू
 class BankCategoryView(discord.ui.View):
@@ -151,7 +151,7 @@ class MainGreetingView(discord.ui.View):
             "✨ **THANOS BOT COMMANDS LIST:**\n\n"
             "🐲 **`/monster [नाम]`**\n"
             "🛡️ **`/shield [घंटे]`**\n"
-            "🧠 **AI Chat:** बॉट को टैग करके (`@Thanos Bot`)  लिखकर सवाल पूछें!"
+            "🧠 **AI Chat:** बॉट को टैग करके (`@Thanos Bot`) या नाम लिखकर सवाल पूछें!"
         )
         await interaction.response.send_message(text, ephemeral=True)
 
@@ -171,7 +171,7 @@ async def clearall(ctx):
     view = ClearConfirmView(ctx.author)
     await ctx.send("⚠️ **चेतावनी:** मैसेज डिलीट करें?", view=view)
 
-# 🐲 मॉन्स्टर कमांड
+# 🐲 मॉन्स्टर कमांड (बड़े रिस्पॉन्स को फिक्स कर दिया गया है)
 @bot.command()
 async def monster(ctx, *, monster_name: str = None):
     if not monster_name:
@@ -188,9 +188,16 @@ async def monster(ctx, *, monster_name: str = None):
                 model='gemini-3.6-flash',
                 contents=prompt,
             )
-            await ctx.send(f"👾 **{monster_name.title()}** को मारने के बेस्ट हीरोज:\n{response.text}")
+            full_response = f"👾 **{monster_name.title()}** को मारने के बेस्ट हीरोज:\n{response.text}"
+            
+            # अगर मैसेज 2000 अक्षरों से बड़ा है, तो उसे टुकड़ों में भेजेगा (2000 Limit Fix)
+            for i in range(0, len(full_response), 1900):
+                await ctx.send(full_response[i:i+1900])
+                
         except Exception as e:
-            await ctx.send(f"❌ एरर: {e}")
+            # एरर मैसेज को भी लिमिट में रखा है ताकि Discord क्रैश न हो
+            error_msg = str(e)[:1800]
+            await ctx.send(f"❌ एरर आ गया भाई: {error_msg}")
 
 # 🛡️ शील्ड कमांड
 @bot.command()
@@ -217,22 +224,22 @@ async def shield(ctx, hours: int):
     except discord.Forbidden:
         await ctx.send(f"⚠️ {ctx.author.mention}, तुम्हारी शील्ड **खत्म हो चुकी है!** 🏰")
 
-# 🧠 AI चैट (स्मार्ट फिक्स)
+# 🧠 AI चैट (स्मार्ट फिक्स और 2000 कैरेक्टर लिमिट फिक्स)
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
         return
 
-    # 1. पहले स्लैश (/) कमांड्स को प्रोसेस करेगा (जैसे /monster)
+    # 1. पहले स्लैश (/) कमांड्स को प्रोसेस करेगा
     await bot.process_commands(message)
 
-    # 2. अगर मैसेज / से शुरू है, तो AI को इग्नोर करेगा
+    # 2. अगर मैसेज / से शुरू है, तो AI इग्नोर करेगा
     if message.content.startswith('/'):
         return
 
     msg_lower = message.content.lower()
     
-    # 3. स्मार्ट चेक: अगर "thanos" नाम कहीं भी है (टैग हो या बिना टैग के)
+    # 3. स्मार्ट चेक: अगर "thanos" नाम कहीं भी है
     is_mentioned = (
         bot.user in message.mentions or 
         "thanos" in msg_lower
@@ -243,7 +250,7 @@ async def on_message(message):
             await message.channel.send("⚠️ Gemini API Key सेट नहीं है!")
             return
 
-        # प्रॉम्प्ट से बॉट का नाम साफ़ करना ताकि AI कंफ्यूज न हो
+        # प्रॉम्प्ट साफ़ करना
         prompt = message.clean_content
         for word in ["@Thanos bot", "@Thanos Bot", "Thanos bot", "thanos bot", "Thanos", "thanos"]:
             prompt = prompt.replace(word, "")
@@ -257,15 +264,19 @@ async def on_message(message):
                         contents=prompt,
                     )
                     full_response = f"{message.author.mention} \n{response.text}"
+                    
+                    # मैसेज 2000 लिमिट फिक्स
                     for i in range(0, len(full_response), 1900):
                         await message.channel.send(full_response[i:i+1900])
+                        
                 except Exception as e:
-                    await message.channel.send(f"❌ कुछ गड़बड़ हो गई: {e}")
+                    error_msg = str(e)[:1800]
+                    await message.channel.send(f"❌ कुछ गड़बड़ हो गई: {error_msg}")
         else:
             await message.channel.send(f"हाँ भाई {message.author.mention}! बताइए, मुझसे क्या पूछना चाहते हैं?")
         return
 
-    # 4. अगर सिर्फ hi, hello लिखा है तो मेनू
+    # 4. अगर सिर्फ hi, hello लिखा है
     words = msg_lower.split()
     if words:
         if any(w in words for w in ["hi", "hii", "hello", "hey", "namaste"]) and len(words) <= 2:
