@@ -51,7 +51,7 @@ async def on_ready():
     if not auto_clear_chat.is_running():
         auto_clear_chat.start()
 
-# 🔵 हेल्प मेनू व्यू (अपडेटेड)
+# 🔵 हेल्प मेनू व्यू
 class HelpButtonView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -97,7 +97,7 @@ class ClearConfirmView(discord.ui.View):
         if interaction.user != self.author:
             await interaction.response.send_message("❌ आप इस बटन का उपयोग नहीं कर सकते!", ephemeral=True)
             return
-        await interaction.response.edit_message(content="❌ चैट डिलीट करने का प्रोसेस रद्द कर दिया गया है।", view=None)
+        await interaction.response.edit_message(content="❌ चैट डिलीट करने का प्रोसेस रद्द कर दिया गया है。", view=None)
 
 # 🟡 अंदर खुलने वाला 5 बटन का मेनू (Bank Categories)
 class BankCategoryView(discord.ui.View):
@@ -129,7 +129,7 @@ class BankCategoryView(discord.ui.View):
         text = "**🌾 RESOURCE COMMANDS:**\n`![type] [amount]` - Sends specific RSS (e.g. `!food 5M`)\n`!rss [F] [S] [W] [O] [G]` - Sends all RSS (e.g. `!rss 5M 5M 5M 5M 0`)\n`!donate[type] [player] [amount]` - Sends RSS to specific player (e.g. `!donatefood Shark 5M`)\n`!admin[type] [player] [amount]` - Admin sends RSS to player\n`!adminrss [F] [S] [W] [O] [G] [player]` - Admin sends all types of RSS to player"
         await interaction.response.send_message(text, ephemeral=True)
 
-# 🟢 मुख्य 2 बटन वाला मेनू (जो hii लिखने पर आएगा)
+# 🟢 मुख्य 3 बटन वाला मेनू (जो hii लिखने पर आएगा)
 class MainGreetingView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -137,7 +137,23 @@ class MainGreetingView(discord.ui.View):
     @discord.ui.button(label="Guild Bank Commands", style=discord.ButtonStyle.success, emoji="🏦")
     async def open_bank_menu_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = BankCategoryView()
-        await interaction.response.send_message("👇 **किस तरह की कमांड्स देखनी हैं? नीचे से कैटेगरी चुनें:**", view=view, ephemeral=True)
+        await interaction.response.send_message("👇 **किस तरह की बैंक कमांड्स देखनी हैं? नीचे से कैटेगरी चुनें:**", view=view, ephemeral=True)
+
+    # 🎮 नया बटन: प्लेयर्स को कमांड्स बताने के लिए
+    @discord.ui.button(label="Bot Commands", style=discord.ButtonStyle.primary, emoji="🤖")
+    async def bot_commands_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        text = (
+            "✨ **THANOS BOT COMMANDS LIST:**\n\n"
+            "🐲 **`/monster [नाम]`**\n"
+            "किसी भी मॉन्स्टर के F2P और P2P हीरोज पता करें।\n"
+            "👉 *ऐसे लिखें:* `/monster hardrox`\n\n"
+            "🛡️ **`/shield [घंटे]`**\n"
+            "एडवांस शील्ड टाइमर सेट करें (खत्म होने से 15 मिनट पहले आपको मैसेज आ जाएगा!)।\n"
+            "👉 *ऐसे लिखें:* `/shield 24` या `/shield 8`\n\n"
+            "🧠 **AI Chat**\n"
+            "बॉट को टैग करके (`@Thanos Bot`) गेम या दुनिया का कोई भी सवाल पूछें!"
+        )
+        await interaction.response.send_message(text, ephemeral=True)
 
     @discord.ui.button(label="Clear Chat", style=discord.ButtonStyle.danger, emoji="🗑️")
     async def clear_chat_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -253,12 +269,11 @@ async def on_message(message):
             view = MainGreetingView()
             await message.channel.send(
                 f"Hello / नमस्ते {message.author.mention}! 👋 \n"
-                f"मुझे कुछ भी पूछने के लिए मुझे टैग करें (जैसे `@Thanos Bot सवाल`)।\n"
-                f"👇 **Guild Bank Commands** और **Clear Chat** के लिए नीचे बटन दबाएं:", 
+                f"👇 **बॉट की सभी कमांड्स (Monster, Shield आदि)** और **Guild Bank** के लिए नीचे बटन दबाएं:", 
                 view=view
             )
         elif any(w in words for w in ["code", "command", "commands"]):
-            await message.channel.send(f"💻 भाई, सभी कमांड्स देखने के लिए `/helpmenu` टाइप करें!")
+            await message.channel.send(f"💻 भाई, सभी कमांड्स देखने के लिए `/helpmenu` टाइप करें या `hii` लिखकर **🤖 Bot Commands** बटन दबाएं!")
 
     await bot.process_commands(message)
 
