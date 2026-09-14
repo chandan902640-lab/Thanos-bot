@@ -15,7 +15,7 @@ if GEMINI_KEY:
 else:
     ai_model = None
 
-# यह डमी वेबसाइट है ताकि Render को लगे कि यह एक वेबसाइट है
+# यह डमी वेबसाइट है ताकि Render इसे 24/7 ऑनलाइन रख सके
 class DummyHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -114,25 +114,26 @@ async def clearall(ctx):
     view = ClearConfirmView(ctx)
     await ctx.send("⚠️ **चेतावनी:** क्या आप इस चैनल के सारे मैसेज डिलीट करना चाहते हैं? पुष्टि करने के लिए नीचे दिए गए **Confirm (OK)** बटन पर क्लिक करें:", view=view)
 
-# 🧠 Gemini AI चैट और स्मार्ट मैसेज फीचर
+# 🧠 Gemini AI चैट और मजबूत मेंशन चेक फीचर
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
         return
 
-    # अगर बॉट को टैग किया गया है (@Thanos Bot) तो Gemini AI की तरह जवाब देगा
-    if bot.user in message.mentions:
+    # बॉट को टैग किया गया है या नहीं, इसे चेक करने का पक्का तरीका
+    is_mentioned = bot.user in message.mentions or f"<@{bot.user.id}>" in message.content or f"<@!{bot.user.id}>" in message.content
+
+    if is_mentioned:
         if not ai_model:
             await message.channel.send("⚠️ Gemini API Key सेट नहीं है भाई! कृपया Render में `GEMINI_API_KEY` जोड़ें।")
             return
 
-        # मैसेज से बॉट का नाम हटाकर सिर्फ सवाल निकालें
+        # मैसेज से बॉट का टैग हटाकर सिर्फ सवाल निकालें
         prompt = message.content.replace(f'<@!{bot.user.id}>', '').replace(f'<@{bot.user.id}>', '').strip()
         
         if prompt:
             async with message.channel.typing():
                 try:
-                    # Gemini से जवाब मंगाएँ
                     response = ai_model.generate_content(prompt)
                     await message.channel.send(f"{message.author.mention} \n{response.text}")
                 except Exception as e:
