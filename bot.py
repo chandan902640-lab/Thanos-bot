@@ -5,6 +5,15 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from datetime import datetime, timedelta, timezone
 import discord
 from discord.ext import commands, tasks
+import google.generativeai as genai
+
+# Gemini AI सेटअप
+GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
+if GEMINI_KEY:
+    genai.configure(api_key=GEMINI_KEY)
+    ai_model = genai.GenerativeModel('gemini-1.5-flash')
+else:
+    ai_model = None
 
 # यह डमी वेबसाइट है ताकि Render को लगे कि यह एक वेबसाइट है
 class DummyHandler(BaseHTTPRequestHandler):
@@ -22,7 +31,7 @@ def keep_alive():
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
-intents.presences = True  # 🟢 ऑनलाइन स्टेटस दिखाने के लिए जरूरी है
+intents.presences = True  # 🟢 ऑनलाइन स्टेटस दिखाने के लिए
 bot = commands.Bot(command_prefix='/', intents=intents)
 
 # हर 4 घंटे में पुराने मैसेज डिलीट करने वाला लूप
@@ -41,7 +50,6 @@ async def auto_clear_chat():
 @bot.event
 async def on_ready():
     print(f'✅ {bot.user} ऑनलाइन आ गया है!')
-    # 🟢 बॉट को ऑनलाइन (हरा डॉट) और गेम का स्टेटस सेट करें
     await bot.change_presence(
         status=discord.Status.online,
         activity=discord.Game(name="Lords Mobile")
@@ -58,10 +66,10 @@ class HelpButtonView(discord.ui.View):
     async def help_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message(
             "✨ **Thanos Bot की सभी कमांड्स और फीचर्स:**\n\n"
-            "🛡️ `/shield [घंटे]` - गेम के लिए शील्ड टाइमर सेट करता है (जैसे `/shield 1`)।\n"
-            "🗑️ `/clearall` - इस चैनल के सारे मैसेज एक साथ डिलीट करने के लिए (बटन के साथ)।\n"
-            "📋 `/helpmenu` - यह हेल्प मेनू दोबारा मंगाने के लिए।\n"
-            "💬 `Hi / Hello` - बॉट से बातचीत करने के लिए।\n"
+            "🧠 **Gemini AI Chat:** बॉट को टैग करके (`@Thanos Bot`) इससे कुछ भी सवाल पूछ सकते हैं!\n"
+            "🛡️ `/shield [घंटे]` - गेम के लिए शील्ड टाइमर सेट करता है।\n"
+            "🗑️ `/clearall` - चैनल के सारे मैसेज डिलीट करने के लिए (बटन के साथ)।\n"
+            "📋 `/helpmenu` - हेल्प मेनू मंगाने के लिए।\n"
             "🧹 **Auto-Cleanup** - हर 4 घंटे में पुराने मैसेज अपने आप साफ़ होते हैं!",
             ephemeral=True
         )
@@ -106,25 +114,40 @@ async def clearall(ctx):
     view = ClearConfirmView(ctx)
     await ctx.send("⚠️ **चेतावनी:** क्या आप इस चैनल के सारे मैसेज डिलीट करना चाहते हैं? पुष्टि करने के लिए नीचे दिए गए **Confirm (OK)** बटन पर क्लिक करें:", view=view)
 
-# स्मार्ट चैट फीचर
+# 🧠 Gemini AI चैट और स्मार्ट मैसेज फीचर
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
         return
 
-    words = message.content.lower().split()
-    if not words:
-        await bot.process_commands(message)
+    # अगर बॉट को टैग किया गया है (@Thanos Bot) तो Gemini AI की तरह जवाब देगा
+    if bot.user in message.mentions:
+        if not ai_model:
+            await message.channel.send("⚠️ Gemini API Key सेट नहीं है भाई! कृपया Render में `GEMINI_API_KEY` जोड़ें।")
+            return
+
+        # मैसेज से बॉट का नाम हटाकर सिर्फ सवाल निकालें
+        prompt = message.content.replace(f'<@!{bot.user.id}>', '').replace(f'<@{bot.user.id}>', '').strip()
+        
+        if prompt:
+            async with message.channel.typing():
+                try:
+                    # Gemini से जवाब मंगाएँ
+                    response = ai_model.generate_content(prompt)
+                    await message.channel.send(f"{message.author.mention} \n{response.text}")
+                except Exception as e:
+                    await message.channel.send(f"❌ कुछ गड़बड़ हो गई: {e}")
+        else:
+            await message.channel.send(f"हाँ भाई {message.author.mention}! बताइए, मुझसे क्या पूछना चाहते हैं?")
         return
 
-    if any(w in words for w in ["hi", "hii", "hello", "hey", "namaste"]):
-        await message.channel.send(f"Hello / नमस्ते {message.author.mention}! 👋 बताइए भाई, आज क्या मदद चाहिए? (कमांड देखने के लिए `/helpmenu` टाइप करें)")
-
-    elif any(w in words for w in ["kaise", "haal", "how"]):
-        await message.channel.send(f"मैं एकदम फर्स्ट क्लास हूँ {message.author.mention}! 🤖 आप सुनाओ, Lords Mobile कैसा चल रहा है?")
-
-    elif any(w in words for w in ["code", "command", "commands"]):
-        await message.channel.send(f"💻 भाई, सभी कमांड्स देखने के लिए `/helpmenu` टाइप करें!")
+    # सामान्य बातचीत के लिए
+    words = message.content.lower().split()
+    if words:
+        if any(w in words for w in ["hi", "hii", "hello", "hey", "namaste"]):
+            await message.channel.send(f"Hello / नमस्ते {message.author.mention}! 👋 मुझे कुछ भी पूछने के लिए मुझे टैग करें (जैसे `@Thanos Bot सवाल`)।")
+        elif any(w in words for w in ["code", "command", "commands"]):
+            await message.channel.send(f"💻 भाई, सभी कमांड्स देखने के लिए `/helpmenu` टाइप करें!")
 
     await bot.process_commands(message)
 
