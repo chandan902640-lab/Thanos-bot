@@ -51,6 +51,7 @@ async def on_ready():
     if not auto_clear_chat.is_running():
         auto_clear_chat.start()
 
+# 🔵 हेल्प मेनू व्यू
 class HelpButtonView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -72,6 +73,38 @@ async def helpmenu(ctx):
     view = HelpButtonView()
     await ctx.send("👇 नीचे दिए गए **नीले बटन** पर क्लिक करके देखें कि कौन सी कमांड क्या करती है!", view=view)
 
+# 🟢 नया फीचर: बैंक कमांड्स बटन व्यू
+class GreetingView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="🏦 Guild Bank Commands", style=discord.ButtonStyle.success, emoji="💰")
+    async def bank_commands_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        bank_text = (
+            "**🏦 GUILD BANK COMMANDS LIST**\n\n"
+            "**📌 General Commands:**\n"
+            "`!shield deploy` - Deploys a shield on the bank\n"
+            "`!relocate [X] [Y]` - Relocates the bank\n"
+            "`!purge` - Clears the Guild Chat\n"
+            "`!buildspam [amount] [delay]` - Spams helps for Guild fest (e.g. `!buildspam 120 5`)\n"
+            "`!hunt [x] [y]` - Hunts the specified monster\n"
+            "`!payransom` - Pays any outstanding Ransom for the account's leader\n\n"
+            "**🔍 Search Commands (Add 'chat' at the end to post in guild):**\n"
+            "`!findtile [type] [level]` - e.g. `!findtile food 4`\n"
+            "`!findmonster [name] [level]` - e.g. `!findmonster hardrox 2`\n"
+            "`!findnest [level]` - Finds a darknest around the bank\n\n"
+            "**⚖️ Balance Commands:**\n"
+            "`!bal` - Checks your balance sent to the bank\n"
+            "`!adminbal` - Checks the RSS balance of the Bank\n"
+            "`!transfer [player] [type] [amount]` - Transfers balance to another player\n\n"
+            "**🌾 Resource Commands:**\n"
+            "`![type] [amount]` - Sends specific RSS (e.g. `!food 5M`)\n"
+            "`!rss [F] [S] [W] [O] [G]` - Sends all RSS (e.g. `!rss 5M 5M 5M 5M 0`)\n"
+            "`!donate[type] [player] [amount]` - Sends RSS to player (e.g. `!donatefood Shark 5M`)"
+        )
+        await interaction.response.send_message(bank_text, ephemeral=True)
+
+# ⚠️ चैट डिलीट करने के लिए कंफर्मेशन बटन व्यू
 class ClearConfirmView(discord.ui.View):
     def __init__(self, ctx):
         super().__init__(timeout=60)
@@ -128,7 +161,6 @@ async def on_message(message):
                     
                     full_response = f"{message.author.mention} \n{response.text}"
                     
-                    # 💡 नया जादू: अगर मैसेज बहुत बड़ा है, तो उसे 1900 कैरेक्टर के टुकड़ों में बांटकर भेजेगा
                     for i in range(0, len(full_response), 1900):
                         await message.channel.send(full_response[i:i+1900])
                         
@@ -141,7 +173,8 @@ async def on_message(message):
     words = message.content.lower().split()
     if words:
         if any(w in words for w in ["hi", "hii", "hello", "hey", "namaste"]):
-            await message.channel.send(f"Hello / नमस्ते {message.author.mention}! 👋 मुझे कुछ भी पूछने के लिए मुझे टैग करें (जैसे `@Thanos Bot सवाल`)।")
+            view = GreetingView()
+            await message.channel.send(f"Hello / नमस्ते {message.author.mention}! 👋 \nमुझे कुछ भी पूछने के लिए मुझे टैग करें (जैसे `@Thanos Bot सवाल`)।\n👇 **Guild Bank Commands** देखने के लिए नीचे हरा बटन दबाएं!", view=view)
         elif any(w in words for w in ["code", "command", "commands"]):
             await message.channel.send(f"💻 भाई, सभी कमांड्स देखने के लिए `/helpmenu` टाइप करें!")
 
