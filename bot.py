@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 import discord
 from discord.ext import commands, tasks
 
-# यह डमी सर्वर है ताकि Render को लगे कि यह एक वेबसाइट है
+# यह डमी वेबसाइट है ताकि Render को लगे कि यह एक वेबसाइट है
 class DummyHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -22,6 +22,7 @@ def keep_alive():
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
+intents.presences = True  # 🟢 ऑनलाइन स्टेटस दिखाने के लिए जरूरी है
 bot = commands.Bot(command_prefix='/', intents=intents)
 
 # हर 4 घंटे में पुराने मैसेज डिलीट करने वाला लूप
@@ -40,7 +41,11 @@ async def auto_clear_chat():
 @bot.event
 async def on_ready():
     print(f'✅ {bot.user} ऑनलाइन आ गया है!')
-    await bot.change_presence(activity=discord.Game(name="Lords Mobile"))
+    # 🟢 बॉट को ऑनलाइन (हरा डॉट) और गेम का स्टेटस सेट करें
+    await bot.change_presence(
+        status=discord.Status.online,
+        activity=discord.Game(name="Lords Mobile")
+    )
     if not auto_clear_chat.is_running():
         auto_clear_chat.start()
 
@@ -66,7 +71,7 @@ async def helpmenu(ctx):
     view = HelpButtonView()
     await ctx.send("👇 नीचे दिए गए **नीले बटन** पर क्लिक करके देखें कि कौन सी कमांड क्या करती है!", view=view)
 
-# ⚠️ चैट डिलीट करने के लिए कंफर्मेशन बटन व्यू (सिर्फ कमांड चलाने वाला ही क्लिक कर पाएगा)
+# ⚠️ चैट डिलीट करने के लिए कंफर्मेशन बटन व्यू
 class ClearConfirmView(discord.ui.View):
     def __init__(self, ctx):
         super().__init__(timeout=60)
@@ -74,7 +79,6 @@ class ClearConfirmView(discord.ui.View):
 
     @discord.ui.button(label="✅ Confirm (OK) - Delete All", style=discord.ButtonStyle.danger)
     async def confirm_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
-        # जाँच करें कि क्या बटन दबाने वाला वही व्यक्ति है जिसने कमांड चलाई थी
         if interaction.user != self.ctx.author:
             await interaction.response.send_message("❌ आप इस बटन का उपयोग नहीं कर सकते!", ephemeral=True)
             return
@@ -93,10 +97,8 @@ class ClearConfirmView(discord.ui.View):
             return
         await interaction.response.edit_message(content="❌ चैट डिलीट करने का प्रोसेस रद्द कर दिया गया है।", view=None)
 
-# 🗑️ नया कमांड: /clearall
 @bot.command()
 async def clearall(ctx):
-    # सुरक्षा जाँच: इसे सिर्फ एडमिन या बॉट का मालिक ही चला सकता है
     if not ctx.author.guild_permissions.administrator:
         await ctx.send("❌ आपके पास इस कमांड को चलाने की परमिशन नहीं है!", delete_after=5)
         return
