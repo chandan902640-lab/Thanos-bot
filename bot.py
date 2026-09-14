@@ -72,7 +72,7 @@ class HelpButtonView(discord.ui.View):
             "🛡️ **`/shield [घंटे]`** - एडवांस शील्ड टाइमर (15 मिनट पहले प्राइवेट DM में अलर्ट देगा)।\n"
             "🗑️ **`/clearall`** - चैनल के सारे मैसेज डिलीट करने के लिए (सिर्फ एडमिन के लिए)।\n"
             "📋 **`/helpmenu`** - यह हेल्प मेनू मंगाने के लिए।\n"
-            "🧹 **Auto-Cleanup:** हर 4 घंटे में पुराने मैसेज अपने आप साफ़ होते हैं!",
+            "🧹 **Auto-Cleanup:** हर 4 घंटे में पुराने मैसेज अपने আজি साफ़ होते हैं!",
             ephemeral=True
         )
 
@@ -193,7 +193,7 @@ async def monster(ctx, *, monster_name: str = None):
     async with ctx.typing():
         try:
             response = ai_client.models.generate_content(
-                model='gemini-2.5-flash',
+                model='gemini-3.6-flash',
                 contents=prompt,
             )
             await ctx.send(f"👾 **{monster_name.title()}** को मारने के बेस्ट हीरोज:\n{response.text}")
@@ -247,7 +247,7 @@ async def on_message(message):
             async with message.channel.typing():
                 try:
                     response = ai_client.models.generate_content(
-                        model='gemini-2.5-flash',
+                        model='gemini-3.6-flash',
                         contents=prompt,
                     )
                     
