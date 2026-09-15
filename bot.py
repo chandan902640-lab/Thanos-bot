@@ -67,7 +67,7 @@ class HelpButtonView(discord.ui.View):
         await interaction.response.send_message(
             "✨ **Thanos Bot की सभी कमांड्स और फीचर्स:**\n\n"
             "🧠 **Smart AI Chat:** चैनल में कोई भी सवाल पूछें, बॉट अपने आप जवाब देगा (बिना टैग किए)!\n"
-            "🐲 **`/monster [नाम]`** - किसी भी मॉन्स्टर के F2P और P2P हीरोज पता करें।\n"
+            "🐲 **Monster Hunt Button:** मेनू में जाकर सीधे 18 मॉन्स्टर्स के हीरो सेटअप देखें!\n"
             "🛡️ **`/shield [घंटे]`** - एडवांस शील्ड टाइमर (15 मिनट पहले प्राइवेट DM में अलर्ट देगा)।\n"
             "🗑️ **`/clearall`** - चैनल के सारे मैसेज डिलीट करने के लिए (सिर्फ एडमिन के लिए)।\n"
             "📋 **`/helpmenu`** - यह हेल्प मेनू मंगाने के लिए।\n"
@@ -103,7 +103,47 @@ class ClearConfirmView(discord.ui.View):
         if interaction.user != self.author:
             await interaction.response.send_message("❌ आप इस बटन का उपयोग नहीं कर सकते!", ephemeral=True)
             return
-        await interaction.response.edit_message(content="❌ चैट डिलीट करने का प्रोसेस रद्द कर दिया गया है。", view=None)
+        await interaction.response.edit_message(content="❌ चैट डिलीट करने का प्रोसेस रद्द कर दिया गया है।", view=None)
+
+# 🐲 मॉन्स्टर हंट डेटा और ड्रॉपडाउन व्यू (GitHub लिंक्स के साथ)
+MONSTERS = {
+    "1": ("Queen Bee", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/1.png"),
+    "2": ("Saberfang", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/2.png"),
+    "3": ("Gryphon", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/3.png"),
+    "4": ("Mecha Trojan", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/4.png"),
+    "5": ("Jade Wyrm", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/5.png"),
+    "6": ("Bon Appeti", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/6.png"),
+    "7": ("Gargantua", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/7.png"),
+    "8": ("Frostwing", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/8.png"),
+    "9": ("Hell Drider", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/9.png"),
+    "10": ("Snow Beast", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/10.png"),
+    "11": ("Tidal Titan", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/11.png"),
+    "12": ("Terrorthorn", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/12.png"),
+    "13": ("Noceros", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/13.png"),
+    "14": ("Mega Maggot", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/14.png"),
+    "15": ("Blackwing", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/15.png"),
+    "16": ("Voodoo Shaman", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/16.png"),
+    "17": ("Grim Reaper", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/17.png"),
+    "18": ("Hardrox", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/18.png"),
+}
+
+class MonsterSelect(discord.ui.Select):
+    def __init__(self):
+        options = [
+            discord.SelectOption(label=f"{num}. {name}", value=num)
+            for num, (name, url) in MONSTERS.items()
+        ]
+        super().__init__(placeholder="🏹 Select a Monster for strategy...", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        selected_num = self.values[0]
+        name, url = MONSTERS[selected_num]
+        await interaction.response.send_message(f"**🎯 Monster Hunt Setup: {name}**\n{url}", ephemeral=True)
+
+class MonsterView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        self.add_item(MonsterSelect())
 
 # 🟡 बैंक मेनू
 class BankCategoryView(discord.ui.View):
@@ -217,9 +257,8 @@ class BankCategoryView(discord.ui.View):
             "`!adminrss [F] [S] [W] [O] [G] [player]` ➡️ Admin sends all types of RSS to a player\n"
         )
         await interaction.response.send_message(text, ephemeral=True)
-           
-        
-# 🟢 मुख्य मेनू
+         
+# 🟢 मुख्य मेनू (यहाँ Monster Hunt का नया हरा बटन जोड़ा गया है)
 class MainGreetingView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -229,11 +268,16 @@ class MainGreetingView(discord.ui.View):
         view = BankCategoryView()
         await interaction.response.send_message("👇 **किस तरह की बैंक कमांड्स देखनी हैं?**", view=view, ephemeral=True)
 
+    @discord.ui.button(label="🏹 Monster Hunt", style=discord.ButtonStyle.green, emoji="🐲")
+    async def monster_hunt_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        view = MonsterView()
+        await interaction.response.send_message("👇 **नीचे दी गई लिस्ट में से अपना मॉन्स्टर चुनें:**", view=view, ephemeral=True)
+
     @discord.ui.button(label="Bot Commands", style=discord.ButtonStyle.primary, emoji="🤖")
     async def bot_commands_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text = (
             "✨ **THANOS BOT COMMANDS LIST:**\n\n"
-            "🐲 **`/monster [नाम]`**\n"
+            "🐲 **Monster Hunt Button:** मेनू से 18 मॉन्स्टर्स के हीरो सेटअप देखें!\n"
             "🛡️ **`/shield [घंटे]`**\n"
             "🧠 **AI Chat:** अब चैनल में कोई भी सवाल पूछें, बॉट तुरंत जवाब देगा!"
         )
@@ -255,11 +299,11 @@ async def clearall(ctx):
     view = ClearConfirmView(ctx.author)
     await ctx.send("⚠️ **चेतावनी:** मैसेज डिलीट करें?", view=view)
 
-# 🐲 मॉन्स्टर कमांड
+# 🐲 मॉन्स्टर कमांड (AI बैकअप)
 @bot.command()
 async def monster(ctx, *, monster_name: str = None):
     if not monster_name:
-        await ctx.send("⚠️ भाई, किसी मॉन्स्टर का नाम तो बताओ!")
+        await ctx.send("⚠️ भाई, किसी मॉन्स्टर का नाम तो बताओ! या मेनू में जाकर 'Monster Hunt' बटन दबाएं।")
         return
     if not ai_client:
         await ctx.send("⚠️ Gemini API Key सेट नहीं है!")
@@ -307,7 +351,7 @@ async def shield(ctx, hours: int):
         await ctx.send(f"⚠️ {ctx.author.mention}, तुम्हारी शील्ड **खत्म हो चुकी है!** 🏰")
 
 
-# 🧠 AI चैट (SMART FILTER - लिमिट बचाएगा और छोटा जवाब देगा)
+# 🧠 AI चैट (SMART FILTER)
 @bot.event
 async def on_message(message):
     if message.author.bot:
@@ -332,14 +376,11 @@ async def on_message(message):
         )
         return
 
-    # --- SMART FILTER: सिर्फ तभी रिप्लाई करेगा जब सवाल हो या नाम लिया जाए ---
     question_keywords = ["kya", "kaise", "kyu", "kyon", "batao", "kaun", "kab", "kaha", "how", "what", "why", "where", "help"]
     
-    # चेक करेगा कि मैसेज में कोई सवाल वाला शब्द है, या '?' है, या बॉट का नाम है
     is_question = any(word in words for word in question_keywords) or "?" in msg_lower
     is_mentioned = "thanos" in msg_lower or "thanod" in msg_lower or bot.user in message.mentions
 
-    # अगर न सवाल है, न नाम लिया है, तो बॉट चुपचाप मैसेज को इग्नोर कर देगा (API लिमिट बचेगी!)
     if not (is_question or is_mentioned):
         return
 
@@ -355,7 +396,6 @@ async def on_message(message):
         await message.channel.send(f"हाँ भाई {message.author.mention}! बताइए, मुझसे क्या पूछना चाहते हैं?")
         return
 
-    # AI को हिडन कमांड: जवाब छोटा और सटीक दो!
     smart_prompt = prompt + "\n\n(System Note: Answer this very briefly and strictly to the point in Hinglish. Do not write long paragraphs. Give only necessary information.)"
 
     async with message.channel.typing():
