@@ -66,12 +66,11 @@ class HelpButtonView(discord.ui.View):
     async def help_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message(
             "✨ **Thanos Bot की सभी कमांड्स और फीचर्स:**\n\n"
-            "🧠 **Smart AI Chat:** चैनल में कोई भी सवाल पूछें, बॉट अपने आप जवाब देगा (बिना टैग किए)!\n"
-            "🐲 **Monster Hunt Button:** मेनू में जाकर सीधे 18 मॉन्स्टर्स के हीरो सेटअप देखें!\n"
-            "🛡️ **`/shield [घंटे]`** - एडवांस शील्ड टाइमर (15 मिनट पहले प्राइवेट DM में अलर्ट देगा)।\n"
-            "🗑️ **`/clearall`** - चैनल के सारे मैसेज डिलीट करने के लिए (सिर्फ एडमिन के लिए)।\n"
-            "📋 **`/helpmenu`** - यह हेल्प मेनू मंगाने के लिए।\n"
-            "🧹 **Auto-Cleanup:** हर 4 घंटे में पुराने मैसेज अपने आप साफ़ होते हैं!",
+            "🧠 **Smart AI Chat:** चैनल में कोई भी सवाल पूछें, बॉट जवाब देगा!\n"
+            "🐲 **Monster Hunt:** मेनू में 'Monster Hunt' बटन दबाकर 18 मॉन्स्टर्स के हीरो सेटअप देखें!\n"
+            "🛡️ **`/shield [घंटे]`** - एडवांस शील्ड टाइमर (15 मिनट पहले अलर्ट देगा)।\n"
+            "🗑️ **`/clearall`** - चैनल के सारे मैसेज डिलीट करने के लिए (एडमिन के लिए)।\n"
+            "📋 **`/helpmenu`** - यह हेल्प मेनू मंगाने के लिए।",
             ephemeral=True
         )
 
@@ -103,9 +102,9 @@ class ClearConfirmView(discord.ui.View):
         if interaction.user != self.author:
             await interaction.response.send_message("❌ आप इस बटन का उपयोग नहीं कर सकते!", ephemeral=True)
             return
-        await interaction.response.edit_message(content="❌ चैट डिलीट करने का प्रोसेस रद्द कर दिया गया है।", view=None)
+        await interaction.response.edit_message(content="❌ चैट डिलीट करने का प्रोसेस रद्द कर दिया गया है。", view=None)
 
-# 🐲 मॉन्स्टर हंट डेटा और ड्रॉपडाउन व्यू (GitHub लिंक्स के साथ)
+# 🐲 18 मॉन्स्टर्स की लिस्ट और ड्रॉपडाउन (बड़ी फोटो/Embed के साथ)
 MONSTERS = {
     "1": ("Queen Bee", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/1.png"),
     "2": ("Saberfang", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/2.png"),
@@ -133,12 +132,17 @@ class MonsterSelect(discord.ui.Select):
             discord.SelectOption(label=f"{num}. {name}", value=num)
             for num, (name, url) in MONSTERS.items()
         ]
-        super().__init__(placeholder="🏹 Select a Monster for strategy...", min_values=1, max_values=1, options=options)
+        super().__init__(placeholder="🎯 Select a Monster (1 to 18)...", min_values=1, max_values=1, options=options)
 
     async def callback(self, interaction: discord.Interaction):
         selected_num = self.values[0]
         name, url = MONSTERS[selected_num]
-        await interaction.response.send_message(f"**🎯 Monster Hunt Setup: {name}**\n{url}", ephemeral=True)
+        
+        # बड़ी Embed इमेज जोड़ेगा
+        embed = discord.Embed(title=f"🎯 Monster Hunt Setup: {name}", color=discord.Color.green())
+        embed.set_image(url=url)
+        
+        await interaction.response.send_message(embed=embed, ephemeral=True)
 
 class MonsterView(discord.ui.View):
     def __init__(self):
@@ -258,7 +262,7 @@ class BankCategoryView(discord.ui.View):
         )
         await interaction.response.send_message(text, ephemeral=True)
          
-# 🟢 मुख्य मेनू (यहाँ Monster Hunt का नया हरा बटन जोड़ा गया है)
+# 🟢 मुख्य मेनू (बटन वाले ऑप्शन के साथ)
 class MainGreetingView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -271,7 +275,7 @@ class MainGreetingView(discord.ui.View):
     @discord.ui.button(label="🏹 Monster Hunt", style=discord.ButtonStyle.green, emoji="🐲")
     async def monster_hunt_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = MonsterView()
-        await interaction.response.send_message("👇 **नीचे दी गई लिस्ट में से अपना मॉन्स्टर चुनें:**", view=view, ephemeral=True)
+        await interaction.response.send_message("👇 **नीचे दिए गए ड्रॉपडाउन से अपना मॉन्स्टर चुनें:**", view=view, ephemeral=True)
 
     @discord.ui.button(label="Bot Commands", style=discord.ButtonStyle.primary, emoji="🤖")
     async def bot_commands_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -279,7 +283,7 @@ class MainGreetingView(discord.ui.View):
             "✨ **THANOS BOT COMMANDS LIST:**\n\n"
             "🐲 **Monster Hunt Button:** मेनू से 18 मॉन्स्टर्स के हीरो सेटअप देखें!\n"
             "🛡️ **`/shield [घंटे]`**\n"
-            "🧠 **AI Chat:** अब चैनल में कोई भी सवाल पूछें, बॉट तुरंत जवाब देगा!"
+            "🧠 **AI Chat:** चैनल में कोई भी सवाल पूछें, बॉट तुरंत जवाब देगा!"
         )
         await interaction.response.send_message(text, ephemeral=True)
 
@@ -371,7 +375,7 @@ async def on_message(message):
         view = MainGreetingView()
         await message.channel.send(
             f"Hello / नमस्ते {message.author.mention}! 👋 \n"
-            f"👇 **बॉट की सभी कमांड्स और Guild Bank** के लिए नीचे बटन दबाएं:", 
+            f"👇 **बॉट की सभी कमांड्स और Guild Bank के लिए नीचे बटन दबाएं:**", 
             view=view
         )
         return
