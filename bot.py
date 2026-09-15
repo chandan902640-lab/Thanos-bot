@@ -7,14 +7,14 @@ import discord
 from discord.ext import commands, tasks
 from google import genai
 
-# Gemini AI सेटअप
+# 🧠 Gemini AI सेटअप
 GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
 if GEMINI_KEY:
     ai_client = genai.Client(api_key=GEMINI_KEY)
 else:
     ai_client = None
 
-# Render और UptimeRobot के लिए 24/7 वेब सर्वर
+# 🌐 Render और UptimeRobot के लिए 24/7 वेब सर्वर
 class DummyHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -32,6 +32,7 @@ def keep_alive():
     server = HTTPServer(('0.0.0.0', port), DummyHandler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
 
+# 🤖 Discord Bot सेटअप
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
@@ -39,6 +40,7 @@ intents.presences = True
 bot = commands.Bot(command_prefix='/', intents=intents)
 bot.remove_command('help') # डिफ़ॉल्ट हेल्प कमांड हटा रहा है ताकि हमारी कस्टम /help कमांड काम करे
 
+# 🧹 हर 4 घंटे में पुरानी चैट साफ करने वाला टास्क
 @tasks.loop(hours=4)
 async def auto_clear_chat():
     for guild in bot.guilds:
@@ -51,15 +53,17 @@ async def auto_clear_chat():
             except Exception as e:
                 print(f"Error in {channel.name}: {e}")
 
+# 🚀 बॉट के स्टार्ट होने पर
 @bot.event
 async def on_ready():
     print(f'✅ {bot.user} ऑनलाइन आ गया है!')
     await bot.change_presence(status=discord.Status.online, activity=discord.Game(name="Lords Mobile"))
     
-    # Persistent Views रजिस्ट्रेशन (ताकि रीस्टार्ट होने पर भी बटन हमेशा काम करते रहें)
+    # 📌 Persistent Views रजिस्ट्रेशन (अब सब कुछ हमेशा एक्टिव रहेगा, Interaction Failed नहीं आएगा)
     bot.add_view(MainGreetingView())
     bot.add_view(HelpButtonView())
     bot.add_view(MonsterView())
+    bot.add_view(BankCategoryView()) # 🛠️ बैंक व्यू भी रजिस्टर हो गया है
 
     if not auto_clear_chat.is_running():
         auto_clear_chat.start()
@@ -105,7 +109,7 @@ class ClearConfirmView(discord.ui.View):
             return
         await interaction.response.edit_message(content="❌ चैट डिलीट करने का प्रोसेस रद्द कर दिया गया है。", view=None)
 
-# 🐲 18 मॉन्स्टर्स की लिस्ट: (नाम, मॉन्स्टर की अपनी फोटो, हीरो सेटअप की फोटो)
+# 🐲 18 मॉन्स्टर्स की लिस्ट (डबल फोटो सिस्टम के लिए)
 MONSTERS = {
     "1": ("Queen Bee", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Queen%20Bee.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/1.png"),
     "2": ("Saberfang", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Saberfang.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/2.png"),
@@ -300,6 +304,7 @@ class MainGreetingView(discord.ui.View):
         view = ClearConfirmView(interaction.user)
         await interaction.response.send_message("⚠️ **चेतावनी:** मैसेज डिलीट करें?", view=view, ephemeral=True)
 
+# 🗑️ चैट क्लियर कमांड
 @bot.command()
 async def clearall(ctx):
     if not ctx.author.guild_permissions.administrator:
@@ -335,7 +340,7 @@ async def monster(ctx, *, monster_name: str = None):
     async with ctx.typing():
         try:
             response = ai_client.models.generate_content(
-                model='gemini-3.6-flash',
+                model='gemini-1.5-flash', # 🛠️ स्टेबल मॉडल
                 contents=prompt,
             )
             full_response = f"👾 **{monster_name.title()}** को मारने के बेस्ट हीरोज:\n{response.text}"
@@ -371,6 +376,12 @@ async def shield(ctx, hours: int):
         await ctx.author.send(f"⚠️ **अलर्ट:** शील्ड **खत्म हो चुकी है!** 🏰")
     except discord.Forbidden:
         await ctx.send(f"⚠️ {ctx.author.mention}, तुम्हारी शील्ड **खत्म हो चुकी है!** 🏰")
+
+# 🛑 शील्ड एरर हैंडलर (Render लॉग्स को लाल होने से बचाने के लिए)
+@shield.error
+async def shield_error(ctx, error):
+    if isinstance(error, commands.BadArgument) or isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send("❌ भाई, सही टाइम (सिर्फ नंबर) बताओ! (जैसे: `/shield 4` या `/shield 8`)", delete_after=5)
 
 
 # 🧠 AI चैट (बिना किसी रुकावट के - हर मैसेज का छोटा जवाब)
@@ -413,7 +424,7 @@ async def on_message(message):
     async with message.channel.typing():
         try:
             response = ai_client.models.generate_content(
-                model='gemini-3.6-flash',
+                model='gemini-1.5-flash', # 🛠️ स्टेबल मॉडल
                 contents=smart_prompt,
             )
             full_response = f"{message.author.mention} \n{response.text}"
@@ -425,7 +436,7 @@ async def on_message(message):
             error_msg = str(e)[:1800]
             await message.channel.send(f"❌ गूगल सर्वर बिजी है, 1 मिनट बाद पूछें: {error_msg}")
 
-# बॉट चालू करें
+# 🏃 बॉट चालू करें
 keep_alive()
 token = os.environ.get("DISCORD_TOKEN")
 if token:
