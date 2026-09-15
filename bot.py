@@ -177,9 +177,20 @@ class BankCategoryView(discord.ui.View):
 
     @discord.ui.button(label="Search", style=discord.ButtonStyle.primary, emoji="🔍")
     async def search_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        text = "**🔍 SEARCH COMMANDS:**\n\n`!findtile food 4`\nMonsters: `!findmonster hardrox 2`\nDarknests: `!findnest 5`"
+        text = (
+            "**🔍 SEARCH COMMANDS:**\n\n"
+            "`!findtile [type] [level]` ➡️ Search for specific resource tiles around the bank\n"
+            "`!findtile any [level]` ➡️ Search for any resource tiles around the bank\n"
+            "`!findtilelocal [type] [lvl]` ➡️ Search for resource tiles around your castle\n"
+            "`!findmonster [name] [lvl]` ➡️ Search for a specific monster around the bank\n"
+            "`!findmonster any [lvl]` ➡️ Search for any monster around the bank\n"
+            "`!findmonsterlocal [name] [lvl]` ➡️ Search for a monster around your castle\n"
+            "`!findnest [level]` ➡️ Search for a Darknest around the bank\n"
+            "`!findnestlocal [level]` ➡️ Search for a Darknest around your castle\n\n"
+            "*(Note: The bank will send all search results directly to your in-game mail!)*"
+        )
         await interaction.response.send_message(text, ephemeral=True)
-
+        
     @discord.ui.button(label="Balance", style=discord.ButtonStyle.secondary, emoji="⚖️")
     async def balance_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text = "**⚖️ BALANCE COMMANDS:**\n\n`!bal`, `!adminbal`, `!setbal`, `!transfer`"
