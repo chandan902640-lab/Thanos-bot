@@ -110,13 +110,13 @@ class BankCategoryView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(label="Tips", style=discord.ButtonStyle.secondary, emoji="📝")
+    @discord.ui.button(label="Tips", style=discord.ButtonStyle.secondary, emoji="💡")
     async def tips_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        text = "**💡 BANK TIPS & TRICKS:**\n\n• Use underscore (`!setacc Player_1`).\n• Hero Stages: Bank will not respond during long hero stages."
+        text = "**💡 BANK TIPS & TRICKS:**\n\nUse underscore ('!setacc Player_1').\nHero Stages: Bank will not respond during long hero stages."
         await interaction.response.send_message(text, ephemeral=True)
-        
-@discord.ui.button(label="General", style=discord.ButtonStyle.success, emoji="📌")
-async def general_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+
+    @discord.ui.button(label="General", style=discord.ButtonStyle.success, emoji="📌")
+    async def general_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text1 = (
             "**📌 GENERAL COMMANDS:**\n\n"
             "**📋 ALL BANK COMMANDS (Part 1):**\n\n"
@@ -144,6 +144,7 @@ async def general_btn(self, interaction: discord.Interaction, button: discord.ui
             "`!addtitle [player] [title]` ➡️ The bank will give a title\n"
             "`!deltitle [title]` ➡️ The bank will remove the title\n"
         )
+        
         text2 = (
             "**📋 ALL BANK COMMANDS (Part 2):**\n\n"
             "`!whitelist [player] [Rank]` ➡️ Accepts a player and sets Rank\n"
@@ -170,8 +171,25 @@ async def general_btn(self, interaction: discord.Interaction, button: discord.ui
             "`!joinda` ➡️ Joins Dragon Arena for your guild\n"
             "`!leaveda` ➡️ Leaves Dragon Arena for your guild\n"
         )
+        
         await interaction.response.send_message(text1, ephemeral=True)
-        await interaction.followup.send(text2, ephemeral=True) 
+        await interaction.followup.send(text2, ephemeral=True)
+
+    @discord.ui.button(label="Search", style=discord.ButtonStyle.primary, emoji="🔍")
+    async def search_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        text = "**🔍 SEARCH COMMANDS:**\n\n`!findtile food 4`\nMonsters: `!findmonster hardrox 2`\nDarknests: `!findnest 5`"
+        await interaction.response.send_message(text, ephemeral=True)
+
+    @discord.ui.button(label="Balance", style=discord.ButtonStyle.secondary, emoji="⚖️")
+    async def balance_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        text = "**⚖️ BALANCE COMMANDS:**\n\n`!bal`, `!adminbal`, `!setbal`, `!transfer`"
+        await interaction.response.send_message(text, ephemeral=True)
+
+    @discord.ui.button(label="Resource", style=discord.ButtonStyle.danger, emoji="💰")
+    async def resource_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        text = "**💰 RESOURCE COMMANDS:**\n\n`!food 5M`, `!rss 5M 5M 5M 5M 0`, `!donatefood Shark 5M`"
+        await interaction.response.send_message(text, ephemeral=True)
+           
         
 # 🟢 मुख्य मेनू
 class MainGreetingView(discord.ui.View):
