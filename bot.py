@@ -66,7 +66,7 @@ class HelpButtonView(discord.ui.View):
     async def help_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message(
             "✨ **Thanos Bot की सभी कमांड्स और फीचर्स:**\n\n"
-            "🧠 **Gemini AI Chat:** बॉट को टैग करके या सिर्फ `Thanos bot` लिखकर इससे कुछ भी सवाल पूछ सकते हैं!\n"
+            "🧠 **Gemini AI Chat:** अब चैनल में कुछ भी लिखें, बॉट तुरंत जवाब देगा (बिना टैग किए)!\n"
             "🐲 **`/monster [नाम]`** - किसी भी मॉन्स्टर के F2P और P2P हीरोज पता करें (उदा. `/monster hardrox`)\n"
             "🛡️ **`/shield [घंटे]`** - एडवांस शील्ड टाइमर (15 मिनट पहले प्राइवेट DM में अलर्ट देगा)।\n"
             "🗑️ **`/clearall`** - चैनल के सारे मैसेज डिलीट करने के लिए (सिर्फ एडमिन के लिए)।\n"
@@ -151,7 +151,7 @@ class MainGreetingView(discord.ui.View):
             "✨ **THANOS BOT COMMANDS LIST:**\n\n"
             "🐲 **`/monster [नाम]`**\n"
             "🛡️ **`/shield [घंटे]`**\n"
-            "🧠 **AI Chat:** बॉट को टैग करके (`Thanos Bot`)  लिखकर सवाल पूछें!"
+            "🧠 **AI Chat:** अब चैनल में कुछ भी लिखें, बॉट तुरंत जवाब देगा!"
         )
         await interaction.response.send_message(text, ephemeral=True)
 
@@ -171,7 +171,7 @@ async def clearall(ctx):
     view = ClearConfirmView(ctx.author)
     await ctx.send("⚠️ **चेतावनी:** मैसेज डिलीट करें?", view=view)
 
-# 🐲 मॉन्स्टर कमांड (Fixed Limits)
+# 🐲 मॉन्स्टर कमांड
 @bot.command()
 async def monster(ctx, *, monster_name: str = None):
     if not monster_name:
@@ -222,68 +222,67 @@ async def shield(ctx, hours: int):
     except discord.Forbidden:
         await ctx.send(f"⚠️ {ctx.author.mention}, तुम्हारी शील्ड **खत्म हो चुकी है!** 🏰")
 
-# 🧠 AI चैट (SMART TAG FIX - अब बिना नीले टैग के भी काम करेगा)
+# 🧠 AI चैट (NEW FEATURE: हर मैसेज का ऑटो-रिप्लाई)
 @bot.event
 async def on_message(message):
-    if message.author == bot.user:
+    # बॉट खुद के मैसेज या किसी दूसरे बॉट के मैसेज का जवाब न दे
+    if message.author.bot:
         return
 
+    # स्लैश (/) कमांड्स को प्रोसेस करे
     await bot.process_commands(message)
 
-    if message.content.startswith('/'):
+    # अगर मैसेज / या ! से शुरू होता है, तो AI इग्नोर करे (बैंक कमांड्स बचाने के लिए)
+    if message.content.startswith('/') or message.content.startswith('!'):
         return
 
-    msg_lower = message.content.lower()
-    
-    # यह है वो जादुई लाइन जो सादे टेक्स्ट और स्पेलिंग मिस्टेक को भी पहचान लेगी:
-    is_mentioned = (
-        bot.user in message.mentions or 
-        "thanos" in msg_lower or
-        "thanod" in msg_lower
-    )
-
-    if is_mentioned:
-        if not ai_client:
-            await message.channel.send("⚠️ Gemini API Key सेट नहीं है!")
-            return
-
-        # बॉट का नाम हटाकर सिर्फ आपका सवाल निकालने के लिए
-        prompt = message.clean_content
-        for word in ["@Thanos bot", "@Thanos Bot", "Thanos bot", "thanos bot", "thanod bot", "Thanos", "thanos", "thanod"]:
-            prompt = prompt.replace(word, "")
-        prompt = prompt.strip()
-        
-        if prompt:
-            async with message.channel.typing():
-                try:
-                    response = ai_client.models.generate_content(
-                        model='gemini-3.6-flash',
-                        contents=prompt,
-                    )
-                    full_response = f"{message.author.mention} \n{response.text}"
-                    
-                    for i in range(0, len(full_response), 1900):
-                        await message.channel.send(full_response[i:i+1900])
-                        
-                except Exception as e:
-                    error_msg = str(e)[:1800]
-                    await message.channel.send(f"❌ गूगल सर्वर बिजी है, कृपया थोड़ी देर में पूछें: {error_msg}")
-        else:
-            await message.channel.send(f"हाँ भाई {message.author.mention}! बताइए, मुझसे क्या पूछना चाहते हैं?")
+    msg_lower = message.content.lower().strip()
+    if not msg_lower:
         return
 
-    # अगर सिर्फ hi, hello लिखा है
+    # अगर सिर्फ hi, hello लिखा है, तो मेनू भेज दे
     words = msg_lower.split()
-    if words:
-        if any(w in words for w in ["hi", "hii", "hello", "hey", "namaste"]) and len(words) <= 2:
-            view = MainGreetingView()
-            await message.channel.send(
-                f"Hello / नमस्ते {message.author.mention}! 👋 \n"
-                f"👇 **बॉट की सभी कमांड्स और Guild Bank** के लिए नीचे बटन दबाएं:", 
-                view=view
+    if len(words) <= 2 and any(w in words for w in ["hi", "hii", "hello", "hey", "namaste"]):
+        view = MainGreetingView()
+        await message.channel.send(
+            f"Hello / नमस्ते {message.author.mention}! 👋 \n"
+            f"👇 **बॉट की सभी कमांड्स और Guild Bank** के लिए नीचे बटन दबाएं:", 
+            view=view
+        )
+        return
+
+    # --- यहाँ से शुरू होता है ऑटो-रिप्लाई (बिना टैग किए) ---
+    if not ai_client:
+        await message.channel.send("⚠️ Gemini API Key सेट नहीं है!")
+        return
+
+    # यूज़र की बात को प्रॉम्प्ट में डालें
+    prompt = message.clean_content.strip()
+    
+    # अगर यूज़र फिर भी आदत से @thanos लिख दे, तो उसे हटा देंगे ताकि AI कंफ्यूज न हो
+    for word in ["@Thanos bot", "@Thanos Bot", "Thanos bot", "thanos bot", "thanod bot", "Thanos", "thanos", "thanod"]:
+        prompt = prompt.replace(word, "").strip()
+
+    # अगर यूज़र ने सिर्फ बॉट का नाम लिखकर छोड़ दिया, तो बॉट पूछेगा "हाँ भाई?"
+    if not prompt:
+        await message.channel.send(f"हाँ भाई {message.author.mention}! बताइए, मुझसे क्या पूछना चाहते हैं?")
+        return
+
+    # AI से रिप्लाई मंगवाएं
+    async with message.channel.typing():
+        try:
+            response = ai_client.models.generate_content(
+                model='gemini-3.6-flash',
+                contents=prompt,
             )
-        elif any(w in words for w in ["code", "command", "commands"]):
-            await message.channel.send(f"💻 सभी कमांड्स देखने के लिए `/helpmenu` टाइप करें या `hii` लिखकर **🤖 Bot Commands** बटन दबाएं!")
+            full_response = f"{message.author.mention} \n{response.text}"
+            
+            for i in range(0, len(full_response), 1900):
+                await message.channel.send(full_response[i:i+1900])
+                
+        except Exception as e:
+            error_msg = str(e)[:1800]
+            await message.channel.send(f"❌ गूगल सर्वर बिजी है, कृपया थोड़ी देर में पूछें: {error_msg}")
 
 # बॉट चालू करें
 keep_alive()
