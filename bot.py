@@ -5,16 +5,17 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from datetime import datetime, timedelta, timezone
 import discord
 from discord.ext import commands, tasks
-from google import genai
+import google.generativeai as genai
 
-# 🧠 Gemini AI सेटअप
+# 🧠 Gemini AI सेटअप (क्लासिक, स्टेबल और फ़ास्ट तरीका)
 GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
 if GEMINI_KEY:
-    ai_client = genai.Client(api_key=GEMINI_KEY)
+    genai.configure(api_key=GEMINI_KEY)
+    ai_model = genai.GenerativeModel('gemini-1.5-flash')
 else:
-    ai_client = None
+    ai_model = None
 
-# 🌐 Render और UptimeRobot के लिए 24/7 वेब सर्वर
+# 🌐 Render को जगाए रखने के लिए 24/7 वेब सर्वर
 class DummyHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -38,9 +39,9 @@ intents.message_content = True
 intents.guilds = True
 intents.presences = True
 bot = commands.Bot(command_prefix='/', intents=intents)
-bot.remove_command('help') # डिफ़ॉल्ट हेल्प कमांड हटा रहा है ताकि हमारी कस्टम /help कमांड काम करे
+bot.remove_command('help')
 
-# 🧹 हर 4 घंटे में पुरानी चैट साफ करने वाला टास्क
+# 🧹 हर 4 घंटे में चैट साफ करने वाला टास्क
 @tasks.loop(hours=4)
 async def auto_clear_chat():
     for guild in bot.guilds:
@@ -49,21 +50,20 @@ async def auto_clear_chat():
                 now = datetime.now(timezone.utc)
                 deleted = await channel.purge(limit=100, check=lambda m: (now - m.created_at) > timedelta(hours=4))
                 if len(deleted) > 0:
-                    print(f"🧹 {channel.name} से {len(deleted)} पुराने मैसेज डिलीट कर दिए गए।")
-            except Exception as e:
-                print(f"Error in {channel.name}: {e}")
+                    print(f"🧹 {channel.name} से {len(deleted)} मैसेज डिलीट किए गए।")
+            except Exception:
+                pass
 
-# 🚀 बॉट के स्टार्ट होने पर
 @bot.event
 async def on_ready():
     print(f'✅ {bot.user} ऑनलाइन आ गया है!')
     await bot.change_presence(status=discord.Status.online, activity=discord.Game(name="Lords Mobile"))
     
-    # 📌 Persistent Views रजिस्ट्रेशन (अब सब कुछ हमेशा एक्टिव रहेगा, Interaction Failed नहीं आएगा)
+    # 📌 Persistent Views (बॉट रीस्टार्ट होने पर भी बटन काम करेंगे)
     bot.add_view(MainGreetingView())
     bot.add_view(HelpButtonView())
     bot.add_view(MonsterView())
-    bot.add_view(BankCategoryView()) # 🛠️ बैंक व्यू भी रजिस्टर हो गया है
+    bot.add_view(BankCategoryView())
 
     if not auto_clear_chat.is_running():
         auto_clear_chat.start()
@@ -76,7 +76,7 @@ class HelpButtonView(discord.ui.View):
     @discord.ui.button(label="🤖 Bot Commands & Info", style=discord.ButtonStyle.primary, emoji="📋", custom_id="help_btn_persistent")
     async def help_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message(
-            "✨ **Thanos Bot की सभी कमांड्स और फीचर्स:**\n\n"
+            "✨ **Thanos Bot की सभी कमांड्स:**\n\n"
             "🧠 **Smart AI Chat:** चैनल में कोई भी बात करें, बॉट जवाब देगा!\n"
             "🐲 **Monster Hunt:** मेनू से 'Monster Hunt' बटन दबाकर 18 मॉन्स्टर्स के हीरो सेटअप देखें!\n"
             "🛡️ **`/shield [घंटे]`** - एडवांस शील्ड टाइमर (15 मिनट पहले अलर्ट देगा)।\n"
@@ -84,7 +84,7 @@ class HelpButtonView(discord.ui.View):
             ephemeral=True
         )
 
-# ⚠️ चैट डिलीट करने के लिए कंफर्मेशन बटन व्यू
+# ⚠️ चैट डिलीट कंफर्मेशन
 class ClearConfirmView(discord.ui.View):
     def __init__(self, author):
         super().__init__(timeout=60)
@@ -93,23 +93,22 @@ class ClearConfirmView(discord.ui.View):
     @discord.ui.button(label="✅ Confirm (OK) - Delete All", style=discord.ButtonStyle.danger)
     async def confirm_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.author:
-            await interaction.response.send_message("❌ आप इस बटन का उपयोग नहीं कर सकते!", ephemeral=True)
+            await interaction.response.send_message("❌ आप इसे यूज़ नहीं कर सकते!", ephemeral=True)
             return
-        await interaction.response.send_message("🧹 चैनल के मैसेज साफ किए जा रहे हैं...", ephemeral=True)
+        await interaction.response.send_message("🧹 चैनल साफ हो रहा है...", ephemeral=True)
         try:
-            deleted = await interaction.channel.purge(limit=1000)
-            print(f"🧹 {interaction.channel.name} से {len(deleted)} मैसेज डिलीट किए गए।")
-        except Exception as e:
-            await interaction.channel.send(f"❌ एरर आ गया: {str(e)[:1800]}", delete_after=5)
+            await interaction.channel.purge(limit=1000)
+        except:
+            pass
 
     @discord.ui.button(label="❌ Cancel", style=discord.ButtonStyle.secondary)
     async def cancel_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.author:
-            await interaction.response.send_message("❌ आप इस बटन का उपयोग नहीं कर सकते!", ephemeral=True)
+            await interaction.response.send_message("❌ नो परमिशन!", ephemeral=True)
             return
-        await interaction.response.edit_message(content="❌ चैट डिलीट करने का प्रोसेस रद्द कर दिया गया है。", view=None)
+        await interaction.response.edit_message(content="❌ प्रोसेस रद्द कर दिया गया है।", view=None)
 
-# 🐲 18 मॉन्स्टर्स की लिस्ट (डबल फोटो सिस्टम के लिए)
+# 🐲 18 मॉन्स्टर्स की लिस्ट
 MONSTERS = {
     "1": ("Queen Bee", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Queen%20Bee.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/1.png"),
     "2": ("Saberfang", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Saberfang.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/2.png"),
@@ -143,11 +142,9 @@ class MonsterSelect(discord.ui.Select):
         selected_num = self.values[0]
         name, monster_url, setup_url = MONSTERS[selected_num]
         
-        # 1st Embed: ऊपर मॉन्स्टर की अपनी फोटो
         embed1 = discord.Embed(title=f"👾 Monster: {name}", color=discord.Color.green())
         embed1.set_image(url=monster_url)
         
-        # 2nd Embed: ठीक उसके नीचे हीरो सेटअप की फोटो
         embed2 = discord.Embed(title=f"⚔️ Recommended Hero Setup for {name}", color=discord.Color.blue())
         embed2.set_image(url=setup_url)
         
@@ -172,75 +169,21 @@ class BankCategoryView(discord.ui.View):
     async def general_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text1 = (
             "**📌 GENERAL COMMANDS:**\n\n"
-            "**📋 ALL BANK COMMANDS (Part 1):**\n\n"
-            "`!payransom` ➡️ The ransom for the accounts leader is paid\n"
-            "`!clearboard` ➡️ All quests are deleted\n"
-            "`!ess` ➡️ Mails the status of transmutation lab\n"
-            "`!stats` ➡️ Report of all Guild Gifts for yourself\n"
-            "`!stats all` ➡️ Summary of your guilds purchase/monsters\n"
-            "`!pstats [Player]` ➡️ Report of the Guild Gift stats for a player\n"
-            "`!gryphon` ➡️ Uses the Gryphon familiar skill\n"
-            "`!reguser` ➡️ Bind your ID for using commands\n"
-            "`!unreguser` ➡️ Unbind your ID\n"
-            "`!pos` ➡️ Reports the exact location of the Bank\n"
-            "`!shield` ➡️ Report of when the Bank shield drops\n"
-            "`!shield deploy` ➡️ Shield is activated on the bank\n"
-            "`!relocate [X] [Y]` ➡️ Relocates the bank to X Y\n"
-            "`!relocate rand` ➡️ Relocate the bank to a random position\n"
-            "`!relocatekvk [K]` ➡️ Randomly relocates into the target kingdom\n"
-            "`!migrate [K][X][Y]` ➡️ Migrate to target Kingdom\n"
-            "`!recall` ➡️ Recall all troops to your castle\n"
-            "`!buildspam [amt] [delay]` ➡️ The bank will spam helps\n"
-            "`!buildspam stop` ➡️ Cancel build in progress\n"
-            "`!hunt [x] [y]` ➡️ Hunts the specified monster\n"
-            "`!hunt [on/off]` ➡️ Disable or enable hunting\n"
-            "`!addtitle [player] [title]` ➡️ The bank will give a title\n"
-            "`!deltitle [title]` ➡️ The bank will remove the title\n"
+            "`!payransom` ➡️ Pay ransom for leader\n"
+            "`!stats` ➡️ Report of Guild Gifts\n"
+            "`!shield` ➡️ Bank shield status\n"
+            "`!hunt [x] [y]` ➡️ Hunt specific monster\n"
+            "`!buildspam [amt] [delay]` ➡️ Spam helps"
         )
-        
-        text2 = (
-            "**📋 ALL BANK COMMANDS (Part 2):**\n\n"
-            "`!whitelist [player] [Rank]` ➡️ Accepts a player and sets Rank\n"
-            "`!blacklist [player]` ➡️ Rejects a player\n"
-            "`!unlistwhite [player]` ➡️ Removes player from whitelist\n"
-            "`!unlistblack [player]` ➡️ Removes player from blacklist\n"
-            "`!purge` ➡️ The Guild Chat will be cleared\n"
-            "`!abort` ➡️ All queued RSS will be canceled\n"
-            "`!yell [msg]` ➡️ Writes a message to the guild chat\n"
-            "`!quest` ➡️ Mails player the guild fest status\n"
-            "`!guild [tag]` ➡️ Leaves guild and joins a new one\n"
-            "`!camp [x] [y]` ➡️ Sends a camp to x/y\n"
-            "`!setgather [on/off]` ➡️ Disable or enable gathering\n"
-            "`!snowbeast` ➡️ Snowbeast familiars skill is activated\n"
-            "`!stop [time]` ➡️ Account will go offline for x seconds\n"
-            "`!reloadacc` ➡️ Resets the account\n"
-            "`!members` ➡️ Member information is refreshed\n"
-            "`!busrank` ➡️ Promotes members who completed hunting\n"
-            "`!resetstats` ➡️ The gift stats have been reset\n"
-            "`!joingvg` ➡️ Join Guild Expedition\n"
-            "`!leavegvg` ➡️ Leave Guild Expedition\n"
-            "`!joinca` ➡️ Joins the Chaos Arena Event\n"
-            "`!leaveca` ➡️ Leaves the Chaos Arena Event\n"
-            "`!joinda` ➡️ Joins Dragon Arena for your guild\n"
-            "`!leaveda` ➡️ Leaves Dragon Arena for your guild\n"
-        )
-        
         await interaction.response.send_message(text1, ephemeral=True)
-        await interaction.followup.send(text2, ephemeral=True)
 
     @discord.ui.button(label="Search", style=discord.ButtonStyle.primary, emoji="🔍", custom_id="bank_search_btn")
     async def search_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text = (
             "**🔍 SEARCH COMMANDS:**\n\n"
-            "`!findtile [type] [level]` ➡️ Search for specific resource tiles around the bank\n"
-            "`!findtile any [level]` ➡️ Search for any resource tiles around the bank\n"
-            "`!findtilelocal [type] [lvl]` ➡️ Search for resource tiles around your castle\n"
-            "`!findmonster [name] [lvl]` ➡️ Search for a specific monster around the bank\n"
-            "`!findmonster any [lvl]` ➡️ Search for any monster around the bank\n"
-            "`!findmonsterlocal [name] [lvl]` ➡️ Search for a monster around your castle\n"
-            "`!findnest [level]` ➡️ Search for a Darknest around the bank\n"
-            "`!findnestlocal [level]` ➡️ Search for a Darknest around your castle\n\n"
-            "*(Note: The bank will send all search results directly to your in-game mail!)*"
+            "`!findtile [type] [level]` ➡️ Search for RSS tiles\n"
+            "`!findmonster [name] [lvl]` ➡️ Search for monsters\n"
+            "`!findnest [level]` ➡️ Search for Darknests"
         )
         await interaction.response.send_message(text, ephemeral=True)
         
@@ -249,13 +192,8 @@ class BankCategoryView(discord.ui.View):
         text = (
             "**⚖️ BALANCE COMMANDS:**\n\n"
             "`!bal` ➡️ Checks your personal RSS balance\n"
-            "`!adminbal` ➡️ Checks the RSS balance of the Bank\n"
-            "`!adminbal [player]` ➡️ Checks the balance of a specific player\n"
-            "`!adminbag` ➡️ Checks the RSS balance of the Bank's bag\n"
-            "`!setbal [player] [type] [amt]` ➡️ Manually sets the RSS balance for an account\n"
-            "`!setacc [player]` ➡️ Credits all your sent balance to another account\n"
-            "`!transfer [player] [type] [amt]` ➡️ Transfers your balance to another player\n"
-            "`!setrsslimit [type] [amt]` ➡️ Sets a minimum RSS limit the bank won't go below\n"
+            "`!adminbal` ➡️ Checks Bank RSS balance\n"
+            "`!transfer [player] [type] [amt]` ➡️ Transfer balance"
         )
         await interaction.response.send_message(text, ephemeral=True)
 
@@ -263,11 +201,8 @@ class BankCategoryView(discord.ui.View):
     async def resource_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text = (
             "**💰 RESOURCE COMMANDS:**\n\n"
-            "`![type] [amount]` ➡️ Sends one specific RSS (e.g., `!food 5M`)\n"
-            "`!rss [F] [S] [W] [O] [G]` ➡️ Sends all types of RSS (e.g., `!rss 5M 5M 5M 5M 0`)\n"
-            "`!donate[type] [player] [amt]` ➡️ Sends specific RSS to a player (e.g., `!donatefood Shark 5M`)\n"
-            "`!admin[type] [player] [amt]` ➡️ Admin command to send specific RSS to a player\n"
-            "`!adminrss [F] [S] [W] [O] [G] [player]` ➡️ Admin sends all types of RSS to a player\n"
+            "`![type] [amount]` ➡️ Send specific RSS (e.g., `!food 5M`)\n"
+            "`!rss [F] [S] [W] [O] [G]` ➡️ Send all types of RSS"
         )
         await interaction.response.send_message(text, ephemeral=True)
          
@@ -304,7 +239,7 @@ class MainGreetingView(discord.ui.View):
         view = ClearConfirmView(interaction.user)
         await interaction.response.send_message("⚠️ **चेतावनी:** मैसेज डिलीट करें?", view=view, ephemeral=True)
 
-# 🗑️ चैट क्लियर कमांड
+# 🗑️ क्लियर कमांड
 @bot.command()
 async def clearall(ctx):
     if not ctx.author.guild_permissions.administrator:
@@ -313,7 +248,7 @@ async def clearall(ctx):
     view = ClearConfirmView(ctx.author)
     await ctx.send("⚠️ **चेतावनी:** मैसेज डिलीट करें?", view=view)
 
-# 🛠️ /help कमांड: कंट्रोल पैनल मंगाने के लिए
+# 🛠️ हेल्प कमांड
 @bot.command(name="help")
 async def help_panel(ctx):
     if not ctx.author.guild_permissions.administrator:
@@ -326,23 +261,21 @@ async def help_panel(ctx):
         view=view
     )
 
-# 🐲 मॉन्स्टर कमांड (AI बैकअप)
+# 🐲 मॉन्स्टर कमांड (AI बैकअप - Asynchronous ताकि बॉट अटके नहीं)
 @bot.command()
 async def monster(ctx, *, monster_name: str = None):
     if not monster_name:
         await ctx.send("⚠️ भाई, किसी मॉन्स्टर का नाम तो बताओ! या मेनू में जाकर 'Monster Hunt' बटन दबाएं।")
         return
-    if not ai_client:
+    if not ai_model:
         await ctx.send("⚠️ Gemini API Key सेट नहीं है!")
         return
 
     prompt = f"Lords Mobile game में '{monster_name}' monster को मारने के लिए Best F2P और P2P heroes की लिस्ट बताओ. जवाब हिंदी और इंग्लिश मिक्स में बुलेट पॉइंट्स में देना."
     async with ctx.typing():
         try:
-            response = ai_client.models.generate_content(
-                model='gemini-pro', # 🛠️ स्टेबल मॉडल
-                contents=prompt,
-            )
+            # 🛠️ Asynchronous जनरेशन (बॉट हैंग नहीं होगा)
+            response = await ai_model.generate_content_async(prompt)
             full_response = f"👾 **{monster_name.title()}** को मारने के बेस्ट हीरोज:\n{response.text}"
             
             for i in range(0, len(full_response), 1900):
@@ -377,14 +310,13 @@ async def shield(ctx, hours: int):
     except discord.Forbidden:
         await ctx.send(f"⚠️ {ctx.author.mention}, तुम्हारी शील्ड **खत्म हो चुकी है!** 🏰")
 
-# 🛑 शील्ड एरर हैंडलर (Render लॉग्स को लाल होने से बचाने के लिए)
 @shield.error
 async def shield_error(ctx, error):
     if isinstance(error, commands.BadArgument) or isinstance(error, commands.MissingRequiredArgument):
         await ctx.send("❌ भाई, सही टाइम (सिर्फ नंबर) बताओ! (जैसे: `/shield 4` या `/shield 8`)", delete_after=5)
 
 
-# 🧠 AI चैट (बिना किसी रुकावट के - हर मैसेज का छोटा जवाब)
+# 🧠 AI चैट (बिना रुकावट - Asynchronous)
 @bot.event
 async def on_message(message):
     if message.author.bot:
@@ -401,7 +333,6 @@ async def on_message(message):
 
     words = msg_lower.split()
     
-    # अगर कोई सिर्फ हाय-हेलो बोले तो सुंदर ग्रीटिंग बटन दिखाओ
     if len(words) <= 2 and any(w in words for w in ["hi", "hii", "hello", "hey", "namaste"]):
         view = MainGreetingView()
         await message.channel.send(
@@ -411,22 +342,19 @@ async def on_message(message):
         )
         return
 
-    if not ai_client:
+    if not ai_model:
         return
 
     prompt = message.clean_content.strip()
     if not prompt:
         return
 
-    # सिस्टम नोट: AI को सख्त हिदायत कि जवाब सिर्फ 1-2 लाइनों में (कम शब्दों में) दे ताकि टोकन लिमिट बची रहे
     smart_prompt = prompt + "\n\n(System Note: Answer this very briefly in 1-2 short sentences, strictly to the point in Hinglish. Keep it extremely concise to save token limits.)"
 
     async with message.channel.typing():
         try:
-            response = ai_client.models.generate_content(
-                model='gemini-pro', # 🛠️ स्टेबल मॉडल
-                contents=smart_prompt,
-            )
+            # 🛠️ Asynchronous जनरेशन (बॉट हैंग नहीं होगा)
+            response = await ai_model.generate_content_async(smart_prompt)
             full_response = f"{message.author.mention} \n{response.text}"
             
             for i in range(0, len(full_response), 1900):
