@@ -56,7 +56,7 @@ async def on_ready():
     print(f'✅ {bot.user} ऑनलाइन आ गया है!')
     await bot.change_presence(status=discord.Status.online, activity=discord.Game(name="Lords Mobile"))
     
-    # Persistent Views रजिस्ट्रेशन (ताकि रीस्टार्ट होने पर भी बटन हमेशा काम करते रहें)
+    # Persistent Views रजिस्ट्रेशन
     bot.add_view(MainGreetingView())
     bot.add_view(HelpButtonView())
     bot.add_view(MonsterView())
@@ -335,7 +335,7 @@ async def monster(ctx, *, monster_name: str = None):
     async with ctx.typing():
         try:
             response = ai_client.models.generate_content(
-                model='gemini-3.6-flash',
+                model='gemini-1.5-flash',
                 contents=prompt,
             )
             full_response = f"👾 **{monster_name.title()}** को मारने के बेस्ट हीरोज:\n{response.text}"
@@ -373,7 +373,7 @@ async def shield(ctx, hours: int):
         await ctx.send(f"⚠️ {ctx.author.mention}, तुम्हारी शील्ड **खत्म हो चुकी है!** 🏰")
 
 
-# 🧠 AI चैट (बिना किसी रुकावट के - हर मैसेज का छोटा जवाब)
+# 🧠 AI चैट (Gemini 1.5 Flash - स्टेबल और फास्ट)
 @bot.event
 async def on_message(message):
     if message.author.bot:
@@ -407,13 +407,12 @@ async def on_message(message):
     if not prompt:
         return
 
-    # सिस्टम नोट: AI को सख्त हिदायत कि जवाब सिर्फ 1-2 लाइनों में (कम शब्दों में) दे ताकि टोकन लिमिट बची रहे
     smart_prompt = prompt + "\n\n(System Note: Answer this very briefly in 1-2 short sentences, strictly to the point in Hinglish. Keep it extremely concise to save token limits.)"
 
     async with message.channel.typing():
         try:
             response = ai_client.models.generate_content(
-                model='gemini-3.6-flash',
+                model='gemini-1.5-flash',
                 contents=smart_prompt,
             )
             full_response = f"{message.author.mention} \n{response.text}"
