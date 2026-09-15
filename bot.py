@@ -116,7 +116,7 @@ class BankCategoryView(discord.ui.View):
         await interaction.response.send_message(text, ephemeral=True)
         
 @discord.ui.button(label="General", style=discord.ButtonStyle.success, emoji="📌")
-    async def general_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+async def general_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text1 = (
             "**📌 GENERAL COMMANDS:**\n\n"
             "**📋 ALL BANK COMMANDS (Part 1):**\n\n"
