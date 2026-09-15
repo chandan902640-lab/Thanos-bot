@@ -48,7 +48,14 @@ async def get_ai_response(prompt):
                     return "⚠️ गूगल ने जवाब देने से मना कर दिया।"
             else:
                 # अगर प्रो काम न करे तो बिना एरर के प्यारा सा जवाब दे देगा
-                return "🤖 भाई, अभी गूगल सर्वर थोड़ा बिजी है, पर बैंक और मॉन्स्टर हंट के सारे फीचर्स एकदम फर्स्ट क्लास चल रहे हैं!"
+                return "👑 THANOS BOT - WELCOME PANEL 👑
+✨ Hello / नमस्ते दोस्तों!
+
+अपने गिल्ड (Guild) की मदद के लिए Thanos Bot पूरी तरह से तैयार और ऑनलाइन है! 🤖🔥
+
+👇 बॉटा  कमांड्स देखने के लिए चैट में बस यह लिखें:
+
+hi या hello"
 
 # 🤖 Discord Bot सेटअप
 intents = discord.Intents.default()
