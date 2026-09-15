@@ -1,7 +1,7 @@
 import asyncio
 import os
 import threading
-import aiohttp # 🛠️ नया हथियार (सीधा API से बात करने के लिए)
+import aiohttp
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from datetime import datetime, timedelta, timezone
 import discord
@@ -27,41 +27,27 @@ def keep_alive():
     server = HTTPServer(('0.0.0.0', port), DummyHandler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
 
-# 🛠️ मास्टर AI फंक्शन (बिना किसी गूगल लाइब्रेरी के सीधा API से बात करेगा)
+# 🛠️ मास्टर AI फंक्शन (लेटेस्ट gemini-1.5-pro मॉडल के साथ)
 async def get_ai_response(prompt):
     if not GEMINI_KEY:
         return "⚠️ Gemini API Key सेट नहीं है!"
         
-    url_flash = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_KEY}"
-    url_pro = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent?key={GEMINI_KEY}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={GEMINI_KEY}"
     
     headers = {'Content-Type': 'application/json'}
     data = {"contents": [{"parts": [{"text": prompt}]}]}
 
     async with aiohttp.ClientSession() as session:
-        # पहले फास्ट मॉडल ट्राई करेगा
-        async with session.post(url_flash, headers=headers, json=data) as resp:
+        async with session.post(url, headers=headers, json=data) as resp:
             if resp.status == 200:
                 result = await resp.json()
                 try:
                     return result['candidates'][0]['content']['parts'][0]['text']
                 except:
                     return "⚠️ गूगल ने जवाब देने से मना कर दिया (Safety Filter)।"
-            elif resp.status == 404:
-                # अगर 404 आया तो पुराने स्टेबल मॉडल पर शिफ्ट हो जाएगा
-                async with session.post(url_pro, headers=headers, json=data) as resp2:
-                    if resp2.status == 200:
-                        result = await resp2.json()
-                        try:
-                            return result['candidates'][0]['content']['parts'][0]['text']
-                        except:
-                            return "⚠️ गूगल ने जवाब देने से मना कर दिया।"
-                    else:
-                        error_text = await resp2.text()
-                        return f"API Error: {resp2.status} - {error_text[:100]}"
             else:
                 error_text = await resp.text()
-                return f"API Error: {resp.status} - {error_text[:100]}"
+                return f"API Error: {resp.status} - {error_text[:150]}"
 
 # 🤖 Discord Bot सेटअप
 intents = discord.Intents.default()
@@ -290,7 +276,7 @@ async def help_panel(ctx):
         view=view
     )
 
-# 🐲 मॉन्स्टर कमांड (Direct API)
+# 🐲 मॉन्स्टर कमांड
 @bot.command()
 async def monster(ctx, *, monster_name: str = None):
     if not monster_name:
@@ -339,8 +325,7 @@ async def shield_error(ctx, error):
     if isinstance(error, commands.BadArgument) or isinstance(error, commands.MissingRequiredArgument):
         await ctx.send("❌ भाई, सही टाइम (सिर्फ नंबर) बताओ! (जैसे: `/shield 4` या `/shield 8`)", delete_after=5)
 
-
-# 🧠 AI चैट (Direct API)
+# 🧠 AI चैट
 @bot.event
 async def on_message(message):
     if message.author.bot:
