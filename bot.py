@@ -73,7 +73,7 @@ class HelpButtonView(discord.ui.View):
     async def help_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message(
             "✨ **Thanos Bot की सभी कमांड्स और फीचर्स:**\n\n"
-            "🧠 **Smart AI Chat:** चैनल में कोई भी सवाल पूछें, बॉट जवाब देगा!\n"
+            "🧠 **Smart AI Chat:** चैनल में कोई भी बात करें, बॉट जवाब देगा!\n"
             "🐲 **Monster Hunt:** मेनू से 'Monster Hunt' बटन दबाकर 18 मॉन्स्टर्स के हीरो सेटअप देखें!\n"
             "🛡️ **`/shield [घंटे]`** - एडवांस शील्ड टाइमर (15 मिनट पहले अलर्ट देगा)।\n"
             "🗑️ **`/clearall`** - चैनल के सारे मैसेज डिलीट करने के लिए (एडमिन के लिए)।",
@@ -103,7 +103,7 @@ class ClearConfirmView(discord.ui.View):
         if interaction.user != self.author:
             await interaction.response.send_message("❌ आप इस बटन का उपयोग नहीं कर सकते!", ephemeral=True)
             return
-        await interaction.response.edit_message(content="❌ चैट डिलीट करने का प्रोसेस रद्द कर दिया गया है।", view=None)
+        await interaction.response.edit_message(content="❌ चैट डिलीट करने का प्रोसेस रद्द कर दिया गया है。", view=None)
 
 # 🐲 18 मॉन्स्टर्स की लिस्ट: (नाम, मॉन्स्टर की अपनी फोटो, हीरो सेटअप की फोटो)
 MONSTERS = {
@@ -288,7 +288,7 @@ class MainGreetingView(discord.ui.View):
             "✨ **THANOS BOT COMMANDS LIST:**\n\n"
             "🐲 **Monster Hunt Button:** मेनू से 18 मॉन्स्टर्स के हीरो सेटअप देखें!\n"
             "🛡️ **`/shield [घंटे]`**\n"
-            "🧠 **AI Chat:** चैनल में कोई भी सवाल पूछें, बॉट तुरंत जवाब देगा!"
+            "🧠 **AI Chat:** चैनल में कोई भी बात करें, बॉट जवाब देगा!"
         )
         await interaction.response.send_message(text, ephemeral=True)
 
@@ -308,7 +308,7 @@ async def clearall(ctx):
     view = ClearConfirmView(ctx.author)
     await ctx.send("⚠️ **चेतावनी:** मैसेज डिलीट करें?", view=view)
 
-# 🛠️ /help कमांड: अब आप /help लिखकर कंट्रोल पैनल मंगा सकते हैं
+# 🛠️ /help कमांड: कंट्रोल पैनल मंगाने के लिए
 @bot.command(name="help")
 async def help_panel(ctx):
     if not ctx.author.guild_permissions.administrator:
@@ -373,7 +373,7 @@ async def shield(ctx, hours: int):
         await ctx.send(f"⚠️ {ctx.author.mention}, तुम्हारी शील्ड **खत्म हो चुकी है!** 🏰")
 
 
-# 🧠 AI चैट (SMART FILTER)
+# 🧠 AI चैट (बिना किसी रुकावट के - हर मैसेज का छोटा जवाब)
 @bot.event
 async def on_message(message):
     if message.author.bot:
@@ -389,6 +389,8 @@ async def on_message(message):
         return
 
     words = msg_lower.split()
+    
+    # अगर कोई सिर्फ हाय-हेलो बोले तो सुंदर ग्रीटिंग बटन दिखाओ
     if len(words) <= 2 and any(w in words for w in ["hi", "hii", "hello", "hey", "namaste"]):
         view = MainGreetingView()
         await message.channel.send(
@@ -398,27 +400,15 @@ async def on_message(message):
         )
         return
 
-    question_keywords = ["kya", "kaise", "kyu", "kyon", "batao", "kaun", "kab", "kaha", "how", "what", "why", "where", "help"]
-    
-    is_question = any(word in words for word in question_keywords) or "?" in msg_lower
-    is_mentioned = "thanos" in msg_lower or "thanod" in msg_lower or bot.user in message.mentions
-
-    if not (is_question or is_mentioned):
-        return
-
     if not ai_client:
-        await message.channel.send("⚠️ Gemini API Key सेट नहीं है!")
         return
 
     prompt = message.clean_content.strip()
-    for word in ["@Thanos bot", "@Thanos Bot", "Thanos bot", "thanos bot", "thanod bot", "Thanos", "thanos", "thanod"]:
-        prompt = prompt.replace(word, "").strip()
-
     if not prompt:
-        await message.channel.send(f"हाँ भाई {message.author.mention}! बताइए, मुझसे क्या पूछना चाहते हैं?")
         return
 
-    smart_prompt = prompt + "\n\n(System Note: Answer this very briefly and strictly to the point in Hinglish. Do not write long paragraphs. Give only necessary information.)"
+    # सिस्टम नोट: AI को सख्त हिदायत कि जवाब सिर्फ 1-2 लाइनों में (कम शब्दों में) दे ताकि टोकन लिमिट बची रहे
+    smart_prompt = prompt + "\n\n(System Note: Answer this very briefly in 1-2 short sentences, strictly to the point in Hinglish. Keep it extremely concise to save token limits.)"
 
     async with message.channel.typing():
         try:
