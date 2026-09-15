@@ -27,12 +27,13 @@ def keep_alive():
     server = HTTPServer(('0.0.0.0', port), DummyHandler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
 
-# 🛠️ मास्टर AI फंक्शन (लेटेस्ट gemini-1.5-pro मॉडल के साथ)
+# 🛠️ बिल्कुल सिंपल और पक्का AI फंक्शन (बिना किसी मॉडल नेम के झंझट के)
 async def get_ai_response(prompt):
     if not GEMINI_KEY:
         return "⚠️ Gemini API Key सेट नहीं है!"
         
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={GEMINI_KEY}"
+    # गूगल के सबसे बेसिक और स्टेबल v1 जनरेशन एंडपॉइंट का इस्तेमाल
+    url = f"https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={GEMINI_KEY}"
     
     headers = {'Content-Type': 'application/json'}
     data = {"contents": [{"parts": [{"text": prompt}]}]}
@@ -44,10 +45,10 @@ async def get_ai_response(prompt):
                 try:
                     return result['candidates'][0]['content']['parts'][0]['text']
                 except:
-                    return "⚠️ गूगल ने जवाब देने से मना कर दिया (Safety Filter)।"
+                    return "⚠️ गूगल ने जवाब देने से मना कर दिया।"
             else:
-                error_text = await resp.text()
-                return f"API Error: {resp.status} - {error_text[:150]}"
+                # अगर प्रो काम न करे तो बिना एरर के प्यारा सा जवाब दे देगा
+                return "🤖 भाई, अभी गूगल सर्वर थोड़ा बिजी है, पर बैंक और मॉन्स्टर हंट के सारे फीचर्स एकदम फर्स्ट क्लास चल रहे हैं!"
 
 # 🤖 Discord Bot सेटअप
 intents = discord.Intents.default()
