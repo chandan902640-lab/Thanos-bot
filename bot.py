@@ -37,6 +37,7 @@ intents.message_content = True
 intents.guilds = True
 intents.presences = True
 bot = commands.Bot(command_prefix='/', intents=intents)
+bot.remove_command('help') # डिफ़ॉल्ट हेल्प कमांड हटा रहा है ताकि हमारी कस्टम /help कमांड काम करे
 
 @tasks.loop(hours=4)
 async def auto_clear_chat():
@@ -54,6 +55,12 @@ async def auto_clear_chat():
 async def on_ready():
     print(f'✅ {bot.user} ऑनलाइन आ गया है!')
     await bot.change_presence(status=discord.Status.online, activity=discord.Game(name="Lords Mobile"))
+    
+    # Persistent Views रजिस्ट्रेशन (ताकि रीस्टार्ट होने पर भी बटन हमेशा काम करते रहें)
+    bot.add_view(MainGreetingView())
+    bot.add_view(HelpButtonView())
+    bot.add_view(MonsterView())
+
     if not auto_clear_chat.is_running():
         auto_clear_chat.start()
 
@@ -62,22 +69,16 @@ class HelpButtonView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(label="🤖 Bot Commands & Info", style=discord.ButtonStyle.primary, emoji="📋")
+    @discord.ui.button(label="🤖 Bot Commands & Info", style=discord.ButtonStyle.primary, emoji="📋", custom_id="help_btn_persistent")
     async def help_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message(
             "✨ **Thanos Bot की सभी कमांड्स और फीचर्स:**\n\n"
             "🧠 **Smart AI Chat:** चैनल में कोई भी सवाल पूछें, बॉट जवाब देगा!\n"
             "🐲 **Monster Hunt:** मेनू से 'Monster Hunt' बटन दबाकर 18 मॉन्स्टर्स के हीरो सेटअप देखें!\n"
             "🛡️ **`/shield [घंटे]`** - एडवांस शील्ड टाइमर (15 मिनट पहले अलर्ट देगा)।\n"
-            "🗑️ **`/clearall`** - चैनल के सारे मैसेज डिलीट करने के लिए (एडमिन के लिए)।\n"
-            "📋 **`/helpmenu`** - यह हेल्प मेनू मंगाने के लिए।",
+            "🗑️ **`/clearall`** - चैनल के सारे मैसेज डिलीट करने के लिए (एडमिन के लिए)।",
             ephemeral=True
         )
-
-@bot.command()
-async def helpmenu(ctx):
-    view = HelpButtonView()
-    await ctx.send("👇 नीचे दिए गए **नीले बटन** पर क्लिक करके देखें कि कौन सी कमांड क्या करती है!", view=view)
 
 # ⚠️ चैट डिलीट करने के लिए कंफर्मेशन बटन व्यू
 class ClearConfirmView(discord.ui.View):
@@ -102,7 +103,7 @@ class ClearConfirmView(discord.ui.View):
         if interaction.user != self.author:
             await interaction.response.send_message("❌ आप इस बटन का उपयोग नहीं कर सकते!", ephemeral=True)
             return
-        await interaction.response.edit_message(content="❌ चैट डिलीट करने का प्रोसेस रद्द कर दिया गया है。", view=None)
+        await interaction.response.edit_message(content="❌ चैट डिलीट करने का प्रोसेस रद्द कर दिया गया है।", view=None)
 
 # 🐲 18 मॉन्स्टर्स की लिस्ट: (नाम, मॉन्स्टर की अपनी फोटो, हीरो सेटअप की फोटो)
 MONSTERS = {
@@ -132,7 +133,7 @@ class MonsterSelect(discord.ui.Select):
             discord.SelectOption(label=f"{num}. {name}", value=num)
             for num, (name, monster_url, setup_url) in MONSTERS.items()
         ]
-        super().__init__(placeholder="🎯 Select a Monster (1 to 18)...", min_values=1, max_values=1, options=options)
+        super().__init__(placeholder="🎯 Select a Monster (1 to 18)...", min_values=1, max_values=1, options=options, custom_id="monster_select_dropdown")
 
     async def callback(self, interaction: discord.Interaction):
         selected_num = self.values[0]
@@ -146,7 +147,6 @@ class MonsterSelect(discord.ui.Select):
         embed2 = discord.Embed(title=f"⚔️ Recommended Hero Setup for {name}", color=discord.Color.blue())
         embed2.set_image(url=setup_url)
         
-        # दोनों फोटो को एक साथ एक ही मैसेज में भेजेंगे
         await interaction.response.send_message(embeds=[embed1, embed2], ephemeral=True)
 
 class MonsterView(discord.ui.View):
@@ -159,12 +159,12 @@ class BankCategoryView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(label="Tips", style=discord.ButtonStyle.secondary, emoji="💡")
+    @discord.ui.button(label="Tips", style=discord.ButtonStyle.secondary, emoji="💡", custom_id="bank_tips_btn")
     async def tips_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text = "**💡 BANK TIPS & TRICKS:**\n\nUse underscore ('!setacc Player_1').\nHero Stages: Bank will not respond during long hero stages."
         await interaction.response.send_message(text, ephemeral=True)
 
-    @discord.ui.button(label="General", style=discord.ButtonStyle.success, emoji="📌")
+    @discord.ui.button(label="General", style=discord.ButtonStyle.success, emoji="📌", custom_id="bank_general_btn")
     async def general_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text1 = (
             "**📌 GENERAL COMMANDS:**\n\n"
@@ -224,7 +224,7 @@ class BankCategoryView(discord.ui.View):
         await interaction.response.send_message(text1, ephemeral=True)
         await interaction.followup.send(text2, ephemeral=True)
 
-    @discord.ui.button(label="Search", style=discord.ButtonStyle.primary, emoji="🔍")
+    @discord.ui.button(label="Search", style=discord.ButtonStyle.primary, emoji="🔍", custom_id="bank_search_btn")
     async def search_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text = (
             "**🔍 SEARCH COMMANDS:**\n\n"
@@ -240,7 +240,7 @@ class BankCategoryView(discord.ui.View):
         )
         await interaction.response.send_message(text, ephemeral=True)
         
-    @discord.ui.button(label="Balance", style=discord.ButtonStyle.secondary, emoji="⚖️")
+    @discord.ui.button(label="Balance", style=discord.ButtonStyle.secondary, emoji="⚖️", custom_id="bank_balance_btn")
     async def balance_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text = (
             "**⚖️ BALANCE COMMANDS:**\n\n"
@@ -255,7 +255,7 @@ class BankCategoryView(discord.ui.View):
         )
         await interaction.response.send_message(text, ephemeral=True)
 
-    @discord.ui.button(label="Resource", style=discord.ButtonStyle.danger, emoji="💰")
+    @discord.ui.button(label="Resource", style=discord.ButtonStyle.danger, emoji="💰", custom_id="bank_resource_btn")
     async def resource_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text = (
             "**💰 RESOURCE COMMANDS:**\n\n"
@@ -272,17 +272,17 @@ class MainGreetingView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(label="Guild Bank Commands", style=discord.ButtonStyle.success, emoji="🏦")
+    @discord.ui.button(label="Guild Bank Commands", style=discord.ButtonStyle.success, emoji="🏦", custom_id="main_bank_btn")
     async def open_bank_menu_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = BankCategoryView()
         await interaction.response.send_message("👇 **किस तरह की बैंक कमांड्स देखनी हैं?**", view=view, ephemeral=True)
 
-    @discord.ui.button(label="🏹 Monster Hunt", style=discord.ButtonStyle.green, emoji="🐲")
+    @discord.ui.button(label="🏹 Monster Hunt", style=discord.ButtonStyle.green, emoji="🐲", custom_id="main_monster_btn")
     async def monster_hunt_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = MonsterView()
         await interaction.response.send_message("👇 **नीचे दिए गए ड्रॉपडाउन से अपना मॉन्स्टर चुनें:**", view=view, ephemeral=True)
 
-    @discord.ui.button(label="Bot Commands", style=discord.ButtonStyle.primary, emoji="🤖")
+    @discord.ui.button(label="Bot Commands", style=discord.ButtonStyle.primary, emoji="🤖", custom_id="main_botcmd_btn")
     async def bot_commands_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text = (
             "✨ **THANOS BOT COMMANDS LIST:**\n\n"
@@ -292,7 +292,7 @@ class MainGreetingView(discord.ui.View):
         )
         await interaction.response.send_message(text, ephemeral=True)
 
-    @discord.ui.button(label="Clear Chat", style=discord.ButtonStyle.danger, emoji="🗑️")
+    @discord.ui.button(label="Clear Chat", style=discord.ButtonStyle.danger, emoji="🗑️", custom_id="main_clearchat_btn")
     async def clear_chat_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not interaction.user.guild_permissions.administrator:
             await interaction.response.send_message("❌ आपके पास परमिशन नहीं है!", ephemeral=True)
@@ -307,6 +307,19 @@ async def clearall(ctx):
         return
     view = ClearConfirmView(ctx.author)
     await ctx.send("⚠️ **चेतावनी:** मैसेज डिलीट करें?", view=view)
+
+# 🛠️ /help कमांड: अब आप /help लिखकर कंट्रोल पैनल मंगा सकते हैं
+@bot.command(name="help")
+async def help_panel(ctx):
+    if not ctx.author.guild_permissions.administrator:
+        await ctx.send("❌ आपके पास एडमिन परमिशन नहीं है!", delete_after=5)
+        return
+    view = MainGreetingView()
+    await ctx.send(
+        "👑 **THANOS BOT - CONTROL PANEL** 👑\n\n"
+        "👇 सर्वर के सभी फीचर्स, बैंक कमांड्स और मॉन्स्टर हंट के लिए नीचे दिए गए बटन्स का इस्तेमाल करें:",
+        view=view
+    )
 
 # 🐲 मॉन्स्टर कमांड (AI बैकअप)
 @bot.command()
