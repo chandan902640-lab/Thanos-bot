@@ -193,12 +193,29 @@ class BankCategoryView(discord.ui.View):
         
     @discord.ui.button(label="Balance", style=discord.ButtonStyle.secondary, emoji="⚖️")
     async def balance_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        text = "**⚖️ BALANCE COMMANDS:**\n\n`!bal`, `!adminbal`, `!setbal`, `!transfer`"
+        text = (
+            "**⚖️ BALANCE COMMANDS:**\n\n"
+            "`!bal` ➡️ Checks your personal RSS balance\n"
+            "`!adminbal` ➡️ Checks the RSS balance of the Bank\n"
+            "`!adminbal [player]` ➡️ Checks the balance of a specific player\n"
+            "`!adminbag` ➡️ Checks the RSS balance of the Bank's bag\n"
+            "`!setbal [player] [type] [amt]` ➡️ Manually sets the RSS balance for an account\n"
+            "`!setacc [player]` ➡️ Credits all your sent balance to another account\n"
+            "`!transfer [player] [type] [amt]` ➡️ Transfers your balance to another player\n"
+            "`!setrsslimit [type] [amt]` ➡️ Sets a minimum RSS limit the bank won't go below\n"
+        )
         await interaction.response.send_message(text, ephemeral=True)
 
     @discord.ui.button(label="Resource", style=discord.ButtonStyle.danger, emoji="💰")
     async def resource_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        text = "**💰 RESOURCE COMMANDS:**\n\n`!food 5M`, `!rss 5M 5M 5M 5M 0`, `!donatefood Shark 5M`"
+        text = (
+            "**💰 RESOURCE COMMANDS:**\n\n"
+            "`![type] [amount]` ➡️ Sends one specific RSS (e.g., `!food 5M`)\n"
+            "`!rss [F] [S] [W] [O] [G]` ➡️ Sends all types of RSS (e.g., `!rss 5M 5M 5M 5M 0`)\n"
+            "`!donate[type] [player] [amt]` ➡️ Sends specific RSS to a player (e.g., `!donatefood Shark 5M`)\n"
+            "`!admin[type] [player] [amt]` ➡️ Admin command to send specific RSS to a player\n"
+            "`!adminrss [F] [S] [W] [O] [G] [player]` ➡️ Admin sends all types of RSS to a player\n"
+        )
         await interaction.response.send_message(text, ephemeral=True)
            
         
