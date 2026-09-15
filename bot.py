@@ -27,12 +27,11 @@ def keep_alive():
     server = HTTPServer(('0.0.0.0', port), DummyHandler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
 
-# 🛠️ बिल्कुल सिंपल और पक्का AI फंक्शन (बिना किसी मॉडल नेम के झंझट के)
+# 🛠️ AI फंक्शन (जिसमें आपका सुंदर मैसेज एरर की जगह सेट कर दिया गया है)
 async def get_ai_response(prompt):
     if not GEMINI_KEY:
         return "⚠️ Gemini API Key सेट नहीं है!"
         
-    # गूगल के सबसे बेसिक और स्टेबल v1 जनरेशन एंडपॉइंट का इस्तेमाल
     url = f"https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={GEMINI_KEY}"
     
     headers = {'Content-Type': 'application/json'}
@@ -47,15 +46,19 @@ async def get_ai_response(prompt):
                 except:
                     return "⚠️ गूगल ने जवाब देने से मना कर दिया।"
             else:
-                # अगर प्रो काम न करे तो बिना एरर के प्यारा सा जवाब दे देगा
-                return "👑 THANOS BOT - WELCOME PANEL 👑
-✨ Hello / नमस्ते दोस्तों!
-
-अपने गिल्ड (Guild) की मदद के लिए Thanos Bot पूरी तरह से तैयार और ऑनलाइन है! 🤖🔥
-
-👇 बॉटा  कमांड्स देखने के लिए चैट में बस यह लिखें:
-
-hi या hello"
+                # 🌟 यहाँ आपका मनचाहा सुंदर मैसेज सेट कर दिया गया है!
+                return (
+                    "👑 **THANOS BOT - WELCOME PANEL** 👑\n\n"
+                    "✨ **Hello / नमस्ते दोस्तों!**\n"
+                    "अपने गिल्ड (Guild) की मदद के लिए **Thanos Bot** पूरी तरह से तैयार और ऑनलाइन है! 🤖🔥\n\n"
+                    "👇 बॉट से बात करने या कमांड्स देखने के लिए चैट में बस यह लिखें:\n"
+                    "> **`hi`** या **`hello`**\n\n"
+                    "🚀 **बॉट की मुख्य विशेषताएँ:**\n"
+                    "• **🤖 Smart AI Chat:** चैनल में कभी भी बात करें!\n"
+                    "• **🏦 Guild Bank Menu:** बैंक की सभी कमांड्स एक क्लिक पर।\n"
+                    "• **🏹 Monster Hunt Setup:** 18 मॉन्स्टर्स के हीरो सेटअप देखें।\n"
+                    "• **🛡️ `/shield` Timer:** शील्ड टाइमर और अलर्ट पाएं।"
+                )
 
 # 🤖 Discord Bot सेटअप
 intents = discord.Intents.default()
