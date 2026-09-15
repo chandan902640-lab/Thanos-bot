@@ -340,7 +340,7 @@ async def monster(ctx, *, monster_name: str = None):
     async with ctx.typing():
         try:
             response = ai_client.models.generate_content(
-                model='gemini-1.5-flash', # 🛠️ स्टेबल मॉडल
+                model='gemini-pro', # 🛠️ स्टेबल मॉडल
                 contents=prompt,
             )
             full_response = f"👾 **{monster_name.title()}** को मारने के बेस्ट हीरोज:\n{response.text}"
@@ -424,7 +424,7 @@ async def on_message(message):
     async with message.channel.typing():
         try:
             response = ai_client.models.generate_content(
-                model='gemini-1.5-flash', # 🛠️ स्टेबल मॉडल
+                model='gemini-pro', # 🛠️ स्टेबल मॉडल
                 contents=smart_prompt,
             )
             full_response = f"{message.author.mention} \n{response.text}"
