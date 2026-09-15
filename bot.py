@@ -117,8 +117,9 @@ class BankCategoryView(discord.ui.View):
 
     @discord.ui.button(label="General", style=discord.ButtonStyle.success, emoji="📌")
     async def general_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        text = "**📌 GENERAL COMMANDS:**\n"`!payransom` ➡️ The ransom for the accounts leader is paid\n"
+        text = ("**📌 GENERAL COMMANDS:**\n\n"
         "`!payransom` ➡️ The ransom for the accounts leader is paid\n"
+        "`!payransom` ➡️ The ransom for the accounts leader is paid\n")
         await interaction.response.send_message(text, ephemeral=True)
 
     @discord.ui.button(label="Search", style=discord.ButtonStyle.primary, emoji="🔍")
