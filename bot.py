@@ -1,19 +1,13 @@
 import asyncio
 import os
 import threading
+import aiohttp # 🛠️ नया हथियार (सीधा API से बात करने के लिए)
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from datetime import datetime, timedelta, timezone
 import discord
 from discord.ext import commands, tasks
-import google.generativeai as genai
 
-# 🧠 Gemini AI सेटअप (क्लासिक, स्टेबल और फ़ास्ट तरीका)
 GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
-if GEMINI_KEY:
-    genai.configure(api_key=GEMINI_KEY)
-    ai_model = genai.GenerativeModel('gemini-pro')
-else:
-    ai_model = None
 
 # 🌐 Render को जगाए रखने के लिए 24/7 वेब सर्वर
 class DummyHandler(BaseHTTPRequestHandler):
@@ -32,6 +26,42 @@ def keep_alive():
     port = int(os.environ.get("PORT", 8080))
     server = HTTPServer(('0.0.0.0', port), DummyHandler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
+
+# 🛠️ मास्टर AI फंक्शन (बिना किसी गूगल लाइब्रेरी के सीधा API से बात करेगा)
+async def get_ai_response(prompt):
+    if not GEMINI_KEY:
+        return "⚠️ Gemini API Key सेट नहीं है!"
+        
+    url_flash = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_KEY}"
+    url_pro = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent?key={GEMINI_KEY}"
+    
+    headers = {'Content-Type': 'application/json'}
+    data = {"contents": [{"parts": [{"text": prompt}]}]}
+
+    async with aiohttp.ClientSession() as session:
+        # पहले फास्ट मॉडल ट्राई करेगा
+        async with session.post(url_flash, headers=headers, json=data) as resp:
+            if resp.status == 200:
+                result = await resp.json()
+                try:
+                    return result['candidates'][0]['content']['parts'][0]['text']
+                except:
+                    return "⚠️ गूगल ने जवाब देने से मना कर दिया (Safety Filter)।"
+            elif resp.status == 404:
+                # अगर 404 आया तो पुराने स्टेबल मॉडल पर शिफ्ट हो जाएगा
+                async with session.post(url_pro, headers=headers, json=data) as resp2:
+                    if resp2.status == 200:
+                        result = await resp2.json()
+                        try:
+                            return result['candidates'][0]['content']['parts'][0]['text']
+                        except:
+                            return "⚠️ गूगल ने जवाब देने से मना कर दिया।"
+                    else:
+                        error_text = await resp2.text()
+                        return f"API Error: {resp2.status} - {error_text[:100]}"
+            else:
+                error_text = await resp.text()
+                return f"API Error: {resp.status} - {error_text[:100]}"
 
 # 🤖 Discord Bot सेटअप
 intents = discord.Intents.default()
@@ -59,7 +89,6 @@ async def on_ready():
     print(f'✅ {bot.user} ऑनलाइन आ गया है!')
     await bot.change_presence(status=discord.Status.online, activity=discord.Game(name="Lords Mobile"))
     
-    # 📌 Persistent Views (बॉट रीस्टार्ट होने पर भी बटन काम करेंगे)
     bot.add_view(MainGreetingView())
     bot.add_view(HelpButtonView())
     bot.add_view(MonsterView())
@@ -106,7 +135,7 @@ class ClearConfirmView(discord.ui.View):
         if interaction.user != self.author:
             await interaction.response.send_message("❌ नो परमिशन!", ephemeral=True)
             return
-        await interaction.response.edit_message(content="❌ प्रोसेस रद्द कर दिया गया है।", view=None)
+        await interaction.response.edit_message(content="❌ प्रोसेस रद्द कर दिया गया है。", view=None)
 
 # 🐲 18 मॉन्स्टर्स की लिस्ट
 MONSTERS = {
@@ -261,29 +290,24 @@ async def help_panel(ctx):
         view=view
     )
 
-# 🐲 मॉन्स्टर कमांड (AI बैकअप - Asynchronous ताकि बॉट अटके नहीं)
+# 🐲 मॉन्स्टर कमांड (Direct API)
 @bot.command()
 async def monster(ctx, *, monster_name: str = None):
     if not monster_name:
         await ctx.send("⚠️ भाई, किसी मॉन्स्टर का नाम तो बताओ! या मेनू में जाकर 'Monster Hunt' बटन दबाएं।")
         return
-    if not ai_model:
-        await ctx.send("⚠️ Gemini API Key सेट नहीं है!")
-        return
 
     prompt = f"Lords Mobile game में '{monster_name}' monster को मारने के लिए Best F2P और P2P heroes की लिस्ट बताओ. जवाब हिंदी और इंग्लिश मिक्स में बुलेट पॉइंट्स में देना."
     async with ctx.typing():
         try:
-            # 🛠️ Asynchronous जनरेशन (बॉट हैंग नहीं होगा)
-            response = await ai_model.generate_content_async(prompt)
-            full_response = f"👾 **{monster_name.title()}** को मारने के बेस्ट हीरोज:\n{response.text}"
+            ai_text = await get_ai_response(prompt)
+            full_response = f"👾 **{monster_name.title()}** को मारने के बेस्ट हीरोज:\n{ai_text}"
             
             for i in range(0, len(full_response), 1900):
                 await ctx.send(full_response[i:i+1900])
                 
         except Exception as e:
-            error_msg = str(e)[:1800]
-            await ctx.send(f"❌ गूगल सर्वर एरर या बिजी: {error_msg}")
+            await ctx.send(f"❌ एरर आ गया: {str(e)[:1800]}")
 
 # 🛡️ शील्ड कमांड
 @bot.command()
@@ -316,7 +340,7 @@ async def shield_error(ctx, error):
         await ctx.send("❌ भाई, सही टाइम (सिर्फ नंबर) बताओ! (जैसे: `/shield 4` या `/shield 8`)", delete_after=5)
 
 
-# 🧠 AI चैट (बिना रुकावट - Asynchronous)
+# 🧠 AI चैट (Direct API)
 @bot.event
 async def on_message(message):
     if message.author.bot:
@@ -342,9 +366,6 @@ async def on_message(message):
         )
         return
 
-    if not ai_model:
-        return
-
     prompt = message.clean_content.strip()
     if not prompt:
         return
@@ -353,16 +374,14 @@ async def on_message(message):
 
     async with message.channel.typing():
         try:
-            # 🛠️ Asynchronous जनरेशन (बॉट हैंग नहीं होगा)
-            response = await ai_model.generate_content_async(smart_prompt)
-            full_response = f"{message.author.mention} \n{response.text}"
+            ai_text = await get_ai_response(smart_prompt)
+            full_response = f"{message.author.mention} \n{ai_text}"
             
             for i in range(0, len(full_response), 1900):
                 await message.channel.send(full_response[i:i+1900])
                 
         except Exception as e:
-            error_msg = str(e)[:1800]
-            await message.channel.send(f"❌ गूगल सर्वर बिजी है, 1 मिनट बाद पूछें: {error_msg}")
+            await message.channel.send(f"❌ एरर आ गया: {str(e)[:1800]}")
 
 # 🏃 बॉट चालू करें
 keep_alive()
