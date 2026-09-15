@@ -114,10 +114,8 @@ class BankCategoryView(discord.ui.View):
     async def tips_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text = "**💡 BANK TIPS & TRICKS:**\n\n• Use underscore (`!setacc Player_1`).\n• Hero Stages: Bank will not respond during long hero stages."
         await interaction.response.send_message(text, ephemeral=True)
-
-   @discord.ui.button(label="General", style=discord.ButtonStyle.success, emoji="📌")
+@discord.ui.button(label="General", style=discord.ButtonStyle.success, emoji="📌")
     async def general_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        # यहाँ मैंने 'text' को 'text1' कर दिया है 👇
         text1 = (
             "**📌 GENERAL COMMANDS:**\n\n"
             "**📋 ALL BANK COMMANDS (Part 1):**\n\n"
@@ -146,7 +144,6 @@ class BankCategoryView(discord.ui.View):
             "`!deltitle [title]` ➡️ The bank will remove the title\n"
         )
         
-        # दूसरा हिस्सा
         text2 = (
             "**📋 ALL BANK COMMANDS (Part 2):**\n\n"
             "`!whitelist [player] [Rank]` ➡️ Accepts a player and sets Rank\n"
@@ -173,13 +170,9 @@ class BankCategoryView(discord.ui.View):
             "`!joinda` ➡️ Joins Dragon Arena for your guild\n"
             "`!leaveda` ➡️ Leaves Dragon Arena for your guild\n"
         )
-
-        # पहले पार्ट 1 सेंड करेगा
         await interaction.response.send_message(text1, ephemeral=True)
-        # फिर तुरंत पार्ट 2 भी सेंड कर देगा
-        await interaction.followup.send(text2, ephemeral=True) 
-
-
+        await interaction.followup.send(text2, ephemeral=True)
+   
     @discord.ui.button(label="Search", style=discord.ButtonStyle.primary, emoji="🔍")
     async def search_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text = "**🔍 SEARCH COMMANDS:**\nTiles: `!findtile food 4`\nMonsters: `!findmonster hardrox 2`\nDarknests: `!findnest 5`"
