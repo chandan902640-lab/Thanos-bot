@@ -194,23 +194,78 @@ class BankCategoryView(discord.ui.View):
     async def general_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text1 = (
             "**📌 GENERAL COMMANDS:**\n\n"
-            "`!payransom` ➡️ Pay ransom for leader\n"
-            "`!stats` ➡️ Report of Guild Gifts\n"
-            "`!shield` ➡️ Bank shield status\n"
-            "`!hunt [x] [y]` ➡️ Hunt specific monster\n"
-            "`!buildspam [amt] [delay]` ➡️ Spam helps"
+            "**📋 ALL BANK COMMANDS (Part 1):**\n\n"
+            "`!payransom` ➡️ The ransom for the accounts leader is paid\n"
+            "`!clearboard` ➡️ All quests are deleted\n"
+            "`!ess` ➡️ Mails the status of transmutation lab\n"
+            "`!stats` ➡️ Report of all Guild Gifts for yourself\n"
+            "`!stats all` ➡️ Summary of your guilds purchase/monsters\n"
+            "`!pstats [Player]` ➡️ Report of the Guild Gift stats for a player\n"
+            "`!gryphon` ➡️ Uses the Gryphon familiar skill\n"
+            "`!reguser` ➡️ Bind your ID for using commands\n"
+            "`!unreguser` ➡️ Unbind your ID\n"
+            "`!pos` ➡️ Reports the exact location of the Bank\n"
+            "`!shield` ➡️ Report of when the Bank shield drops\n"
+            "`!shield deploy` ➡️ Shield is activated on the bank\n"
+            "`!relocate [X] [Y]` ➡️ Relocates the bank to X Y\n"
+            "`!relocate rand` ➡️ Relocate the bank to a random position\n"
+            "`!relocatekvk [K]` ➡️ Randomly relocates into the target kingdom\n"
+            "`!migrate [K][X][Y]` ➡️ Migrate to target Kingdom\n"
+            "`!recall` ➡️ Recall all troops to your castle\n"
+            "`!buildspam [amt] [delay]` ➡️ The bank will spam helps\n"
+            "`!buildspam stop` ➡️ Cancel build in progress\n"
+            "`!hunt [x] [y]` ➡️ Hunts the specified monster\n"
+            "`!hunt [on/off]` ➡️ Disable or enable hunting\n"
+            "`!addtitle [player] [title]` ➡️ The bank will give a title\n"
+            "`!deltitle [title]` ➡️ The bank will remove the title\n"
         )
+        
+        text2 = (
+            "**📋 ALL BANK COMMANDS (Part 2):**\n\n"
+            "`!whitelist [player] [Rank]` ➡️ Accepts a player and sets Rank\n"
+            "`!blacklist [player]` ➡️ Rejects a player\n"
+            "`!unlistwhite [player]` ➡️ Removes player from whitelist\n"
+            "`!unlistblack [player]` ➡️ Removes player from blacklist\n"
+            "`!purge` ➡️ The Guild Chat will be cleared\n"
+            "`!abort` ➡️ All queued RSS will be canceled\n"
+            "`!yell [msg]` ➡️ Writes a message to the guild chat\n"
+            "`!quest` ➡️ Mails player the guild fest status\n"
+            "`!guild [tag]` ➡️ Leaves guild and joins a new one\n"
+            "`!camp [x] [y]` ➡️ Sends a camp to x/y\n"
+            "`!setgather [on/off]` ➡️ Disable or enable gathering\n"
+            "`!snowbeast` ➡️ Snowbeast familiars skill is activated\n"
+            "`!stop [time]` ➡️ Account will go offline for x seconds\n"
+            "`!reloadacc` ➡️ Resets the account\n"
+            "`!members` ➡️ Member information is refreshed\n"
+            "`!busrank` ➡️ Promotes members who completed hunting\n"
+            "`!resetstats` ➡️ The gift stats have been reset\n"
+            "`!joingvg` ➡️ Join Guild Expedition\n"
+            "`!leavegvg` ➡️ Leave Guild Expedition\n"
+            "`!joinca` ➡️ Joins the Chaos Arena Event\n"
+            "`!leaveca` ➡️ Leaves the Chaos Arena Event\n"
+            "`!joinda` ➡️ Joins Dragon Arena for your guild\n"
+            "`!leaveda` ➡️ Leaves Dragon Arena for your guild\n"
+        )
+        
         await interaction.response.send_message(text1, ephemeral=True)
+        await interaction.followup.send(text2, ephemeral=True)
 
     @discord.ui.button(label="Search", style=discord.ButtonStyle.primary, emoji="🔍", custom_id="bank_search_btn")
     async def search_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text = (
             "**🔍 SEARCH COMMANDS:**\n\n"
-            "`!findtile [type] [level]` ➡️ Search for RSS tiles\n"
-            "`!findmonster [name] [lvl]` ➡️ Search for monsters\n"
-            "`!findnest [level]` ➡️ Search for Darknests"
+            "`!findtile [type] [level]` ➡️ Search for specific resource tiles around the bank\n"
+            "`!findtile any [level]` ➡️ Search for any resource tiles around the bank\n"
+            "`!findtilelocal [type] [lvl]` ➡️ Search for resource tiles around your castle\n"
+            "`!findmonster [name] [lvl]` ➡️ Search for a specific monster around the bank\n"
+            "`!findmonster any [lvl]` ➡️ Search for any monster around the bank\n"
+            "`!findmonsterlocal [name] [lvl]` ➡️ Search for a monster around your castle\n"
+            "`!findnest [level]` ➡️ Search for a Darknest around the bank\n"
+            "`!findnestlocal [level]` ➡️ Search for a Darknest around your castle\n\n"
+            "*(Note: The bank will send all search results directly to your in-game mail!)*"
         )
         await interaction.response.send_message(text, ephemeral=True)
+        
         
     @discord.ui.button(label="Balance", style=discord.ButtonStyle.secondary, emoji="⚖️", custom_id="bank_balance_btn")
     async def balance_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
