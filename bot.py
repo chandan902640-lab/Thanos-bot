@@ -93,7 +93,7 @@ intents.presences = True
 bot = commands.Bot(command_prefix='/', intents=intents)
 bot.remove_command('help')
 
-# 🧹 हर 4 घंटे में चैट साफ करने वाला टास्क
+# 🧹 हर 8 घंटे में चैट साफ करने वाला टास्क
 @tasks.loop(hours=8)
 async def auto_clear_chat():
     for guild in bot.guilds:
@@ -540,7 +540,7 @@ async def on_message(message):
         view = MainGreetingView()
         await message.channel.send(
             f"Hello / नमस्ते {message.author.mention}! 👋 \n"
-            f"👇 **बॉट की सभी कमांड्स और Guild Bank के लिए नीचे बटन दबाएं:**", 
+            f"👇 **Click buttons below for Bot Commands & Guild Bank / बॉट कमांड्स और बैंक के लिए नीचे बटन दबाएं:**", 
             view=view
         )
         return
