@@ -53,7 +53,7 @@ async def get_ai_response(prompt):
                     "अपने गिल्ड (Guild) की मदद के लिए **Thanos Bot** पूरी तरह से तैयार और ऑनलाइन है! 🤖🔥\n\n"
                     "👇 बॉट कमांड्स देखने के लिए चैट में बस यह लिखें:\n"
                     "> **`hi`** या **`hello`**\n\n"
-                    "🚀 **बॉट की मुख्य विशेषताएँ:**\n"                
+                    "🚀 **बॉट की मुख्य विशेषताएँ:**\n"    
                     "• **🏦 Guild Bank Menu:** बैंक की सभी कमांड्स एक क्लिक पर।\n"
                     "• **🏹 Monster Hunt Setup:** 18 मॉन्स्टर्स के हीरो सेटअप देखें।\n"
                     "• **🛡️ `/shield` Timer:** शील्ड टाइमर और अलर्ट पाएं।"
@@ -71,6 +71,19 @@ def load_saved_codes():
 def save_new_code(code):
     with open(CODES_FILE, "a") as f:
         f.write(code + "\n")
+
+# 📝 पैच नोट्स की डायरी (Saved Patches)
+PATCH_FILE = "saved_patches.txt"
+
+def load_saved_patches():
+    if not os.path.exists(PATCH_FILE):
+        return set()
+    with open(PATCH_FILE, "r") as f:
+        return set(line.strip() for line in f if line.strip())
+
+def save_patch_id(post_id):
+    with open(PATCH_FILE, "a") as f:
+        f.write(f"{post_id}\n")
 
 # 🤖 Discord Bot सेटअप
 intents = discord.Intents.default()
@@ -93,10 +106,9 @@ async def auto_clear_chat():
             except Exception:
                 pass
 
-# 🕵️ रिडीम कोड ढूँढने वाला ऑटोमैटिक जासूस (सब सर्वर के लिए)
+# 🕵️ रिडीम कोड ढूँढने वाला ऑटोमैटिक जासूस
 @tasks.loop(minutes=30)
 async def code_scraper():
-    # 📌👇 लिंक यहाँ सेट किया गया है 👇📌
     url = "https://www.reddit.com/r/lordsmobile/new.json?limit=10"
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Bot'}
 
@@ -119,27 +131,70 @@ async def code_scraper():
                                 if p_code not in saved_codes and not p_code.isnumeric():
                                     save_new_code(p_code)
                                     
-                                    # 🌟 यहाँ से बॉट सभी सर्वर्स (Guilds) में मैसेज भेजेगा
                                     for guild in bot.guilds:
-                                        target_channel = guild.system_channel
-                                        
-                                        if not target_channel or not target_channel.permissions_for(guild.me).send_messages:
-                                            for channel in guild.text_channels:
-                                                if channel.permissions_for(guild.me).send_messages:
-                                                    target_channel = channel
-                                                    break
-                                        
-                                        if target_channel:
-                                            try:
-                                                await target_channel.send(
-                                                    f"🚨 **New Lords Mobile Code Found!** 🚨\n"
-                                                    f"🎁 **Code:** `{p_code}`\n"
-                                                    f"🔗 *Redeem here:* <https://lordsmobile.igg.com/project/gifts/>"
-                                                )
-                                            except Exception:
-                                                pass 
+                                        for channel in guild.text_channels:
+                                            if channel.permissions_for(guild.me).send_messages:
+                                                try:
+                                                    await channel.send(
+                                                        f"🚨 **New Lords Mobile Code Found!** 🚨\n"
+                                                        f"🎁 **Code:** `{p_code}`\n"
+                                                        f"🔗 *Redeem here:* <https://lordsmobile.igg.com/project/gifts/>"
+                                                    )
+                                                except Exception:
+                                                    pass 
         except Exception as e:
             print(f"Scraper Error: {e}")
+
+# 🚨 ऑफिशियल पैच नोट्स और बैनर स्क्रैपर
+@tasks.loop(hours=1)
+async def patch_notes_scraper():
+    url = "https://www.reddit.com/r/lordsmobile/new.json?limit=10"
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Bot'}
+
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.get(url, headers=headers) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    saved_patches = load_saved_patches()
+                    
+                    for post in data['data']['children']:
+                        p_data = post['data']
+                        post_id = p_data['id']
+                        title = p_data['title']
+                        text = p_data.get('selftext', '')
+                        full_content = (title + " " + text).lower()
+                        
+                        # चेक करें कि क्या यह पैच नोट्स या अपडेट से जुड़ा है
+                        if any(keyword in full_content for keyword in ["update", "patch", "maintenance", "notes", "event"]):
+                            if post_id not in saved_patches:
+                                save_patch_id(post_id)
+                                
+                                image_url = p_data.get('url', None)
+                                post_permalink = f"https://www.reddit.com{p_data.get('permalink', '')}"
+                                
+                                # डिस्कॉर्ड Embed बनाना (बैनर के साथ)
+                                embed = discord.Embed(
+                                    title="🚨 New Lords Mobile Update & Patch Notes!",
+                                    description=f"**{title}**\n\n🔗 [Read full post on Reddit]({post_permalink})",
+                                    color=discord.Color.gold()
+                                )
+                                
+                                # अगर पोस्ट में वैध बैनर/फोटो है तो उसे जोड़ें
+                                if image_url and any(image_url.endswith(ext) for ext in ['.jpg', '.png', '.jpeg']):
+                                    embed.set_image(url=image_url)
+                                
+                                # सर्वर के सभी चैनल्स पर ब्रॉडकास्ट करें
+                                for guild in bot.guilds:
+                                    for channel in guild.text_channels:
+                                        if channel.permissions_for(guild.me).send_messages:
+                                            try:
+                                                await channel.send(embed=embed)
+                                            except Exception:
+                                                pass
+                                break 
+        except Exception as e:
+            print(f"Patch Scraper Error: {e}")
 
 @bot.event
 async def on_ready():
@@ -156,7 +211,11 @@ async def on_ready():
         
     if not code_scraper.is_running():
         code_scraper.start()
-        print("🕵️ Scraper चालू हो गया है!")
+        print("🕵️ Code Scraper चालू हो गया है!")
+
+    if not patch_notes_scraper.is_running():
+        patch_notes_scraper.start()
+        print("🚨 Patch Notes Scraper चालू हो गया है!")
 
 # 🔵 हेल्प मेनू व्यू
 class HelpButtonView(discord.ui.View):
