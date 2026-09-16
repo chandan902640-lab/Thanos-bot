@@ -48,15 +48,17 @@ async def get_ai_response(prompt):
                     return "⚠️ गूगल ने जवाब देने से मना कर दिया।"
             else:
                 return (
-                    "<a:bot1:1549808164478910586> **THANOS BOT - WELCOME PANEL** <a:bot1:1549808164478910586>\n\n"
+                    "**THANOS BOT - WELCOME PANEL**\n\n"
                     "✨ **Hello / नमस्ते Everyone / दोस्तों!**\n"
                     "Thanos Bot is online and ready to help your guild! / गिल्ड की मदद के लिए बॉट तैयार है! 🤖🔥\n\n"
-                    "👇 Type in chat to see commands / कमांड्स देखने के लिए चैट में लिखें:\n"
-                    "> **`hi`** or / या **`hello`**\n\n"
-                    "🚀 **Key Features / मुख्य विशेषताएँ:**\n"    
-                    "• **🏦 Guild Bank Menu:** All bank commands in one click. / बैंक की सभी कमांड्स एक क्लिक पर।\n"
-                    "• **🏹 Monster Hunt Setup:** View hero setups for 18 monsters. / 18 मॉन्स्टर्स के हीरो सेटअप देखें।\n"
-                    "• **🛡️ `/shield` Timer:** Set shield timers & alerts. / शील्ड टाइमर और अलर्ट पाएं।"
+                    "💡 **Type in chat to see commands / कमांड्स देखने के लिए चैट में लिखें:**\n"
+                    "`hi` or / `hello`\n\n"
+                    "📌 **Key Features / मुख्य विशेषताएं:**\n"
+                    "• 🏰 **Guild Bank Menu:** All bank commands in one click. / बैंक की सभी कमांड्स एक क्लिक पर।\n"
+                    "• 🏹 **Monster Hunt Setup:** View hero setups for 18 monsters. / 18 मॉन्स्टर्स के हीरो सेटअप देखें।\n"
+                    "• 🛡️ **/shield Timer:** Set shield timers & alerts. / शील्ड टाइमर और अलर्ट पाएं।\n\n"
+                    "⚠️ **Need Help?** Mention Admin or ask here! / कोई दिक्कत हो तो एडमिन को टैग करें!\n"
+                    "https://cdn.discordapp.com/emojis/1549808164478910586.gif"
                 )
 
 # 📝 बॉट की डायरी (Saved Codes)
