@@ -58,7 +58,7 @@ async def get_ai_response(prompt):
                     "• 🏹 **Monster Hunt Setup:** View hero setups for 18 monsters. / 18 मॉन्स्टर्स के हीरो सेटअप देखें।\n"
                     "• 🛡️ **/shield Timer:** Set shield timers & alerts. / शील्ड टाइमर और अलर्ट पाएं।\n\n"
                     "⚠️ **Need Help?** Mention Admin or ask here! / कोई दिक्कत हो तो एडमिन को टैग करें!\n"
-                    "https://cdn.discordapp.com/emojis/1549808164478910586.gif"
+                    "[ ](https://cdn.discordapp.com/emojis/1549808164478910586.gif)"
                 )
 
 # 📝 बॉट की डायरी (Saved Codes)
