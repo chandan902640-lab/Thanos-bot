@@ -2,6 +2,7 @@ import asyncio
 import os
 import threading
 import aiohttp
+import re  # 🟢 रिडीम कोड पहचानने के लिए
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from datetime import datetime, timedelta, timezone
 import discord
@@ -27,7 +28,7 @@ def keep_alive():
     server = HTTPServer(('0.0.0.0', port), DummyHandler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
 
-# 🛠️ AI फंक्शन (जिसमें आपका सुंदर मैसेज एरर की जगह सेट कर दिया गया है)
+# 🛠️ AI फंक्शन
 async def get_ai_response(prompt):
     if not GEMINI_KEY:
         return "⚠️ Gemini API Key सेट नहीं है!"
@@ -46,7 +47,6 @@ async def get_ai_response(prompt):
                 except:
                     return "⚠️ गूगल ने जवाब देने से मना कर दिया।"
             else:
-                # 🌟 यहाँ आपका मनचाहा सुंदर मैसेज सेट कर दिया गया है!
                 return (
                     "👑 **THANOS BOT - WELCOME PANEL** 👑\n\n"
                     "✨ **Hello / नमस्ते दोस्तों!**\n"
@@ -58,6 +58,19 @@ async def get_ai_response(prompt):
                     "• **🏹 Monster Hunt Setup:** 18 मॉन्स्टर्स के हीरो सेटअप देखें।\n"
                     "• **🛡️ `/shield` Timer:** शील्ड टाइमर और अलर्ट पाएं।"
                 )
+
+# 📝 बॉट की डायरी (Saved Codes)
+CODES_FILE = "saved_codes.txt"
+
+def load_saved_codes():
+    if not os.path.exists(CODES_FILE):
+        return []
+    with open(CODES_FILE, "r") as f:
+        return f.read().splitlines()
+
+def save_new_code(code):
+    with open(CODES_FILE, "a") as f:
+        f.write(code + "\n")
 
 # 🤖 Discord Bot सेटअप
 intents = discord.Intents.default()
@@ -80,6 +93,54 @@ async def auto_clear_chat():
             except Exception:
                 pass
 
+# 🕵️ रिडीम कोड ढूँढने वाला ऑटोमैटिक जासूस (सब सर्वर के लिए)
+@tasks.loop(minutes=30)
+async def code_scraper():
+    # 📌👇 लिंक यहाँ सेट किया गया है 👇📌
+    url = "https://www.reddit.com/r/lordsmobile/new.json?limit=10"
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Bot'}
+
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.get(url, headers=headers) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    saved_codes = load_saved_codes()
+                    
+                    for post in data['data']['children']:
+                        title = post['data']['title'].upper()
+                        text = post['data'].get('selftext', '').upper()
+                        full_content = title + " " + text
+                        
+                        if "CODE" in full_content or "REDEEM" in full_content:
+                            possible_codes = re.findall(r'\b[A-Z0-9]{8,12}\b', full_content)
+                            
+                            for p_code in possible_codes:
+                                if p_code not in saved_codes and not p_code.isnumeric():
+                                    save_new_code(p_code)
+                                    
+                                    # 🌟 यहाँ से बॉट सभी सर्वर्स (Guilds) में मैसेज भेजेगा
+                                    for guild in bot.guilds:
+                                        target_channel = guild.system_channel
+                                        
+                                        if not target_channel or not target_channel.permissions_for(guild.me).send_messages:
+                                            for channel in guild.text_channels:
+                                                if channel.permissions_for(guild.me).send_messages:
+                                                    target_channel = channel
+                                                    break
+                                        
+                                        if target_channel:
+                                            try:
+                                                await target_channel.send(
+                                                    f"🚨 **New Lords Mobile Code Found!** 🚨\n"
+                                                    f"🎁 **Code:** `{p_code}`\n"
+                                                    f"🔗 *Redeem here:* <https://lordsmobile.igg.com/project/gifts/>"
+                                                )
+                                            except Exception:
+                                                pass 
+        except Exception as e:
+            print(f"Scraper Error: {e}")
+
 @bot.event
 async def on_ready():
     print(f'✅ {bot.user} ऑनलाइन आ गया है!')
@@ -92,6 +153,10 @@ async def on_ready():
 
     if not auto_clear_chat.is_running():
         auto_clear_chat.start()
+        
+    if not code_scraper.is_running():
+        code_scraper.start()
+        print("🕵️ Scraper चालू हो गया है!")
 
 # 🔵 हेल्प मेनू व्यू
 class HelpButtonView(discord.ui.View):
@@ -110,7 +175,6 @@ class HelpButtonView(discord.ui.View):
         )
 
 # ⚠️ चैट डिलीट कंफर्मेशन
-# ⚠️ चैट डिलीट कंफर्मेशन
 class ClearConfirmView(discord.ui.View):
     def __init__(self, author):
         super().__init__(timeout=60)
@@ -122,9 +186,8 @@ class ClearConfirmView(discord.ui.View):
             await interaction.response.send_message("❌ आप इसे यूज़ नहीं कर सकते! अपना बटन खुद दबाएं।", ephemeral=True)
             return
         
-        await interaction.response.send_message("🧹 आपकी चैट साफ हो रही है...", ephemeral=True)
+        await interaction.response.send_message("🧹 आपकी चैट साफ हो रही...", ephemeral=True)
         try:
-            # यह फिल्टर सिर्फ बटन दबाने वाले मेंबर और बॉट के मैसेज पकड़ेगा
             def is_user_or_bot(m):
                 return m.author == interaction.user or m.author == interaction.client.user
             
@@ -272,7 +335,6 @@ class BankCategoryView(discord.ui.View):
         )
         await interaction.response.send_message(text, ephemeral=True)
         
-        
     @discord.ui.button(label="Balance", style=discord.ButtonStyle.secondary, emoji="⚖️", custom_id="bank_balance_btn")
     async def balance_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text = (
@@ -327,14 +389,12 @@ class MainGreetingView(discord.ui.View):
 
     @discord.ui.button(label="Clear My Chat", style=discord.ButtonStyle.danger, emoji="🗑️", custom_id="main_clearchat_btn")
     async def clear_chat_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        # एडमिन लॉक हटा दिया गया है, अब सब यूज़ कर पाएंगे
         view = ClearConfirmView(interaction.user)
         await interaction.response.send_message("⚠️ **चेतावनी:** क्या आप अपने और बॉट के मैसेज डिलीट करना चाहते हैं?", view=view, ephemeral=True)
 
-# 🗑️ क्लियर कमांड (अब सब के लिए)
+# 🗑️ क्लियर कमांड 
 @bot.command()
 async def clearall(ctx):
-    # एडमिन लॉक हटा दिया गया है
     view = ClearConfirmView(ctx.author)
     await ctx.send("⚠️ **चेतावनी:** क्या आप अपने और बॉट के मैसेज डिलीट करना चाहते हैं?", view=view)
 
