@@ -439,10 +439,13 @@ class MainGreetingView(discord.ui.View):
     @discord.ui.button(label="Bot Commands", style=discord.ButtonStyle.primary, emoji="🤖", custom_id="main_botcmd_btn")
     async def bot_commands_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text = (
-            "✨ **THANOS BOT COMMANDS LIST:**\n\n"
-            "🐲 **Monster Hunt Button:** मेनू से 18 मॉन्स्टर्स के हीरो सेटअप देखें!\n"
-            "🛡️ **`/shield [घंटे]`**\n"
-            "🧠 **AI Chat:** चैनल में कोई भी बात करें, बॉट जवाब देगा!"
+            "✨ **THANOS BOT COMMANDS & FEATURES / बॉट की कमांड्स और फीचर्स:**\n\n"
+            "🏦 **Guild Bank Menu:** Access bank commands instantly. / बैंक कमांड्स का आसान मेनू।\n"
+            "🐲 **Monster Hunt:** View 18 monster hero setups. / 18 मॉन्स्टर्स के हीरो सेटअप देखें।\n"
+            "🛡️ **`/shield [hours]`** - Shield timer with alerts. / शील्ड टाइमर और अलर्ट।\n"
+            "🎁 **Auto Redeem Codes:** Bot will automatically send new redeem codes. / नया रिडीम कोड आने पर बॉट आपको ऑटोमैटिक रिडीम कोड भेजेगा।\n"
+            "🚨 **Event & Patch Notes:** Bot will automatically send event pages. / नया इवेंट आने पर बॉट आपको ऑटोमैटिक इवेंट पेज भेजेगा।\n"
+            "🗑️ **`/clearall` / Clear Chat:** Clean up chat messages. / चैट साफ़ करें।"
         )
         await interaction.response.send_message(text, ephemeral=True)
 
