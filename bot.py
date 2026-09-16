@@ -48,7 +48,7 @@ async def get_ai_response(prompt):
                     return "⚠️ गूगल ने जवाब देने से मना कर दिया।"
             else:
                 return (
-                    "👑 **THANOS BOT - WELCOME PANEL** 👑\n\n"
+                    "<a:bot1:1549808164478910586> **THANOS BOT - WELCOME PANEL** <a:bot1:1549808164478910586>\n\n"
                     "✨ **Hello / नमस्ते Everyone / दोस्तों!**\n"
                     "Thanos Bot is online and ready to help your guild! / गिल्ड की मदद के लिए बॉट तैयार है! 🤖🔥\n\n"
                     "👇 Type in chat to see commands / कमांड्स देखने के लिए चैट में लिखें:\n"
