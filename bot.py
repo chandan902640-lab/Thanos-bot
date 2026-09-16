@@ -110,20 +110,26 @@ class HelpButtonView(discord.ui.View):
         )
 
 # ⚠️ चैट डिलीट कंफर्मेशन
+# ⚠️ चैट डिलीट कंफर्मेशन
 class ClearConfirmView(discord.ui.View):
     def __init__(self, author):
         super().__init__(timeout=60)
         self.author = author
 
-    @discord.ui.button(label="✅ Confirm (OK) - Delete All", style=discord.ButtonStyle.danger)
+    @discord.ui.button(label="✅ Confirm - Clear My Chat", style=discord.ButtonStyle.danger)
     async def confirm_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.author:
-            await interaction.response.send_message("❌ आप इसे यूज़ नहीं कर सकते!", ephemeral=True)
+            await interaction.response.send_message("❌ आप इसे यूज़ नहीं कर सकते! अपना बटन खुद दबाएं।", ephemeral=True)
             return
-        await interaction.response.send_message("🧹 चैनल साफ हो रहा है...", ephemeral=True)
+        
+        await interaction.response.send_message("🧹 आपकी चैट साफ हो रही है...", ephemeral=True)
         try:
-            await interaction.channel.purge(limit=1000)
-        except:
+            # यह फिल्टर सिर्फ बटन दबाने वाले मेंबर और बॉट के मैसेज पकड़ेगा
+            def is_user_or_bot(m):
+                return m.author == interaction.user or m.author == interaction.client.user
+            
+            await interaction.channel.purge(limit=100, check=is_user_or_bot)
+        except Exception:
             pass
 
     @discord.ui.button(label="❌ Cancel", style=discord.ButtonStyle.secondary)
@@ -131,7 +137,7 @@ class ClearConfirmView(discord.ui.View):
         if interaction.user != self.author:
             await interaction.response.send_message("❌ नो परमिशन!", ephemeral=True)
             return
-        await interaction.response.edit_message(content="❌ प्रोसेस रद्द कर दिया गया है。", view=None)
+        await interaction.response.edit_message(content="❌ प्रोसेस रद्द कर दिया गया है।", view=None)
 
 # 🐲 18 मॉन्स्टर्स की लिस्ट
 MONSTERS = {
@@ -319,22 +325,18 @@ class MainGreetingView(discord.ui.View):
         )
         await interaction.response.send_message(text, ephemeral=True)
 
-    @discord.ui.button(label="Clear Chat", style=discord.ButtonStyle.danger, emoji="🗑️", custom_id="main_clearchat_btn")
+    @discord.ui.button(label="Clear My Chat", style=discord.ButtonStyle.danger, emoji="🗑️", custom_id="main_clearchat_btn")
     async def clear_chat_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if not interaction.user.guild_permissions.administrator:
-            await interaction.response.send_message("❌ आपके पास परमिशन नहीं है!", ephemeral=True)
-            return
+        # एडमिन लॉक हटा दिया गया है, अब सब यूज़ कर पाएंगे
         view = ClearConfirmView(interaction.user)
-        await interaction.response.send_message("⚠️ **चेतावनी:** मैसेज डिलीट करें?", view=view, ephemeral=True)
+        await interaction.response.send_message("⚠️ **चेतावनी:** क्या आप अपने और बॉट के मैसेज डिलीट करना चाहते हैं?", view=view, ephemeral=True)
 
-# 🗑️ क्लियर कमांड
+# 🗑️ क्लियर कमांड (अब सब के लिए)
 @bot.command()
 async def clearall(ctx):
-    if not ctx.author.guild_permissions.administrator:
-        await ctx.send("❌ परमिशन नहीं है!", delete_after=5)
-        return
+    # एडमिन लॉक हटा दिया गया है
     view = ClearConfirmView(ctx.author)
-    await ctx.send("⚠️ **चेतावनी:** मैसेज डिलीट करें?", view=view)
+    await ctx.send("⚠️ **चेतावनी:** क्या आप अपने और बॉट के मैसेज डिलीट करना चाहते हैं?", view=view)
 
 # 🛠️ हेल्प कमांड
 @bot.command(name="help")
