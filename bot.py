@@ -49,14 +49,14 @@ async def get_ai_response(prompt):
             else:
                 return (
                     "👑 **THANOS BOT - WELCOME PANEL** 👑\n\n"
-                    "✨ **Hello / नमस्ते दोस्तों!**\n"
-                    "अपने गिल्ड (Guild) की मदद के लिए **Thanos Bot** पूरी तरह से तैयार और ऑनलाइन है! 🤖🔥\n\n"
-                    "👇 बॉट कमांड्स देखने के लिए चैट में बस यह लिखें:\n"
-                    "> **`hi`** या **`hello`**\n\n"
-                    "🚀 **बॉट की मुख्य विशेषताएँ:**\n"    
-                    "• **🏦 Guild Bank Menu:** बैंक की सभी कमांड्स एक क्लिक पर।\n"
-                    "• **🏹 Monster Hunt Setup:** 18 मॉन्स्टर्स के हीरो सेटअप देखें।\n"
-                    "• **🛡️ `/shield` Timer:** शील्ड टाइमर और अलर्ट पाएं।"
+                    "✨ **Hello / नमस्ते Everyone / दोस्तों!**\n"
+                    "Thanos Bot is online and ready to help your guild! / गिल्ड की मदद के लिए बॉट तैयार है! 🤖🔥\n\n"
+                    "👇 Type in chat to see commands / कमांड्स देखने के लिए चैट में लिखें:\n"
+                    "> **`hi`** or / या **`hello`**\n\n"
+                    "🚀 **Key Features / मुख्य विशेषताएँ:**\n"    
+                    "• **🏦 Guild Bank Menu:** All bank commands in one click. / बैंक की सभी कमांड्स एक क्लिक पर।\n"
+                    "• **🏹 Monster Hunt Setup:** View hero setups for 18 monsters. / 18 मॉन्स्टर्स के हीरो सेटअप देखें।\n"
+                    "• **🛡️ `/shield` Timer:** Set shield timers & alerts. / शील्ड टाइमर और अलर्ट पाएं।"
                 )
 
 # 📝 बॉट की डायरी (Saved Codes)
