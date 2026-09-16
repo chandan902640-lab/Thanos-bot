@@ -81,7 +81,7 @@ bot = commands.Bot(command_prefix='/', intents=intents)
 bot.remove_command('help')
 
 # 🧹 हर 4 घंटे में चैट साफ करने वाला टास्क
-@tasks.loop(hours=4)
+@tasks.loop(hours=8)
 async def auto_clear_chat():
     for guild in bot.guilds:
         for channel in guild.text_channels:
