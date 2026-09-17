@@ -95,16 +95,17 @@ intents.presences = True
 bot = commands.Bot(command_prefix='/', intents=intents)
 bot.remove_command('help')
 
-# 🧹 हर 24 घंटे में चैट साफ करने वाला टास्क
-@tasks.loop(hours=24)
+# 🧹 हर 30 मिनट में चेक करेगा और 24 घंटे पुराने मैसेज अपने आप डिलीट कर देगा
+@tasks.loop(minutes=30)
 async def auto_clear_chat():
     for guild in bot.guilds:
         for channel in guild.text_channels:
             try:
                 now = datetime.now(timezone.utc)
-                deleted = await channel.purge(limit=100, check=lambda m: (now - m.created_at) > timedelta(hours=4))
+                # यह चेक करेगा कि कौन सा मैसेज 24 घंटे से पुराना है, और उसे डिलीट करेगा
+                deleted = await channel.purge(limit=200, check=lambda m: (now - m.created_at) > timedelta(hours=24))
                 if len(deleted) > 0:
-                    print(f"🧹 {channel.name} से {len(deleted)} मैसेज डिलीट किए गए।")
+                    print(f"🧹 {channel.name} से {len(deleted)} पुराने मैसेज डिलीट किए गए।")
             except Exception:
                 pass
 
