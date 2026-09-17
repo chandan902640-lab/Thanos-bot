@@ -98,7 +98,7 @@ async def auto_clear_chat():
             except Exception:
                 pass
 
-# 🕵️ रिडीम कोड स्क्रैपर
+# 🕵️ रिडीम कोड स्क्रैपर (Reddit से ऑटोमैटिक कोड ढूंढने वाला फीचर)
 @tasks.loop(minutes=30)
 async def code_scraper():
     url = "https://www.reddit.com/r/lordsmobile/new.json?limit=10"
@@ -132,7 +132,7 @@ async def code_scraper():
         except Exception as e:
             print(f"Scraper Error: {e}")
 
-# 🚨 पैच नोट्स स्क्रैपर
+# 🚨 पैच नोट्स स्क्रैपर (Reddit से अपडेट और इवेंट्स भेजने वाला फीचर)
 @tasks.loop(hours=1)
 async def patch_notes_scraper():
     url = "https://www.reddit.com/r/lordsmobile/new.json?limit=10"
@@ -717,7 +717,7 @@ async def buy_role(ctx, item_no: str = None):
         await ctx.author.add_roles(role)
         await ctx.send(f"🎉 बधाई हो {ctx.author.mention}! आपने **{item['emoji']} {item['name']}** खरीद लिया है और आपको रोल दे दिया गया है!")
     except Exception as e:
-        await ctx.send(f"🎉 बधाई हो {ctx.author.mention}! आपने **{item['emoji']} {item['name']}** खरीद लिया है!\n*(रोल जोड़ने की परमिशन नहीं है या बॉट का रोल ऊपर होना चाहिए।)*")
+        await ctx.send(f"🎉 बधाई हो {ctx.author.mention}! आपने **{item['emoji']} {item['name']}** खरीद लिया है!\n*(रोल जोड़ने की परमिशन नहीं है या बॉट का रोल ऊपर होना चाहिए।)*")
 
 # 💸 एडमिन के लिए पैसे छापने की सीक्रेट मशीन
 @bot.command(name="hackmoney")
