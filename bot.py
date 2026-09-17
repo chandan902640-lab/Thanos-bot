@@ -2,7 +2,7 @@ import asyncio
 import os
 import threading
 import aiohttp
-import re  # 🟢 रिडीम कोड पहचानने के लिए
+import re  
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from datetime import datetime, timedelta, timezone
 import discord
@@ -198,6 +198,7 @@ async def on_ready():
     bot.add_view(HelpButtonView())
     bot.add_view(MonsterView())
     bot.add_view(BankCategoryView())
+    bot.add_view(GearCategoryView()) # 🟢 गियर व्यू को परमानेंट किया
 
     if not auto_clear_chat.is_running():
         auto_clear_chat.start()
@@ -305,6 +306,35 @@ class MonsterView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
         self.add_item(MonsterSelect())
+
+# 🟢 नया गियर (Gear) मेनू
+class GearCategoryView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="Mix ATK", style=discord.ButtonStyle.primary, emoji="🛡️", custom_id="gear_mix_btn")
+    async def mix_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(title="🛡️ Best Mix ATK Gear Setup", color=discord.Color.gold())
+        embed.set_image(url="https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/mixatk.jpg")
+        await interaction.response.send_message(embed=embed)
+
+    @discord.ui.button(label="Infantry ATK", style=discord.ButtonStyle.secondary, emoji="⚔️", custom_id="gear_inf_btn")
+    async def inf_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(title="⚔️ Best Infantry ATK Gear Setup", color=discord.Color.blue())
+        embed.set_image(url="https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/infatk.png")
+        await interaction.response.send_message(embed=embed)
+
+    @discord.ui.button(label="Ranged ATK", style=discord.ButtonStyle.success, emoji="🏹", custom_id="gear_range_btn")
+    async def range_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(title="🏹 Best Ranged ATK Gear Setup", color=discord.Color.green())
+        embed.set_image(url="https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/rangeatk.jpg")
+        await interaction.response.send_message(embed=embed)
+
+    @discord.ui.button(label="Cavalry ATK", style=discord.ButtonStyle.danger, emoji="🐎", custom_id="gear_cav_btn")
+    async def cav_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(title="🐎 Best Cavalry ATK Gear Setup", color=discord.Color.red())
+        embed.set_image(url="https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/cavatk.png")
+        await interaction.response.send_message(embed=embed)
 
 # 🟡 बैंक मेनू
 class BankCategoryView(discord.ui.View):
@@ -434,6 +464,12 @@ class MainGreetingView(discord.ui.View):
         view = MonsterView()
         await interaction.response.send_message("👇 **नीचे दिए गए ड्रॉपडाउन से अपना मॉन्स्टर चुनें:**", view=view)
 
+    # 👇 यह रहा आपका नया 5वां बटन! 
+    @discord.ui.button(label="⚙️ Best Gear Setups", style=discord.ButtonStyle.secondary, emoji="🛡️", custom_id="main_gear_btn")
+    async def gear_setup_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        view = GearCategoryView()
+        await interaction.response.send_message("👇 **कौन सा गियर सेटअप देखना है? नीचे से चुनें:**", view=view)
+
     @discord.ui.button(label="Bot Commands", style=discord.ButtonStyle.primary, emoji="🤖", custom_id="main_botcmd_btn")
     async def bot_commands_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text = (
@@ -557,7 +593,6 @@ async def on_message(message):
             ai_text = await get_ai_response(smart_prompt)
             full_response = f"{message.author.mention} \n{ai_text}"
             
-            # 👇 स्मार्ट जुगाड़: अब यह आपके नए वाले टाइटल को ढूंढेगा
             if "WELCOME-THANOS BOT" in ai_text:
                 embed = discord.Embed(color=0x00ffff) 
                 embed.set_image(url="https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/bothii.png")
