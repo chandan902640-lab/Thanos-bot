@@ -48,7 +48,7 @@ async def get_ai_response(prompt):
                     return "⚠️ गूगल ने जवाब देने से मना कर दिया।"
             else:
                 return (
-                    "** 🛑 WELCOME- THANOS BOT 🛑**\n\n"
+                    "**THANOS BOT - WELCOME PANEL**\n\n"
                     "✨ **Hello / नमस्ते Everyone / दोस्तों!**\n"
                     "Thanos Bot is online and ready to help your guild! / गिल्ड की मदद के लिए बॉट तैयार है! 🤖🔥\n\n"
                     "💡 **Type in chat to see commands / कमांड्स देखने के लिए चैट में लिखें:**\n"
@@ -57,9 +57,7 @@ async def get_ai_response(prompt):
                     "• 🏰 **Guild Bank Menu:** All bank commands in one click. / बैंक की सभी कमांड्स एक क्लिक पर।\n"
                     "• 🏹 **Monster Hunt Setup:** View hero setups for 18 monsters. / 18 मॉन्स्टर्स के हीरो सेटअप देखें।\n"
                     "• 🛡️ **/shield Timer:** Set shield timers & alerts. / शील्ड टाइमर और अलर्ट पाएं।\n\n"
-                    "⚠️ **Need Help?** Mention Admin or ask here! / कोई दिक्कत हो तो एडमिन को टैग करें!\n"
-                    # 👇 यहाँ हमने bothii.gif की जगह bothii.png कर दिया है और अदृश्य अक्षर [ㅤ] लगा दिया है
-                    "[ㅤ](https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/bothii.png)"
+                    "⚠️ **Need Help?** Mention Admin or ask here! / कोई दिक्कत हो तो एडमिन को टैग करें!"
                 )
 
 # 📝 बॉट की डायरी (Saved Codes)
