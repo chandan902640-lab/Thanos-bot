@@ -465,7 +465,7 @@ class MainGreetingView(discord.ui.View):
         await interaction.response.send_message("👇 **नीचे दिए गए ड्रॉपडाउन से अपना मॉन्स्टर चुनें:**", view=view)
 
     # 👇 यह रहा आपका नया 5वां बटन! 
-    @discord.ui.button(label="⚙️ Best Gear Setups", style=discord.ButtonStyle.secondary, emoji="🛡️", custom_id="main_gear_btn")
+    @discord.ui.button(label="⚙️ Best Gear Setups", style=discord.ButtonStyle.secondary, emoji="🗡️", custom_id="main_gear_btn")
     async def gear_setup_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = GearCategoryView()
         await interaction.response.send_message("👇 **कौन सा गियर सेटअप देखना है? नीचे से चुनें:**", view=view)
