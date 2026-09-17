@@ -449,30 +449,30 @@ class BankCategoryView(discord.ui.View):
         )
         await interaction.response.send_message(text)
          
-# 🟢 मुख्य मेनू (बटन्स के नए कलर्स के साथ)
+# 🟢 मुख्य मेनू (बटन्स के सही कलर्स के साथ)
 class MainGreetingView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    # 1. Guild Bank (Green - Success)
-    @discord.ui.button(label="Guild Bank Commands", style=discord.ButtonStyle.success, emoji="🏦", custom_id="main_bank_btn")
+    # 1. Guild Bank (Primary - Blue)
+    @discord.ui.button(label="Guild Bank Commands", style=discord.ButtonStyle.primary, emoji="🏦", custom_id="main_bank_btn")
     async def open_bank_menu_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = BankCategoryView()
         await interaction.response.send_message("👇 **किस तरह की बैंक कमांड्स देखनी हैं?**", view=view)
 
-    # 2. Monster Hunt (Blurple - Primary)
-    @discord.ui.button(label="🏹 Monster Hunt", style=discord.ButtonStyle.primary, emoji="🐲", custom_id="main_monster_btn")
+    # 2. Monster Hunt (Success - Green)
+    @discord.ui.button(label="🏹 Monster Hunt", style=discord.ButtonStyle.success, emoji="🐲", custom_id="main_monster_btn")
     async def monster_hunt_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = MonsterView()
         await interaction.response.send_message("👇 **नीचे दिए गए ड्रॉपडाउन से अपना मॉन्स्टर चुनें:**", view=view)
 
-    # 3. Best Gear Setups (Grey - Secondary / Neutral)
+    # 3. Best Gear Setups (Secondary - Grey)
     @discord.ui.button(label="⚙️ Best Gear Setups", style=discord.ButtonStyle.secondary, emoji="🛡️", custom_id="main_gear_btn")
     async def gear_setup_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = GearCategoryView()
         await interaction.response.send_message("👇 **कौन सा गियर सेटअप देखना है? नीचे से चुनें:**", view=view)
 
-    # 4. Bot Commands (Blurple - Skyblue vibe)
+    # 4. Bot Commands (Primary - Blue)
     @discord.ui.button(label="Bot Commands", style=discord.ButtonStyle.primary, emoji="🤖", custom_id="main_botcmd_btn")
     async def bot_commands_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text = (
@@ -486,7 +486,7 @@ class MainGreetingView(discord.ui.View):
         )
         await interaction.response.send_message(text)
 
-    # 5. Clear My Chat (Red - Danger)
+    # 5. Clear My Chat (Danger - Red)
     @discord.ui.button(label="Clear My Chat", style=discord.ButtonStyle.danger, emoji="🗑️", custom_id="main_clearchat_btn")
     async def clear_chat_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = ClearConfirmView(interaction.user)
