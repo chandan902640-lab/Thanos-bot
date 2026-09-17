@@ -168,7 +168,6 @@ async def patch_notes_scraper():
                         text = p_data.get('selftext', '')
                         full_content = (title + " " + text).lower()
                         
-                        # चेक करें कि क्या यह पैच नोट्स या अपडेट से जुड़ा है
                         if any(keyword in full_content for keyword in ["update", "patch", "maintenance", "notes", "event"]):
                             if post_id not in saved_patches:
                                 save_patch_id(post_id)
@@ -176,18 +175,15 @@ async def patch_notes_scraper():
                                 image_url = p_data.get('url', None)
                                 post_permalink = f"https://www.reddit.com{p_data.get('permalink', '')}"
                                 
-                                # डिस्कॉर्ड Embed बनाना (बैनर के साथ)
                                 embed = discord.Embed(
                                     title="🚨 New Lords Mobile Update & Patch Notes!",
                                     description=f"**{title}**\n\n🔗 [Read full post on Reddit]({post_permalink})",
                                     color=discord.Color.gold()
                                 )
                                 
-                                # अगर पोस्ट में वैध बैनर/फोटो है तो उसे जोड़ें
                                 if image_url and any(image_url.endswith(ext) for ext in ['.jpg', '.png', '.jpeg']):
                                     embed.set_image(url=image_url)
                                 
-                                # सर्वर के सभी चैनल्स पर ब्रॉडकास्ट करें
                                 for guild in bot.guilds:
                                     for channel in guild.text_channels:
                                         if channel.permissions_for(guild.me).send_messages:
@@ -232,8 +228,7 @@ class HelpButtonView(discord.ui.View):
             "🧠 **Smart AI Chat:** चैनल में कोई भी बात करें, बॉट जवाब देगा!\n"
             "🐲 **Monster Hunt:** मेनू से 'Monster Hunt' बटन दबाकर 18 मॉन्स्टर्स के हीरो सेटअप देखें!\n"
             "🛡️ **`/shield [घंटे]`** - एडवांस शील्ड टाइमर (15 मिनट पहले अलर्ट देगा)।\n"
-            "🗑️ **`/clearall`** - चैनल के सारे मैसेज डिलीट करने के लिए (एडमिन के लिए)।",
-            ephemeral=True
+            "🗑️ **`/clearall`** - चैनल के सारे मैसेज डिलीट करने के लिए (एडमिन के लिए)।"
         )
 
 # ⚠️ चैट डिलीट कंफर्मेशन
@@ -260,7 +255,7 @@ class ClearConfirmView(discord.ui.View):
         if interaction.user != self.author:
             await interaction.response.send_message("❌ नो परमिशन!")
             return
-        await interaction.response.edit_message(content="❌ प्रोसेस रद्द कर दिया गया है।", view=None)
+        await interaction.response.edit_message(content="❌ प्रोसेस रद्द कर दिया गया है。", view=None)
 
 # 🐲 18 मॉन्स्टर्स की लिस्ट
 MONSTERS = {
@@ -302,7 +297,7 @@ class MonsterSelect(discord.ui.Select):
         embed2 = discord.Embed(title=f"⚔️ Recommended Hero Setup for {name}", color=discord.Color.blue())
         embed2.set_image(url=setup_url)
         
-        await interaction.response.send_message(embeds=[embed1, embed2], ephemeral=True)
+        await interaction.response.send_message(embeds=[embed1, embed2])
 
 class MonsterView(discord.ui.View):
     def __init__(self):
@@ -317,7 +312,7 @@ class BankCategoryView(discord.ui.View):
     @discord.ui.button(label="Tips", style=discord.ButtonStyle.secondary, emoji="💡", custom_id="bank_tips_btn")
     async def tips_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text = "**💡 BANK TIPS & TRICKS:**\n\nUse underscore ('!setacc Player_1').\nHero Stages: Bank will not respond during long hero stages."
-        await interaction.response.send_message(text, ephemeral=True)
+        await interaction.response.send_message(text)
 
     @discord.ui.button(label="General", style=discord.ButtonStyle.success, emoji="📌", custom_id="bank_general_btn")
     async def general_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -376,8 +371,8 @@ class BankCategoryView(discord.ui.View):
             "`!leaveda` ➡️ Leaves Dragon Arena for your guild\n"
         )
         
-        await interaction.response.send_message(text1, ephemeral=True)
-        await interaction.followup.send(text2, ephemeral=True)
+        await interaction.response.send_message(text1)
+        await interaction.followup.send(text2)
 
     @discord.ui.button(label="Search", style=discord.ButtonStyle.primary, emoji="🔍", custom_id="bank_search_btn")
     async def search_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -393,7 +388,7 @@ class BankCategoryView(discord.ui.View):
             "`!findnestlocal [level]` ➡️ Search for a Darknest around your castle\n\n"
             "*(Note: The bank will send all search results directly to your in-game mail!)*"
         )
-        await interaction.response.send_message(text, ephemeral=True)
+        await interaction.response.send_message(text)
         
     @discord.ui.button(label="Balance", style=discord.ButtonStyle.secondary, emoji="⚖️", custom_id="bank_balance_btn")
     async def balance_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -408,7 +403,7 @@ class BankCategoryView(discord.ui.View):
             "`!transfer [player] [type] [amt]` ➡️ Transfers your balance to another player\n"
             "`!setrsslimit [type] [amt]` ➡️ Sets a minimum RSS limit the bank won't go below\n"
         )
-        await interaction.response.send_message(text, ephemeral=True)
+        await interaction.response.send_message(text)
 
     @discord.ui.button(label="Resource", style=discord.ButtonStyle.danger, emoji="💰", custom_id="bank_resource_btn")
     async def resource_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -420,7 +415,7 @@ class BankCategoryView(discord.ui.View):
             "`!admin[type] [player] [amt]` ➡️ Admin command to send specific RSS to a player\n"
             "`!adminrss [F] [S] [W] [O] [G] [player]` ➡️ Admin sends all types of RSS to a player\n"
         )
-        await interaction.response.send_message(text, ephemeral=True)
+        await interaction.response.send_message(text)
          
 # 🟢 मुख्य मेनू
 class MainGreetingView(discord.ui.View):
@@ -430,12 +425,12 @@ class MainGreetingView(discord.ui.View):
     @discord.ui.button(label="Guild Bank Commands", style=discord.ButtonStyle.success, emoji="🏦", custom_id="main_bank_btn")
     async def open_bank_menu_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = BankCategoryView()
-        await interaction.response.send_message("👇 **किस तरह की बैंक कमांड्स देखनी हैं?**", view=view, ephemeral=True)
+        await interaction.response.send_message("👇 **किस तरह की बैंक कमांड्स देखनी हैं?**", view=view)
 
     @discord.ui.button(label="🏹 Monster Hunt", style=discord.ButtonStyle.green, emoji="🐲", custom_id="main_monster_btn")
     async def monster_hunt_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = MonsterView()
-        await interaction.response.send_message("👇 **नीचे दिए गए ड्रॉपडाउन से अपना मॉन्स्टर चुनें:**", view=view, ephemeral=True)
+        await interaction.response.send_message("👇 **नीचे दिए गए ड्रॉपडाउन से अपना मॉन्स्टर चुनें:**", view=view)
 
     @discord.ui.button(label="Bot Commands", style=discord.ButtonStyle.primary, emoji="🤖", custom_id="main_botcmd_btn")
     async def bot_commands_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -446,14 +441,14 @@ class MainGreetingView(discord.ui.View):
             "🛡️ **`/shield [hours]`** -➔ Shield timer with alerts. ➔ /शील्ड टाइमर और अलर्ट।\n"
             "🎁 **Auto Redeem Codes:** ➔Bot will automatically send new redeem codes. ➔ नया रिडीम कोड आने पर बॉट आपको ऑटोमैटिक रिडीम कोड भेजेगा।\n"
             "🚨 **Event & Patch Notes:**➔ Bot will automatically send event pages. ➔ नया इवेंट आने पर बॉट आपको ऑटोमैटिक इवेंट पेज भेजेगा।\n"
-            "🗑️ **`/clearall` / Clear Chat:** ➔Clean up chat messages. ➔/ चैट साफ़ करें।"
+            "🗑️ **`/clearall` / Clear Chat:** ➔Clean up chat messages. ➔/ चैट साफ़ करें।"
         )
-        await interaction.response.send_message(text, ephemeral=True)
+        await interaction.response.send_message(text)
 
     @discord.ui.button(label="Clear My Chat", style=discord.ButtonStyle.danger, emoji="🗑️", custom_id="main_clearchat_btn")
     async def clear_chat_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = ClearConfirmView(interaction.user)
-        await interaction.response.send_message("⚠️ **चेतावनी:** क्या आप अपने और बॉट के मैसेज डिलीट करना चाहते हैं?", view=view, ephemeral=True)
+        await interaction.response.send_message("⚠️ **चेतावनी:** क्या आप अपने और बॉट के मैसेज डिलीट करना चाहते हैं?", view=view)
 
 # 🗑️ क्लियर कमांड 
 @bot.command()
@@ -572,4 +567,4 @@ token = os.environ.get("DISCORD_TOKEN")
 if token:
     bot.run(token)
 else:
-    print("❌ Error: DISCORD_TOKEN environment variable not found!")
+    print("❌ Error: DISCORD_TOKEN environment variable not found")
