@@ -77,7 +77,7 @@ def save_patch_id(post_id):
     with open(PATCH_FILE, "a") as f:
         f.write(f"{post_id}\n")
 
-# 🤖 Discord Bot सेटअप (अब प्रिफिक्स '!' है ताकि कोई पॉप-अप एरर न आए)
+# 🤖 Discord Bot सेटअप
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
@@ -654,11 +654,15 @@ async def buy_role(ctx, item_no: str = None):
     try:
         role = discord.utils.get(ctx.guild.roles, name=item['name'])
         if not role:
-            role = await ctx.guild.create_role(name=item['name'], color=discord.Color.random())
+            # hoist=True से रोल अपने आप मेंबर लिस्ट में अलग दिखने लगेगा
+            role = await ctx.guild.create_role(name=item['name'], color=discord.Color.random(), hoist=True)
+        else:
+            if not role.hoist:
+                await role.edit(hoist=True)
         await ctx.author.add_roles(role)
         await ctx.send(f"🎉 बधाई हो {ctx.author.mention}! आपने **{item['emoji']} {item['name']}** खरीद लिया है और आपको रोल दे दिया गया है!")
-    except Exception:
-        await ctx.send(f"🎉 बधाई हो {ctx.author.mention}! आपने **{item['emoji']} {item['name']}** खरीद लिया है!\n*(रोल जोड़ने की परमिशन नहीं है, एडमिन से संपर्क करें।)*")
+    except Exception as e:
+        await ctx.send(f"🎉 बधाई हो {ctx.author.mention}! आपने **{item['emoji']} {item['name']}** खरीद लिया है!\n*(रोल जोड़ने की परमिशन नहीं है या बॉट का रोल ऊपर होना चाहिए।)*")
 
 # 💸 एडमिन के लिए पैसे छापने की सीक्रेट मशीन
 @bot.command(name="hackmoney")
