@@ -46,22 +46,20 @@ async def get_ai_response(prompt):
                     return result['candidates'][0]['content']['parts'][0]['text']
                 except:
                     return "⚠️ गूगल ने जवाब देने से मना कर दिया।"
-            async with message.channel.typing():
-        try:
-            ai_text = await get_ai_response(smart_prompt)
-            full_response = f"{message.author.mention} \n{ai_text}"
-            
-            # 🟢 नया जुगाड़: अगर यह वेलकम पैनल है, तो बिना लिंक दिखाए Embed के ज़रिए फोटो भेजें
-            if "THANOS BOT - WELCOME PANEL" in ai_text:
-                embed = discord.Embed(color=0x00ffff) # यह आपके रोबोट से मैच करता हुआ Cyan कलर है
-                embed.set_image(url="https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/bothii.png")
-                await message.channel.send(full_response, embed=embed)
             else:
-                for i in range(0, len(full_response), 1900):
-                    await message.channel.send(full_response[i:i+1900])
-                
-        except Exception as e:
-            await message.channel.send(f"❌ एरर आ गया: {str(e)[:1800]}")
+                # 👇 यहाँ से लिंक हटा दिया गया है ताकि टेक्स्ट में न दिखे
+                return (
+                    "**THANOS BOT - WELCOME PANEL**\n\n"
+                    "✨ **Hello / नमस्ते Everyone / दोस्तों!**\n"
+                    "Thanos Bot is online and ready to help your guild! / गिल्ड की मदद के लिए बॉट तैयार है! 🤖🔥\n\n"
+                    "💡 **Type in chat to see commands / कमांड्स देखने के लिए चैट में लिखें:**\n"
+                    "`hi` or / `hello`\n\n"
+                    "📌 **Key Features / मुख्य विशेषताएं:**\n"
+                    "• 🏰 **Guild Bank Menu:** All bank commands in one click. / बैंक की सभी कमांड्स एक क्लिक पर।\n"
+                    "• 🏹 **Monster Hunt Setup:** View hero setups for 18 monsters. / 18 मॉन्स्टर्स के हीरो सेटअप देखें।\n"
+                    "• 🛡️ **/shield Timer:** Set shield timers & alerts. / शील्ड टाइमर और अलर्ट पाएं।\n\n"
+                    "⚠️ **Need Help?** Mention Admin or ask here! / कोई दिक्कत हो तो एडमिन को टैग करें!"
+                )
 
 # 📝 बॉट की डायरी (Saved Codes)
 CODES_FILE = "saved_codes.txt"
@@ -269,6 +267,7 @@ class ClearConfirmView(discord.ui.View):
             await interaction.response.send_message("❌ नो परमिशन!")
             return
         await interaction.response.edit_message(content="❌ प्रोसेस रद्द कर दिया गया है。", view=None)
+
 # 🐲 18 मॉन्स्टर्स की लिस्ट
 MONSTERS = {
     "1": ("Queen Bee", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Queen%20Bee.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/1.png"),
@@ -448,11 +447,11 @@ class MainGreetingView(discord.ui.View):
     async def bot_commands_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text = (
             "✨ **THANOS BOT COMMANDS & FEATURES / बॉट की कमांड्स और फीचर्स:**\n\n"
-            "🏦 **Guild Bank Menu:** ➔Access bank commands instantly. ➔ बैंक कमांड्स का आसान मेनू।\n"
-            "🐲 **Monster Hunt:** View ➔18 monster hero setups. ➔ 18 मॉन्स्टर्स के हीरो सेटअप देखें।\n"
-            "🛡️ **`/shield [hours]`** -➔ Shield timer with alerts. ➔ /शील्ड टाइमर और अलर्ट।\n"
-            "🎁 **Auto Redeem Codes:** ➔Bot will automatically send new redeem codes. ➔ नया रिडीम कोड आने पर बॉट आपको ऑटोमैटिक रिडीम कोड भेजेगा।\n"
-            "🚨 **Event & Patch Notes:**➔ Bot will automatically send event pages. ➔ नया इवेंट आने पर बॉट आपको ऑटोमैटिक इवेंट पेज भेजेगा।\n"
+            "🏦 **Guild Bank Menu:** ➔Access bank commands instantly. ➔ बैंक कमांड्स का आसान मेनू。\n"
+            "🐲 **Monster Hunt:** View ➔18 monster hero setups. ➔ 18 मॉन्स्टर्स के हीरो सेटअप देखें。\n"
+            "🛡️ **`/shield [hours]`** -➔ Shield timer with alerts. ➔ /शील्ड टाइमर और अलर्ट。\n"
+            "🎁 **Auto Redeem Codes:** ➔Bot will automatically send new redeem codes. ➔ नया रिडीम कोड आने पर बॉट आपको ऑटोमैटिक रिडीम कोड भेजेगा。\n"
+            "🚨 **Event & Patch Notes:**➔ Bot will automatically send event pages. ➔ नया इवेंट आने पर बॉट आपको ऑटोमैटिक इवेंट पेज भेजेगा。\n"
             "🗑️ **`/clearall` / Clear Chat:** ➔Clean up chat messages. ➔/ चैट साफ़ करें।"
         )
         await interaction.response.send_message(text)
@@ -567,8 +566,14 @@ async def on_message(message):
             ai_text = await get_ai_response(smart_prompt)
             full_response = f"{message.author.mention} \n{ai_text}"
             
-            for i in range(0, len(full_response), 1900):
-                await message.channel.send(full_response[i:i+1900])
+            # 👇 यहाँ है स्मार्ट जुगाड़: अगर यह वेलकम पैनल है, तो बिना लिंक दिखाए Embed से फोटो भेजें
+            if "THANOS BOT - WELCOME PANEL" in ai_text:
+                embed = discord.Embed(color=0x00ffff) # यह आपके रोबोट से मैच करता हुआ Cyan कलर है
+                embed.set_image(url="https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/bothii.png")
+                await message.channel.send(full_response, embed=embed)
+            else:
+                for i in range(0, len(full_response), 1900):
+                    await message.channel.send(full_response[i:i+1900])
                 
         except Exception as e:
             await message.channel.send(f"❌ एरर आ गया: {str(e)[:1800]}")
