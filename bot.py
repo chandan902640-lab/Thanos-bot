@@ -1,4 +1,3 @@
-import random
 import asyncio
 import os
 import threading
@@ -578,6 +577,7 @@ async def on_message(message):
 
     words = msg_lower.split()
     
+    # 👇 यह रहा आपका मेन फिक्स! अब "hi" लिखने पर फोटो और बटन दोनों आएंगे!
     if len(words) <= 2 and any(w in words for w in ["hi", "hii", "hello", "hey", "namaste"]):
         view = MainGreetingView()
         
@@ -588,11 +588,10 @@ async def on_message(message):
             "👇 **Click buttons below for Bot Commands & Guild Bank / बॉट कमांड्स और बैंक के लिए नीचे बटन दबाएं:**"
         )
         
-        random_color = random.choice([0xFFA500, 0xFFFF00, 0xFFC0CB, 0xFFFFFF])
-        # 👇 फिक्स: टेक्स्ट को सीधा Embed के अंदर डाल दिया, ताकि खाली पट्टी का एरर ना आए!
-        embed = discord.Embed(description=welcome_text, color=random_color) 
+        embed = discord.Embed(color=0x00ffff) 
+        embed.set_image(url="https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/bothii.png")
         
-        await message.channel.send(embed=embed, view=view)
+        await message.channel.send(content=welcome_text, embed=embed, view=view)
         return
 
     prompt = message.clean_content.strip()
@@ -607,19 +606,17 @@ async def on_message(message):
             full_response = f"{message.author.mention} \n{ai_text}"
             
             if "WELCOME-THANOS BOT" in ai_text:
-                random_color = random.choice([0xFFA500, 0xFFFF00, 0xFFC0CB, 0xFFFFFF])
-                # 👇 फिक्स: यहाँ भी टेक्स्ट को Embed के अंदर डाल दिया
-                embed = discord.Embed(description=full_response, color=random_color) 
-                
+                embed = discord.Embed(color=0x00ffff) 
+                embed.set_image(url="https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/bothii.png")
                 view = MainGreetingView()
-                await message.channel.send(embed=embed, view=view)
+                await message.channel.send(content=full_response, embed=embed, view=view)
             else:
                 for i in range(0, len(full_response), 1900):
                     await message.channel.send(full_response[i:i+1900])
                 
         except Exception as e:
             await message.channel.send(f"❌ एरर आ गया: {str(e)[:1800]}")
-            
+
 # 🏃 बॉट चालू करें
 keep_alive()
 token = os.environ.get("DISCORD_TOKEN")
