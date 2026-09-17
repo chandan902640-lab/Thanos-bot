@@ -245,22 +245,20 @@ class ClearConfirmView(discord.ui.View):
     @discord.ui.button(label="✅ Confirm - Clear My Chat", style=discord.ButtonStyle.danger)
     async def confirm_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.author:
-            await interaction.response.send_message("❌ आप इसे यूज़ नहीं कर सकते! अपना बटन खुद दबाएं।", ephemeral=True)
+            await interaction.response.send_message("❌ आप इसे यूज़ नहीं कर सकते! अपना बटन खुद दबाएं।")
             return
         
-        await interaction.response.send_message("🧹 आपकी चैट साफ हो रही...", ephemeral=True)
+        await interaction.response.send_message("🧹 आपकी चैट तुरंत साफ हो रही...")
         try:
-            def is_user_or_bot(m):
-                return m.author == interaction.user or m.author == interaction.client.user
-            
-            await interaction.channel.purge(limit=100, check=is_user_or_bot)
+            # यहाँ बिना किसी टाइम लिमिट के तुरंत ताज़ा 500 मैसेज तक डिलीट हो जाएंगे
+            await interaction.channel.purge(limit=500)
         except Exception:
             pass
 
     @discord.ui.button(label="❌ Cancel", style=discord.ButtonStyle.secondary)
     async def cancel_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.author:
-            await interaction.response.send_message("❌ नो परमिशन!", ephemeral=True)
+            await interaction.response.send_message("❌ नो परमिशन!")
             return
         await interaction.response.edit_message(content="❌ प्रोसेस रद्द कर दिया गया है।", view=None)
 
