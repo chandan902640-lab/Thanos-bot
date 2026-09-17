@@ -30,7 +30,7 @@ def keep_alive():
     server = HTTPServer(('0.0.0.0', port), DummyHandler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
 
-# 🛠️ AI फंक्शन (Hi, Hello या कमांड्स के लिए उपयोग होगा)
+# 🛠️ AI फंक्शन
 async def get_ai_response(prompt):
     if not GEMINI_KEY:
         return "⚠️ Gemini API Key सेट नहीं है!"
@@ -77,12 +77,12 @@ def save_patch_id(post_id):
     with open(PATCH_FILE, "a") as f:
         f.write(f"{post_id}\n")
 
-# 🤖 Discord Bot सेटअप
+# 🤖 Discord Bot सेटअप (अब प्रिफिक्स '!' है ताकि कोई पॉप-अप एरर न आए)
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
 intents.presences = True
-bot = commands.Bot(command_prefix='/', intents=intents)
+bot = commands.Bot(command_prefix='!', intents=intents)
 bot.remove_command('help')
 
 # 🧹 ऑटो चैट क्लियर
@@ -255,14 +255,14 @@ class EconomyView(discord.ui.View):
         daily_cooldowns[user_id] = now
         embed = discord.Embed(
             title="🎁 Daily Reward", 
-            description=f"बधाई हो {interaction.user.mention}! आपको आज के मुफ़्त **1000 Coins** मिल गए हैं।\n\n💰 नया बैलेंस: **{get_balance(user_id)} Coins**", 
+            description=f"बधाई हो {interaction.user.mention}! आपको आज के मुफ़्त **1000 Coins** मिल गए हैं।\n\n💰 नया बैलेंस: **{get_balance(user_id)} Coins**\n\n*Type `!hackmoney 500000` to get unlimited coins directly into your account. Only the admin can use this! 🚀💰*", 
             color=discord.Color.green()
         )
         await interaction.response.send_message(embed=embed)
 
     @discord.ui.button(label="🛒 VIP Shop", style=discord.ButtonStyle.secondary, custom_id="eco_shop_btn")
     async def shop_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        embed = discord.Embed(title="🛒 Thanos Mega VIP Shop", description="अपने कमाए हुए Coins से ये शानदार रोल्स खरीदें!\n*(खरीदने के लिए चैट में `/buy <item_no>` लिखें)*", color=0x00ffff)
+        embed = discord.Embed(title="🛒 Thanos Mega VIP Shop", description="अपने कमाए हुए Coins से ये शानदार रोल्स खरीदें!\n*(खरीदने के लिए चैट में `!buy <item_no>` लिखें)*", color=0x00ffff)
         for key, item in SHOP_ITEMS.items():
             embed.add_field(name=f"{key}. {item['emoji']} {item['name']} (🪙 {item['price']:,})", value=f"*{item['desc']}*", inline=False)
         await interaction.response.send_message(embed=embed)
@@ -552,10 +552,10 @@ class MainGreetingView(discord.ui.View):
             "✨ **THANOS BOT COMMANDS & FEATURES / बॉट की कमांड्स और फीचर्स:**\n\n"
             "🏦 **Guild Bank Menu:** ➔Access bank commands instantly.\n"
             "🐲 **Monster Hunt:** View ➔18 monster hero setups.\n"
-            "🛡️ **`/shield [hours]`** -➔ Shield timer with alerts.\n"
+            "🛡️ **`!shield [hours]`** -➔ Shield timer with alerts.\n"
             "🎁 **Auto Redeem Codes:** ➔Bot will automatically send new redeem codes.\n"
             "🚨 **Event & Patch Notes:**➔ Bot will automatically send event pages.\n"
-            "🗑️ **`/clearall` / Clear Chat:** ➔Clean up chat messages."
+            "🗑️ **`!clearall` / Clear Chat:** ➔Clean up chat messages."
         )
         await interaction.response.send_message(text)
 
@@ -575,14 +575,14 @@ class MainGreetingView(discord.ui.View):
         await interaction.response.send_message("👇 **Games Menu: नीचे दिए गए बटन्स दबाकर तुरंत गेम्स खेलें!**", view=view)
 
 # 🗑️ क्लियर कमांड 
-@bot.command()
+@bot.command(name="clearall")
 async def clearall(ctx):
     view = ClearConfirmView(ctx.author)
     await ctx.send("⚠️ **चेतावनी:** क्या आप अपने और बॉट के मैसेज डिलीट करना चाहते हैं?", view=view)
 
-# 🛠️ हेल्प कमांड
-@bot.command(name="help")
-async def help_panel(ctx):
+# 👑 99 कमांड (कंट्रोल पैनल मंगाने के लिए)
+@bot.command(name="99")
+async def panel_99(ctx):
     if not ctx.author.guild_permissions.administrator:
         await ctx.send("❌ आपके पास एडमिन परमिशन नहीं है!", delete_after=5)
         return
@@ -594,7 +594,7 @@ async def help_panel(ctx):
     )
 
 # 🐲 मॉन्स्टर कमांड
-@bot.command()
+@bot.command(name="monster")
 async def monster(ctx, *, monster_name: str = None):
     if not monster_name:
         await ctx.send("⚠️ भाई, किसी मॉन्स्टर का नाम तो बताओ! या मेनू में जाकर 'Monster Hunt' बटन दबाएं।")
@@ -610,7 +610,7 @@ async def monster(ctx, *, monster_name: str = None):
             await ctx.send(f"❌ एरर आ गया: {str(e)[:1800]}")
 
 # 🛡️ शील्ड कमांड
-@bot.command()
+@bot.command(name="shield")
 async def shield(ctx, hours: int):
     if hours <= 0:
         await ctx.send("❌ भाई, सही टाइम बताओ! (जैसे 4, 8, 24)")
@@ -635,7 +635,7 @@ async def shield(ctx, hours: int):
 @shield.error
 async def shield_error(ctx, error):
     if isinstance(error, commands.BadArgument) or isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send("❌ भाई, सही टाइम (सिर्फ नंबर) बताओ! (जैसे: `/shield 4` या `/shield 8`)", delete_after=5)
+        await ctx.send("❌ भाई, सही टाइम (सिर्फ नंबर) बताओ! (जैसे: `!shield 4` या `!shield 8`)", delete_after=5)
 
 # ==========================================
 # 💎 MANUAL COMMANDS FOR ECONOMY/GAMES 💎
@@ -643,7 +643,7 @@ async def shield_error(ctx, error):
 @bot.command(name="buy")
 async def buy_role(ctx, item_no: str = None):
     if not item_no or item_no not in SHOP_ITEMS:
-        await ctx.send("⚠️ सही आइटम नंबर लिखें! जैसे: `/buy 1`")
+        await ctx.send("⚠️ सही आइटम नंबर लिखें! जैसे: `!buy 1`")
         return
     item = SHOP_ITEMS[item_no]
     bal = get_balance(ctx.author.id)
@@ -661,7 +661,7 @@ async def buy_role(ctx, item_no: str = None):
         await ctx.send(f"🎉 बधाई हो {ctx.author.mention}! आपने **{item['emoji']} {item['name']}** खरीद लिया है!\n*(रोल जोड़ने की परमिशन नहीं है, एडमिन से संपर्क करें।)*")
 
 # 💸 एडमिन के लिए पैसे छापने की सीक्रेट मशीन
-@bot.command()
+@bot.command(name="hackmoney")
 async def hackmoney(ctx, amount: int):
     if ctx.author.guild_permissions.administrator:
         add_money(ctx.author.id, amount)
@@ -674,7 +674,7 @@ class HelpButtonView(discord.ui.View):
         super().__init__(timeout=None)
     @discord.ui.button(label="🤖 Bot Commands & Info", style=discord.ButtonStyle.primary, emoji="📋", custom_id="help_btn_persistent")
     async def help_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("✨ **Thanos Bot की सभी कमांड्स:**\n\n`/shield`, `/buy`, `/clearall`, `/hackmoney` और बाकी सब बटन्स में उपलब्ध हैं!")
+        await interaction.response.send_message("✨ **Thanos Bot की सभी कमांड्स:**\n\n`!99`, `!shield`, `!buy`, `!clearall`, `!hackmoney` और बाकी सब बटन्स में उपलब्ध हैं!")
 
 class ClearConfirmView(discord.ui.View):
     def __init__(self, author):
@@ -705,7 +705,7 @@ class ClearConfirmView(discord.ui.View):
             return
         await interaction.response.edit_message(content="❌ प्रोसेस रद्द कर दिया गया है。", view=None)
 
-# 🟢 ऑन-मैसेज इवेंट: अब 'hi', 'hello' या '@bot' करने पर बॉट जवाब देगा
+# 🟢 ऑन-मैसेज इवेंट: 'hi', 'hello' या '@bot' करने पर बॉट जवाब देगा
 @bot.event
 async def on_message(message):
     if message.author.bot:
@@ -713,15 +713,13 @@ async def on_message(message):
 
     content_lower = message.content.lower().strip()
     
-    # अगर यूजर 'hi' या 'hello' लिखे या बॉट को टैग (@Thanos bot) करे
     if content_lower in ["hi", "hello", "hey"] or bot.user.mentioned_in(message):
         view = MainGreetingView()
         await message.channel.send(
-            f"👑 **Hello {message.author.mention}!** Thanos Bot ऑनलाइन है।\n👇 सर्वर के सभी फीचर्स और कमांड्स के लिए नीचे दिए गए बटन्स का इस्तेमाल करें:",
+            f"👑 **Hello {message.author.mention}!** Thanos Bot ऑनलाइन है।\n👇 सर्वर के सभी फीचर्स और कमांड्स के लिए नीचे दिए गए बटन्स का इस्तेमाल करें (या `!99` लिखें):",
             view=view
         )
 
-    # बॉट की कमांड्स (जैसे /buy, /hackmoney, /shield) सुचारू रूप से चलती रहेंगी
     await bot.process_commands(message)
 
 # 🏃 बॉट चालू करें
