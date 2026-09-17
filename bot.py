@@ -58,7 +58,8 @@ async def get_ai_response(prompt):
                     "• 🏹 **Monster Hunt Setup:** View hero setups for 18 monsters. / 18 मॉन्स्टर्स के हीरो सेटअप देखें।\n"
                     "• 🛡️ **/shield Timer:** Set shield timers & alerts. / शील्ड टाइमर और अलर्ट पाएं।\n\n"
                     "⚠️ **Need Help?** Mention Admin or ask here! / कोई दिक्कत हो तो एडमिन को टैग करें!\n"
-                    "[\u200B](https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/bothii.gif)"
+                    # 👇 यहाँ हमने bothii.gif की जगह bothii.png कर दिया है और अदृश्य अक्षर [ㅤ] लगा दिया है
+                    "[ㅤ](https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/bothii.png)"
                 )
 
 # 📝 बॉट की डायरी (Saved Codes)
