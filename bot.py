@@ -30,7 +30,7 @@ def keep_alive():
     server = HTTPServer(('0.0.0.0', port), DummyHandler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
 
-# 🛠️ AI फंक्शन (फिक्स: अब यहाँ से वेलकम मैसेज नहीं आएगा)
+# 🛠️ AI फंक्शन (सिर्फ कमांड्स या मॉन्स्टर हंट के लिए उपयोग होगा)
 async def get_ai_response(prompt):
     if not GEMINI_KEY:
         return "⚠️ Gemini API Key सेट नहीं है!"
@@ -214,23 +214,23 @@ def add_money(user_id, amount):
     save_economy(data)
 
 # ==========================================
-# 🛒 MEGA VIP SHOP ITEMS (10 Items)
+# 🛒 MEGA VIP SHOP ITEMS (10 Items with Emojis & Use)
 # ==========================================
 SHOP_ITEMS = {
-    "1": {"name": "VIP Member", "price": 10000, "desc": "चैट में नाम का रंग अलग दिखेगा और VIP चैनल में एंट्री मिलेगी।"},
-    "2": {"name": "Monster Hunter", "price": 25000, "desc": "हंटिंग टीम का स्पेशल रोल और मॉन्स्टर अलर्ट्स।"},
-    "3": {"name": "Casino Master", "price": 40000, "desc": "सर्वर के सबसे बड़े जुआरी का टैग और स्पेशल एक्सेस।"},
-    "4": {"name": "Dragon Killer", "price": 50000, "desc": "ड्रैगन हंटर्स के एलीट ग्रुप की पहचान और पावर।"},
-    "5": {"name": "Rally Leader", "price": 60000, "desc": "डार्कनेस्ट रैली लीड करने वालों का खास रोल।"},
-    "6": {"name": "Bank Manager", "price": 75000, "desc": "गिल्ड बैंक की सिक्योरिटी और ट्रस्टेड मेंबर का टैग।"},
-    "7": {"name": "War General", "price": 85000, "desc": "KVK और गिल्ड वॉर के कमांडर्स की पहचान।"},
-    "8": {"name": "Guild King", "price": 100000, "desc": "सर्वर का सबसे प्रो प्लेयर और असली किंग।"},
-    "9": {"name": "Thanos Champion", "price": 150000, "desc": "बॉट का सबसे अमीर और टॉप लेवल गेमर।"},
-    "10": {"name": "Server Legend", "price": 200000, "desc": "सर्वर का भगवान! एडमिन के बाद सबसे बड़ी इज्जत।"}
+    "1": {"name": "VIP Member", "price": 10000, "emoji": "💎", "desc": "चैट में नाम का रंग अलग दिखेगा और VIP चैनल में एंट्री मिलेगी।"},
+    "2": {"name": "Monster Hunter", "price": 25000, "emoji": "🏹", "desc": "हंटिंग टीम का स्पेशल रोल और मॉन्स्टर अलर्ट्स।"},
+    "3": {"name": "Casino Master", "price": 40000, "emoji": "🎰", "desc": "सर्वर के सबसे बड़े जुआरी का टैग और स्पेशल एक्सेस।"},
+    "4": {"name": "Dragon Killer", "price": 50000, "emoji": "🐲", "desc": "ड्रैगन हंटर्स के एलीट ग्रुप की पहचान और पावर।"},
+    "5": {"name": "Rally Leader", "price": 60000, "emoji": "⚔️", "desc": "डार्कनेस्ट रैली लीड करने वालों का खास रोल।"},
+    "6": {"name": "Bank Manager", "price": 75000, "emoji": "🏦", "desc": "गिल्ड बैंक की सिक्योरिटी और ट्रस्टेड मेंबर का टैग।"},
+    "7": {"name": "War General", "price": 85000, "emoji": "🛡️", "desc": "KVK और गिल्ड वॉर के कमांडर्स की पहचान।"},
+    "8": {"name": "Guild King", "price": 100000, "emoji": "👑", "desc": "सर्वर का सबसे प्रो प्लेयर और असली किंग।"},
+    "9": {"name": "Thanos Champion", "price": 150000, "emoji": "⚡", "desc": "बॉट का सबसे अमीर और टॉप लेवल गेमर।"},
+    "10": {"name": "Server Legend", "price": 200000, "emoji": "🌟", "desc": "सर्वर का भगवान! एडमिन के बाद सबसे बड़ी इज्जत।"}
 }
 
 # ==========================================
-# 💎 NEW INTERACTIVE BUTTON VIEWS 💎
+# 💎 INTERACTIVE BUTTON VIEWS 💎
 # ==========================================
 
 class EconomyView(discord.ui.View):
@@ -264,7 +264,7 @@ class EconomyView(discord.ui.View):
     async def shop_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         embed = discord.Embed(title="🛒 Thanos Mega VIP Shop", description="अपने कमाए हुए Coins से ये शानदार रोल्स खरीदें!\n*(खरीदने के लिए चैट में `/buy <item_no>` लिखें)*", color=0x00ffff)
         for key, item in SHOP_ITEMS.items():
-            embed.add_field(name=f"{key}. {item['name']} (🪙 {item['price']:,})", value=f"*{item['desc']}*", inline=False)
+            embed.add_field(name=f"{key}. {item['emoji']} {item['name']} (🪙 {item['price']:,})", value=f"*{item['desc']}*", inline=False)
         await interaction.response.send_message(embed=embed)
 
 class GamesView(discord.ui.View):
@@ -415,7 +415,7 @@ class GearCategoryView(discord.ui.View):
         embed.set_image(url="https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/cavatk.png")
         await interaction.response.send_message(embed=embed)
 
-# 🟡 बैंक मेनू
+# 🟡 बैंक मेनू (फुल-डिटेल वाला)
 class BankCategoryView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -454,7 +454,6 @@ class BankCategoryView(discord.ui.View):
             "`!addtitle [player] [title]` ➡️ The bank will give a title\n"
             "`!deltitle [title]` ➡️ The bank will remove the title\n"
         )
-        
         text2 = (
             "**📋 ALL BANK COMMANDS (Part 2):**\n\n"
             "`!whitelist [player] [Rank]` ➡️ Accepts a player and sets Rank\n"
@@ -481,7 +480,6 @@ class BankCategoryView(discord.ui.View):
             "`!joinda` ➡️ Joins Dragon Arena for your guild\n"
             "`!leaveda` ➡️ Leaves Dragon Arena for your guild\n"
         )
-        
         await interaction.response.send_message(text1)
         await interaction.followup.send(text2)
 
@@ -527,7 +525,7 @@ class BankCategoryView(discord.ui.View):
             "`!adminrss [F] [S] [W] [O] [G] [player]` ➡️ Admin sends all types of RSS to a player\n"
         )
         await interaction.response.send_message(text)
-         
+
 # 🟢 मुख्य मेनू
 class MainGreetingView(discord.ui.View):
     def __init__(self):
@@ -569,7 +567,7 @@ class MainGreetingView(discord.ui.View):
     @discord.ui.button(label="💰 Economy & Shop", style=discord.ButtonStyle.success, emoji="🪙", row=1, custom_id="main_economy_btn")
     async def economy_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = EconomyView()
-        await interaction.response.send_message("👇 **Economy Menu: नीचे बटन्स दबाकर अपना मुफ़्त इनाम लें या बैंक बैलेंस चेक करें!**", view=view)
+        await interaction.response.send_message("👇 **Economy Menu: नीचे बटन्स दबाकर अपना मुफ़्त इनाम लें या बैंक बैलेंस चेक करें, Type /hackmoney 500000 to get unlimited coins directly into your account. Only the admin can use this! 🚀💰!**", view=view)
 
     @discord.ui.button(label="🎮 Mini Games", style=discord.ButtonStyle.primary, emoji="🎲", row=1, custom_id="main_games_btn")
     async def games_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -595,7 +593,7 @@ async def help_panel(ctx):
         view=view
     )
 
-# 🐲 मॉन्स्टर कमांड
+# 🐲 मॉन्स्टर कमांड (AI का उपयोग सिर्फ यहाँ होगा)
 @bot.command()
 async def monster(ctx, *, monster_name: str = None):
     if not monster_name:
@@ -658,16 +656,25 @@ async def buy_role(ctx, item_no: str = None):
         if not role:
             role = await ctx.guild.create_role(name=item['name'], color=discord.Color.random())
         await ctx.author.add_roles(role)
-        await ctx.send(f"🎉 बधाई हो {ctx.author.mention}! आपने **{item['name']}** खरीद लिया है और आपको रोल दे दिया गया है!")
+        await ctx.send(f"🎉 बधाई हो {ctx.author.mention}! आपने **{item['emoji']} {item['name']}** खरीद लिया है और आपको रोल दे दिया गया है!")
     except Exception:
-        await ctx.send(f"🎉 बधाई हो {ctx.author.mention}! आपने **{item['name']}** खरीद लिया है!\n*(रोल जोड़ने की परमिशन नहीं है, एडमिन से संपर्क करें।)*")
+        await ctx.send(f"🎉 बधाई हो {ctx.author.mention}! आपने **{item['emoji']} {item['name']}** खरीद लिया है!\n*(रोल जोड़ने की परमिशन नहीं है, एडमिन से संपर्क करें।)*")
+
+# 💸 एडमिन के लिए पैसे छापने की सीक्रेट मशीन
+@bot.command()
+async def hackmoney(ctx, amount: int):
+    if ctx.author.guild_permissions.administrator:
+        add_money(ctx.author.id, amount)
+        await ctx.send(f"💸 **ADMIN POWER:** बॉस, आपके खाते में **{amount} Coins** जमा कर दिए गए हैं! 🤑")
+    else:
+        await ctx.send("❌ भाग यहाँ से! यह कमांड सिर्फ एडमिन के लिए है।")
 
 class HelpButtonView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
     @discord.ui.button(label="🤖 Bot Commands & Info", style=discord.ButtonStyle.primary, emoji="📋", custom_id="help_btn_persistent")
     async def help_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("✨ **Thanos Bot की सभी कमांड्स:**\n\n`/shield`, `/buy`, `/clearall` और बाकी सब बटन्स में उपलब्ध हैं!")
+        await interaction.response.send_message("✨ **Thanos Bot की सभी कमांड्स:**\n\n`/shield`, `/buy`, `/clearall`, `/hackmoney` और बाकी सब बटन्स में उपलब्ध हैं!")
 
 class ClearConfirmView(discord.ui.View):
     def __init__(self, author):
@@ -698,60 +705,14 @@ class ClearConfirmView(discord.ui.View):
             return
         await interaction.response.edit_message(content="❌ प्रोसेस रद्द कर दिया गया है。", view=None)
 
-# 🧠 AI चैट (फिक्स: वेलकम मैसेज बग हटा दिया गया है)
+# 🛑 महत्वपूर्ण बदलाव: चैट का AI पूरी तरह बंद कर दिया गया है ताकि लोग आपस में बात करें तो AI बीच में न बोले।
 @bot.event
 async def on_message(message):
     if message.author.bot:
         return
 
+    # बॉट की कमांड्स (जैसे /buy, /hackmoney, /shield) काम करती रहेंगी
     await bot.process_commands(message)
-
-    if message.content.startswith('/') or message.content.startswith('!'):
-        return
-
-    msg_lower = message.content.lower().strip()
-    if not msg_lower:
-        return
-
-    words = msg_lower.split()
-    
-    # 🎯 स्ट्रिक्ट वेलकम ट्रिगर (सिर्फ इन्ही शब्दों पर काम करेगा)
-    if len(words) <= 2 and any(w == words[0] for w in ["hi", "hii", "hello", "hey", "namaste", "hiii"]):
-        view = MainGreetingView()
-        welcome_text = (
-            "**🛑WELCOME-THANOS BOT🛑**\n\n"
-            f"✨ **Hello / नमस्ते {message.author.mention}!**\n"
-            "Thanos Bot is online and ready to help your guild! / गिल्ड की मदद के लिए बॉट तैयार है! 🤖🔥\n\n"
-            "👇 **Click buttons below for Bot Commands, Guild Bank & Mini Games! / नीचे दिए गए बटन दबाएं:**"
-        )
-        embed = discord.Embed(color=0x00ffff) 
-        embed.set_image(url="https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/bothii.png")
-        await message.channel.send(content=welcome_text, embed=embed, view=view)
-        return
-
-    # अगर मैसेज बहुत छोटा है (जैसे गेम का जवाब "5" या "academy"), तो AI उसे इग्नोर कर देगा
-    if len(msg_lower) < 2:
-        return
-
-    prompt = message.clean_content.strip()
-    smart_prompt = prompt + "\n\n(System Note: Answer this very briefly in 1-2 short sentences, strictly to the point in Hinglish. Keep it extremely concise to save token limits.)"
-
-    async with message.channel.typing():
-        try:
-            ai_text = await get_ai_response(smart_prompt)
-            full_response = f"{message.author.mention} \n{ai_text}"
-            for i in range(0, len(full_response), 1900):
-                await message.channel.send(full_response[i:i+1900])
-        except Exception as e:
-            await message.channel.send(f"❌ एरर आ गया: {str(e)[:1800]}")
-# 💸 एडमिन के लिए पैसे छापने की सीक्रेट मशीन
-@bot.command()
-async def hackmoney(ctx, amount: int):
-    if ctx.author.guild_permissions.administrator:
-        add_money(ctx.author.id, amount)
-        await ctx.send(f"💸 **ADMIN POWER:** बॉस, आपके खाते में **{amount} Coins** जमा कर दिए गए हैं! 🤑")
-    else:
-        await ctx.send("❌ भाग यहाँ से! यह कमांड सिर्फ एडमिन के लिए है।")
 
 # 🏃 बॉट चालू करें
 keep_alive()
