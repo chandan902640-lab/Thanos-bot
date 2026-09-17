@@ -1,3 +1,5 @@
+import random
+import json
 import asyncio
 import os
 import threading
@@ -211,6 +213,182 @@ async def on_ready():
         patch_notes_scraper.start()
         print("🚨 Patch Notes Scraper चालू हो गया है!")
 
+# ==========================================
+# 💎 ECONOMY SYSTEM & MINI GAMES 💎
+# ==========================================
+ECONOMY_FILE = "economy.json"
+
+def load_economy():
+    if not os.path.exists(ECONOMY_FILE):
+        return {}
+    with open(ECONOMY_FILE, "r") as f:
+        try:
+            return json.load(f)
+        except:
+            return {}
+
+def save_economy(data):
+    with open(ECONOMY_FILE, "w") as f:
+        json.dump(data, f)
+
+def get_balance(user_id):
+    data = load_economy()
+    return data.get(str(user_id), 0)
+
+def add_money(user_id, amount):
+    data = load_economy()
+    user_id = str(user_id)
+    data[user_id] = data.get(user_id, 0) + amount
+    if data[user_id] < 0:
+        data[user_id] = 0
+    save_economy(data)
+
+@bot.command(name="bal", aliases=["balance", "coins"])
+async def check_balance(ctx):
+    bal = get_balance(ctx.author.id)
+    embed = discord.Embed(title="💰 Bank Balance", description=f"{ctx.author.mention}, आपके खाते में **{bal} Coins** हैं! 🏦", color=discord.Color.gold())
+    await ctx.send(embed=embed)
+
+@bot.command()
+@commands.cooldown(1, 86400, commands.BucketType.user)  # 24 घंटे का टाइमर
+async def daily(ctx):
+    amount = 1000
+    add_money(ctx.author.id, amount)
+    embed = discord.Embed(
+        title="🎁 Daily Reward", 
+        description=f"बधाई हो {ctx.author.mention}! आपको आज के मुफ़्त **{amount} Coins** मिल गए हैं।\n\n💰 आपका नया बैलेंस: **{get_balance(ctx.author.id)} Coins**", 
+        color=discord.Color.green()
+    )
+    await ctx.send(embed=embed)
+
+@daily.error
+async def daily_error(ctx, error):
+    if isinstance(error, commands.CommandOnCooldown):
+        hours, remainder = divmod(int(error.retry_after), 3600)
+        minutes, seconds = divmod(remainder, 60)
+        await ctx.send(f"⏳ भाई, आज का इनाम ले चुके हो! अब **{hours} घंटे और {minutes} मिनट** बाद आना।")
+
+@bot.command()
+async def coinflip(ctx, choice: str = None, bet: int = None):
+    if not choice or not bet:
+        await ctx.send("⚠️ सही कमांड लिखें: `/coinflip [heads/tails] [amount]`\nजैसे: `/coinflip heads 50`")
+        return
+    choice = choice.lower()
+    if choice not in ["heads", "tails"]:
+        await ctx.send("⚠️ सिर्फ `heads` या `tails` चुनें!")
+        return
+    if bet <= 0:
+        await ctx.send("⚠️ भाई, कम से कम 1 Coin की शर्त तो लगाओ!")
+        return
+        
+    bal = get_balance(ctx.author.id)
+    if bal < bet:
+        await ctx.send(f"❌ आपके पास पर्याप्त पैसे नहीं हैं! आपका बैलेंस: **{bal} Coins**")
+        return
+        
+    result = random.choice(["heads", "tails"])
+    
+    if choice == result:
+        add_money(ctx.author.id, bet) 
+        await ctx.send(f"🪙 सिक्का उछला और... **{result.upper()}** आया!\n🎉 बधाई हो {ctx.author.mention}! आप जीत गए और आपको **{bet} Coins** का फायदा हुआ!")
+    else:
+        add_money(ctx.author.id, -bet) 
+        await ctx.send(f"🪙 सिक्का उछला और... **{result.upper()}** आया!\n😢 अफ़सोस {ctx.author.mention}! आप शर्त हार गए और आपके **{bet} Coins** चले गए।")
+
+@bot.command()
+async def slots(ctx, bet: int = None):
+    if not bet or bet <= 0:
+        await ctx.send("⚠️ सही कमांड लिखें: `/slots [amount]`\nजैसे: `/slots 100`")
+        return
+        
+    bal = get_balance(ctx.author.id)
+    if bal < bet:
+        await ctx.send(f"❌ आपके पास कैसीनो खेलने के पैसे नहीं हैं! आपका बैलेंस: **{bal} Coins**")
+        return
+        
+    emojis = ["🍎", "💎", "🍒", "🔔", "⭐"]
+    slot1, slot2, slot3 = random.choice(emojis), random.choice(emojis), random.choice(emojis)
+    
+    await ctx.send(f"🎰 **SLOTS MACHINE** 🎰\n| {slot1} | {slot2} | {slot3} |")
+    
+    if slot1 == slot2 == slot3:
+        winnings = bet * 10
+        add_money(ctx.author.id, winnings)
+        await ctx.send(f"🚨 **MEGA JACKPOT!!!** 🚨\n{ctx.author.mention} आपने शर्त का 10 गुना यानी **{winnings} Coins** जीत लिए!")
+    elif slot1 == slot2 or slot2 == slot3 or slot1 == slot3:
+        winnings = bet * 2
+        add_money(ctx.author.id, winnings)
+        await ctx.send(f"✨ **Small Win!** ✨\n{ctx.author.mention} आपने डबल **{winnings} Coins** जीते!")
+    else:
+        add_money(ctx.author.id, -bet)
+        await ctx.send(f"❌ बैड लक। मशीन रुक गई और आपके **{bet} Coins** डूब गए!")
+
+LM_QUESTIONS = {
+    "Lords mobile में T4 troops अनलॉक करने के लिए कौनसी बिल्डिंग level 25 की होनी चाहिए?": "academy",
+    "Trickster हीरो का असली नाम क्या है?": "tattler",
+    "Rose Knight हीरो का असली नाम क्या है?": "joan",
+    "Blackwing मॉन्स्टर का मुख्य ड्रॉप कौन सा है जिससे उसका गियर बनता है?": "glowing eye",
+    "Monster hunt करते समय एक बार में कितने हीरोज को भेजा जा सकता है?": "5"
+}
+
+@bot.command()
+@commands.cooldown(1, 60, commands.BucketType.channel)
+async def quiz(ctx):
+    question, answer = random.choice(list(LM_QUESTIONS.items()))
+    await ctx.send(f"🧠 **Lords Mobile Quiz** 🧠\n\n❓ **सवाल:** {question}\n\n*(जल्दी से चैट में सही जवाब टाइप करें! जीतने वाले को 500 Coins मिलेंगे।)*")
+    
+    def check(m):
+        return m.channel == ctx.channel and m.content.lower().strip() == answer
+        
+    try:
+        msg = await bot.wait_for('message', check=check, timeout=30.0)
+        add_money(msg.author.id, 500)
+        await ctx.send(f"🎉 **बिल्कुल सही!** {msg.author.mention} ने सबसे पहले सही जवाब दिया: `{answer.title()}`.\n💰 इनाम: **500 Coins** आपके बैंक में जमा हो गए हैं!")
+    except asyncio.TimeoutError:
+        await ctx.send(f"⏳ समय समाप्त! कोई भी सही जवाब नहीं दे पाया। सही जवाब था: `{answer.title()}`")
+
+@bot.command()
+async def shop(ctx):
+    embed = discord.Embed(title="🛒 Thanos VIP Shop", description="अपने कमाए हुए Coins से ये शानदार रोल्स खरीदें!\n*(खरीदने के लिए `/buy <item_no>` लिखें)*", color=0x00ffff)
+    embed.add_field(name="1. 💎 VIP Member", value="कीमत: **10,000 Coins**", inline=False)
+    embed.add_field(name="2. 🐲 Dragon Killer", value="कीमत: **50,000 Coins**", inline=False)
+    embed.add_field(name="3. 👑 Guild King", value="कीमत: **100,000 Coins**", inline=False)
+    await ctx.send(embed=embed)
+
+@bot.command()
+async def buy(ctx, item_no: str = None):
+    shop_items = {
+        "1": {"name": "VIP Member", "price": 10000},
+        "2": {"name": "Dragon Killer", "price": 50000},
+        "3": {"name": "Guild King", "price": 100000}
+    }
+    
+    if not item_no or item_no not in shop_items:
+        await ctx.send("⚠️ सही आइटम नंबर लिखें! जैसे: `/buy 1`")
+        return
+        
+    item = shop_items[item_no]
+    bal = get_balance(ctx.author.id)
+    
+    if bal < item['price']:
+        await ctx.send(f"❌ आपके पास {item['name']} खरीदने के लिए पैसे नहीं हैं! (कीमत: {item['price']}, आपके पास: {bal})")
+        return
+        
+    # पैसे काटना
+    add_money(ctx.author.id, -item['price'])
+    
+    try:
+        role = discord.utils.get(ctx.guild.roles, name=item['name'])
+        if not role:
+            # अगर रोल नहीं है तो बॉट खुद बना लेगा
+            role = await ctx.guild.create_role(name=item['name'], color=discord.Color.random())
+        await ctx.author.add_roles(role)
+        await ctx.send(f"🎉 बधाई हो {ctx.author.mention}! आपने दुकान से **{item['name']}** खरीद लिया है और आपको यह रोल दे दिया गया है!")
+    except Exception:
+        await ctx.send(f"🎉 बधाई हो {ctx.author.mention}! आपने **{item['name']}** खरीद लिया है!\n*(ध्यान दें: बॉट के पास सर्वर में रोल देने की परमिशन नहीं है, इसलिए रोल नहीं जुड़ा। एडमिन से बोलकर रोल लें।)*")
+
+# ==========================================
+
 # 🔵 हेल्प मेनू व्यू
 class HelpButtonView(discord.ui.View):
     def __init__(self):
@@ -223,7 +401,14 @@ class HelpButtonView(discord.ui.View):
             "🧠 **Smart AI Chat:** चैनल में कोई भी बात करें, बॉट जवाब देगा!\n"
             "🐲 **Monster Hunt:** मेनू से 'Monster Hunt' बटन दबाकर 18 मॉन्स्टर्स के हीरो सेटअप देखें!\n"
             "🛡️ **`/shield [घंटे]`** - एडवांस शील्ड टाइमर (15 मिनट पहले अलर्ट देगा)।\n"
-            "🗑️ **`/clearall`** - चैनल के सारे मैसेज डिलीट करने के लिए (एडमिन के लिए)।"
+            "🗑️ **`/clearall`** - चैनल के सारे मैसेज डिलीट करने के लिए (एडमिन के लिए)।\n\n"
+            "💰 **NEW GAMING FEATURES:**\n"
+            "`/daily` - रोज़ाना मुफ़्त Coins पाएं!\n"
+            "`/bal` - अपना बैंक बैलेंस चेक करें।\n"
+            "`/coinflip [heads/tails] [bet]` - शर्त लगाकर कॉइनफ्लिप खेलें।\n"
+            "`/slots [bet]` - कैसीनो स्लॉट्स खेलें।\n"
+            "`/quiz` - Lords Mobile क्विज़ खेलकर पैसे कमाएं।\n"
+            "`/shop` और `/buy` - रोल्स खरीदें!"
         )
 
 # ⚠️ चैट डिलीट कंफर्मेशन
@@ -577,7 +762,6 @@ async def on_message(message):
 
     words = msg_lower.split()
     
-    # 👇 यह रहा आपका मेन फिक्स! अब "hi" लिखने पर फोटो और बटन दोनों आएंगे!
     if len(words) <= 2 and any(w in words for w in ["hi", "hii", "hello", "hey", "namaste"]):
         view = MainGreetingView()
         
