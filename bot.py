@@ -243,7 +243,7 @@ class EconomyView(discord.ui.View):
         embed = discord.Embed(title="💰 Bank Balance", description=f"{interaction.user.mention}, आपके खाते में **{bal} Coins** हैं! 🏦", color=discord.Color.gold())
         await interaction.response.send_message(embed=embed)
 
-    @discord.ui.button(label="🎁 Claim Daily 1000", style=discord.ButtonStyle.success, custom_id="eco_daily_btn")
+    @discord.ui.button(label="🎁 Claim Daily 2000", style=discord.ButtonStyle.success, custom_id="eco_daily_btn")
     async def daily_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         user_id = interaction.user.id
         now = datetime.now()
@@ -251,11 +251,11 @@ class EconomyView(discord.ui.View):
             hours = int((86400 - (now - daily_cooldowns[user_id]).total_seconds()) // 3600)
             await interaction.response.send_message(f"⏳ {interaction.user.mention}, आज का इनाम ले चुके हो! **{hours} घंटे** बाद आना।", ephemeral=True)
             return
-        add_money(user_id, 1000)
+        add_money(user_id, 2000)
         daily_cooldowns[user_id] = now
         embed = discord.Embed(
             title="🎁 Daily Reward", 
-            description=f"बधाई हो {interaction.user.mention}! आपको आज के मुफ़्त **1000 Coins** मिल गए हैं।\n\n💰 नया बैलेंस: **{get_balance(user_id)} Coins**\n\n*Type `!hackmoney 500000` to get unlimited coins directly into your account. Only the admin can use this! 🚀💰*", 
+            description=f"बधाई हो {interaction.user.mention}! आपको आज के मुफ़्त **2000 Coins** मिल गए हैं।\n\n💰 नया बैलेंस: **{get_balance(user_id)} Coins**\n\n*Type `!hackmoney 500000` to get unlimited coins directly into your account. Only the admin can use this! 🚀💰*", 
             color=discord.Color.green()
         )
         await interaction.response.send_message(embed=embed)
