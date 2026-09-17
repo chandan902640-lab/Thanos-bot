@@ -47,7 +47,6 @@ async def get_ai_response(prompt):
                 except:
                     return "⚠️ गूगल ने जवाब देने से मना कर दिया।"
             else:
-                # 👇 यहाँ से लिंक हटा दिया गया है ताकि टेक्स्ट में न दिखे
                 return (
                     "**🛑WELCOME-THANOS BOT🛑**\n\n"
                     "✨ **Hello / नमस्ते Everyone / दोस्तों!**\n"
@@ -98,7 +97,6 @@ async def auto_clear_chat():
         for channel in guild.text_channels:
             try:
                 now = datetime.now(timezone.utc)
-                # यह चेक करेगा कि कौन सा मैसेज 24 घंटे से पुराना है, और उसे डिलीट करेगा
                 deleted = await channel.purge(limit=200, check=lambda m: (now - m.created_at) > timedelta(hours=24))
                 if len(deleted) > 0:
                     print(f"🧹 {channel.name} से {len(deleted)} पुराने मैसेज डिलीट किए गए।")
@@ -242,9 +240,7 @@ class ClearConfirmView(discord.ui.View):
         await interaction.response.send_message("🧹 आपकी चैट तुरंत साफ हो रही...")
         
         try:
-            # चेक करें कि यह सर्वर है या DM (Private Chat)
             if interaction.guild is None:
-                # 🟢 अगर DM है: तो बॉट एक-एक करके सिर्फ अपने मैसेज डिलीट करेगा
                 async for msg in interaction.channel.history(limit=100):
                     if msg.author == interaction.client.user:
                         try:
@@ -252,7 +248,6 @@ class ClearConfirmView(discord.ui.View):
                         except:
                             pass
             else:
-                # 🔵 अगर सर्वर है: तो एक झटके में सब (यूजर और बॉट के) डिलीट कर देगा
                 await interaction.channel.purge(limit=500)
         except Exception:
             pass
@@ -562,9 +557,9 @@ async def on_message(message):
             ai_text = await get_ai_response(smart_prompt)
             full_response = f"{message.author.mention} \n{ai_text}"
             
-            # 👇 यहाँ है स्मार्ट जुगाड़: अगर यह वेलकम पैनल है, तो बिना लिंक दिखाए Embed से फोटो भेजें
-            if "THANOS BOT - WELCOME PANEL" in ai_text:
-                embed = discord.Embed(color=0x00ffff) # यह आपके रोबोट से मैच करता हुआ Cyan कलर है
+            # 👇 स्मार्ट जुगाड़: अब यह आपके नए वाले टाइटल को ढूंढेगा
+            if "WELCOME-THANOS BOT" in ai_text:
+                embed = discord.Embed(color=0x00ffff) 
                 embed.set_image(url="https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/bothii.png")
                 await message.channel.send(full_response, embed=embed)
             else:
