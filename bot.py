@@ -604,13 +604,19 @@ class MainGreetingView(discord.ui.View):
     @discord.ui.button(label="Bot Commands", style=discord.ButtonStyle.primary, emoji="🤖", row=0, custom_id="main_botcmd_btn")
     async def bot_commands_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text = (
-            "✨ **THANOS BOT COMMANDS & FEATURES / बॉट की कमांड्स और फीचर्स:**\n\n"
-            "🏦 **Guild Bank Menu:** ➔Access bank commands instantly.\n"
-            "🐲 **Monster Hunt:** View ➔18 monster hero setups.\n"
-            "🛡️ **`!shield [hours]`** -➔ Shield timer with alerts.\n"
-            "🎁 **Auto Redeem Codes:** ➔Bot will automatically send new redeem codes.\n"
-            "🚨 **Event & Patch Notes:**➔ Bot will automatically send event pages.\n"
-            "🗑️ **`!clearall` / Clear Chat:** ➔Clean up chat messages."
+            "✨ **THANOS BOT - ALL COMMANDS & FEATURES / सभी कमांड्स और फीचर्स (Total: 12+ Features):**\n\n"
+            "👑 **`!99`** ➔ सर्वर का पूरा **कंट्रोल पैनल** ओपन करता है (बैंक, मॉन्स्टर, गेम्स और मेनू के लिए)। / Opens the main Control Panel.\n"
+            "🏦 **Guild Bank Menu** ➔ बैंक कमांड्स (General, Search, Balance, Resource, Tips) की पूरी लिस्ट दिखाता है। / Shows all Guild Bank commands category-wise.\n"
+            "🐲 **`!monster [नाम]` या Monster Hunt Menu** ➔ 18 मॉन्स्टर्स के बेस्ट हीरोज और F2P/P2P सेटअप दिखाता है। / Shows best hero setups for 18 monsters.\n"
+            "🛡️ **`!shield [घंटे]`** ➔ शील्ड टाइमर सेट करता है और खत्म होने से 15 मिनट पहले अलर्ट भेजता है। / Sets shield timer with 15-min alerts.\n"
+            "🎁 **Auto Redeem Codes** ➔ Reddit से नए Lords Mobile रिडीम कोड्स अपने-आप ढूंढकर चैनल पर भेजता है। / Automatically scrapes and sends new redeem codes.\n"
+            "🚨 **Event & Patch Notes** ➔ गेम के नए अपडेट और इवेंट्स की जानकारी फोटो के साथ ऑटोमैटिक भेजता है। / Auto sends patch notes & events with photos.\n"
+            "🪙 **Economy & Daily 2000** ➔ रोज के मुफ़्त **2000 Coins** क्लेम करें और बैंक बैलेंस चेक करें। / Claim daily 2000 free coins and check balance.\n"
+            "🛒 **`!buy <नंबर>` / VIP Shop** ➔ कमाए हुए कॉइन्स से Guild King या Server Legend जैसे रोल्स खरीदें। / Buy VIP roles using earned coins.\n"
+            "💸 **`!hackmoney [अमाउंट]`** ➔ सिर्फ एडमिन के लिए खाते में अनलिमिटेड कॉइन्स जोड़ने की सीक्रेट मशीन। / Admin command to add coins.\n"
+            "🎲 **Mini Games (Quiz, Slots, Coinflip)** ➔ क्विज़ खेलें (500 Coins जीतें), स्लॉट्स मशीन और हेड/टेल खेलें। / Play Quiz, Slots, and Coinflip to win coins.\n"
+            "⚙️ **Best Gear Setups** ➔ Mix, Infantry, Ranged और Cavalry ATK के बेस्ट गियर सेटअप देखें। / View best gear setups.\n"
+            "🗑️ **`!clearall` / Clear Chat** ➔ सर्वर की चैट और पुराने मैसेज को तुरंत साफ़ करता है। / Cleans up chat messages."
         )
         await interaction.response.send_message(text)
 
