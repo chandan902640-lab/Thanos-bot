@@ -588,11 +588,11 @@ async def on_message(message):
             "👇 **Click buttons below for Bot Commands & Guild Bank / बॉट कमांड्स और बैंक के लिए नीचे बटन दबाएं:**"
         )
         
-        # 👇 यहाँ आपके चारों कलर्स हैं! बॉट हर बार कोई एक नया कलर चुनेगा। (फोटो हटा दी गई है)
         random_color = random.choice([0xFFA500, 0xFFFF00, 0xFFC0CB, 0xFFFFFF])
-        embed = discord.Embed(color=random_color) 
+        # 👇 फिक्स: टेक्स्ट को सीधा Embed के अंदर डाल दिया, ताकि खाली पट्टी का एरर ना आए!
+        embed = discord.Embed(description=welcome_text, color=random_color) 
         
-        await message.channel.send(content=welcome_text, embed=embed, view=view)
+        await message.channel.send(embed=embed, view=view)
         return
 
     prompt = message.clean_content.strip()
@@ -607,12 +607,12 @@ async def on_message(message):
             full_response = f"{message.author.mention} \n{ai_text}"
             
             if "WELCOME-THANOS BOT" in ai_text:
-                # 👇 यहाँ भी आपके चारों कलर्स हैं!
                 random_color = random.choice([0xFFA500, 0xFFFF00, 0xFFC0CB, 0xFFFFFF])
-                embed = discord.Embed(color=random_color) 
+                # 👇 फिक्स: यहाँ भी टेक्स्ट को Embed के अंदर डाल दिया
+                embed = discord.Embed(description=full_response, color=random_color) 
                 
                 view = MainGreetingView()
-                await message.channel.send(content=full_response, embed=embed, view=view)
+                await message.channel.send(embed=embed, view=view)
             else:
                 for i in range(0, len(full_response), 1900):
                     await message.channel.send(full_response[i:i+1900])
