@@ -30,7 +30,7 @@ def keep_alive():
     server = HTTPServer(('0.0.0.0', port), DummyHandler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
 
-# 🛠️ AI फंक्शन (सिर्फ कमांड्स या मॉन्स्टर हंट के लिए उपयोग होगा)
+# 🛠️ AI फंक्शन (Hi, Hello या कमांड्स के लिए उपयोग होगा)
 async def get_ai_response(prompt):
     if not GEMINI_KEY:
         return "⚠️ Gemini API Key सेट नहीं है!"
@@ -567,7 +567,7 @@ class MainGreetingView(discord.ui.View):
     @discord.ui.button(label="💰 Economy & Shop", style=discord.ButtonStyle.success, emoji="🪙", row=1, custom_id="main_economy_btn")
     async def economy_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = EconomyView()
-        await interaction.response.send_message("👇 **Economy Menu: नीचे बटन्स दबाकर अपना मुफ़्त इनाम लें या बैंक बैलेंस चेक करें, Type /hackmoney 500000 to get unlimited coins directly into your account. Only the admin can use this! 🚀💰!**", view=view)
+        await interaction.response.send_message("👇 **Economy Menu: नीचे बटन्स दबाकर अपना मुफ़्त इनाम लें या बैंक बैलेंस चेक करें!**", view=view)
 
     @discord.ui.button(label="🎮 Mini Games", style=discord.ButtonStyle.primary, emoji="🎲", row=1, custom_id="main_games_btn")
     async def games_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -593,7 +593,7 @@ async def help_panel(ctx):
         view=view
     )
 
-# 🐲 मॉन्स्टर कमांड (AI का उपयोग सिर्फ यहाँ होगा)
+# 🐲 मॉन्स्टर कमांड
 @bot.command()
 async def monster(ctx, *, monster_name: str = None):
     if not monster_name:
@@ -705,13 +705,23 @@ class ClearConfirmView(discord.ui.View):
             return
         await interaction.response.edit_message(content="❌ प्रोसेस रद्द कर दिया गया है。", view=None)
 
-# 🛑 महत्वपूर्ण बदलाव: चैट का AI पूरी तरह बंद कर दिया गया है ताकि लोग आपस में बात करें तो AI बीच में न बोले।
+# 🟢 ऑन-मैसेज इवेंट: अब 'hi', 'hello' या '@bot' करने पर बॉट जवाब देगा
 @bot.event
 async def on_message(message):
     if message.author.bot:
         return
 
-    # बॉट की कमांड्स (जैसे /buy, /hackmoney, /shield) काम करती रहेंगी
+    content_lower = message.content.lower().strip()
+    
+    # अगर यूजर 'hi' या 'hello' लिखे या बॉट को टैग (@Thanos bot) करे
+    if content_lower in ["hi", "hello", "hey"] or bot.user.mentioned_in(message):
+        view = MainGreetingView()
+        await message.channel.send(
+            f"👑 **Hello {message.author.mention}!** Thanos Bot ऑनलाइन है।\n👇 सर्वर के सभी फीचर्स और कमांड्स के लिए नीचे दिए गए बटन्स का इस्तेमाल करें:",
+            view=view
+        )
+
+    # बॉट की कमांड्स (जैसे /buy, /hackmoney, /shield) सुचारू रूप से चलती रहेंगी
     await bot.process_commands(message)
 
 # 🏃 बॉट चालू करें
