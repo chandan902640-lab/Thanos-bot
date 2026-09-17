@@ -244,9 +244,20 @@ class ClearConfirmView(discord.ui.View):
             return
         
         await interaction.response.send_message("🧹 आपकी चैट तुरंत साफ हो रही...")
+        
         try:
-            # यहाँ बिना किसी टाइम लिमिट के तुरंत ताज़ा 500 मैसेज तक डिलीट हो जाएंगे
-            await interaction.channel.purge(limit=500)
+            # चेक करें कि यह सर्वर है या DM (Private Chat)
+            if interaction.guild is None:
+                # 🟢 अगर DM है: तो बॉट एक-एक करके सिर्फ अपने मैसेज डिलीट करेगा
+                async for msg in interaction.channel.history(limit=100):
+                    if msg.author == interaction.client.user:
+                        try:
+                            await msg.delete()
+                        except:
+                            pass
+            else:
+                # 🔵 अगर सर्वर है: तो एक झटके में सब (यूजर और बॉट के) डिलीट कर देगा
+                await interaction.channel.purge(limit=500)
         except Exception:
             pass
 
@@ -256,7 +267,6 @@ class ClearConfirmView(discord.ui.View):
             await interaction.response.send_message("❌ नो परमिशन!")
             return
         await interaction.response.edit_message(content="❌ प्रोसेस रद्द कर दिया गया है。", view=None)
-
 # 🐲 18 मॉन्स्टर्स की लिस्ट
 MONSTERS = {
     "1": ("Queen Bee", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Queen%20Bee.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/1.png"),
