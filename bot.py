@@ -579,11 +579,19 @@ async def on_message(message):
     
     if len(words) <= 2 and any(w in words for w in ["hi", "hii", "hello", "hey", "namaste"]):
         view = MainGreetingView()
-        await message.channel.send(
-            f"Hello / नमस्ते {message.author.mention}! 👋 \n"
-            f"👇 **Click buttons below for Bot Commands & Guild Bank / बॉट कमांड्स और बैंक के लिए नीचे बटन दबाएं:**", 
-            view=view
+        
+        welcome_text = (
+            "**🛑WELCOME-THANOS BOT🛑**\n\n"
+            f"✨ **Hello / नमस्ते {message.author.mention}!**\n"
+            "Thanos Bot is online and ready to help your guild! / गिल्ड की मदद के लिए बॉट तैयार है! 🤖🔥\n\n"
+            "👇 **Click buttons below for Bot Commands & Guild Bank / बॉट कमांड्स और बैंक के लिए नीचे बटन दबाएं:**"
         )
+        
+        # 👇 यहाँ आपके चारों कलर्स हैं! बॉट हर बार कोई एक नया कलर चुनेगा। (फोटो हटा दी गई है)
+        random_color = random.choice([0xFFA500, 0xFFFF00, 0xFFC0CB, 0xFFFFFF])
+        embed = discord.Embed(color=random_color) 
+        
+        await message.channel.send(content=welcome_text, embed=embed, view=view)
         return
 
     prompt = message.clean_content.strip()
@@ -598,16 +606,19 @@ async def on_message(message):
             full_response = f"{message.author.mention} \n{ai_text}"
             
             if "WELCOME-THANOS BOT" in ai_text:
-                embed = discord.Embed(color=0x00ffff) 
-                embed.set_image(url="https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/bothii.png")
-                await message.channel.send(full_response, embed=embed)
+                # 👇 यहाँ भी आपके चारों कलर्स हैं!
+                random_color = random.choice([0xFFA500, 0xFFFF00, 0xFFC0CB, 0xFFFFFF])
+                embed = discord.Embed(color=random_color) 
+                
+                view = MainGreetingView()
+                await message.channel.send(content=full_response, embed=embed, view=view)
             else:
                 for i in range(0, len(full_response), 1900):
                     await message.channel.send(full_response[i:i+1900])
                 
         except Exception as e:
             await message.channel.send(f"❌ एरर आ गया: {str(e)[:1800]}")
-
+            
 # 🏃 बॉट चालू करें
 keep_alive()
 token = os.environ.get("DISCORD_TOKEN")
