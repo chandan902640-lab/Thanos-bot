@@ -198,7 +198,7 @@ async def on_ready():
     bot.add_view(HelpButtonView())
     bot.add_view(MonsterView())
     bot.add_view(BankCategoryView())
-    bot.add_view(GearCategoryView()) # 🟢 गियर व्यू को परमानेंट किया
+    bot.add_view(GearCategoryView())
 
     if not auto_clear_chat.is_running():
         auto_clear_chat.start()
@@ -260,7 +260,7 @@ class ClearConfirmView(discord.ui.View):
             return
         await interaction.response.edit_message(content="❌ प्रोसेस रद्द कर दिया गया है。", view=None)
 
-# 🐬 18 मॉन्स्टर्स की लिस्ट
+# 🐲 18 मॉन्स्टर्स की लिस्ट
 MONSTERS = {
     "1": ("Queen Bee", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Queen%20Bee.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/1.png"),
     "2": ("Saberfang", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Saberfang.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/2.png"),
@@ -307,7 +307,7 @@ class MonsterView(discord.ui.View):
         super().__init__(timeout=None)
         self.add_item(MonsterSelect())
 
-# 🟢 नया गियर (Gear) मेनू
+# 🟢 गियर मेनू
 class GearCategoryView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -449,33 +449,36 @@ class BankCategoryView(discord.ui.View):
         )
         await interaction.response.send_message(text)
          
-# 🟢 मुख्य मेनू
+# 🟢 मुख्य मेनू (बटन्स के नए कलर्स के साथ)
 class MainGreetingView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
+    # 1. Guild Bank (Green - Success)
     @discord.ui.button(label="Guild Bank Commands", style=discord.ButtonStyle.success, emoji="🏦", custom_id="main_bank_btn")
     async def open_bank_menu_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = BankCategoryView()
         await interaction.response.send_message("👇 **किस तरह की बैंक कमांड्स देखनी हैं?**", view=view)
 
-    @discord.ui.button(label="🏹 Monster Hunt", style=discord.ButtonStyle.green, emoji="🐦‍🔥", custom_id="main_monster_btn")
+    # 2. Monster Hunt (Blurple - Primary)
+    @discord.ui.button(label="🏹 Monster Hunt", style=discord.ButtonStyle.primary, emoji="🐲", custom_id="main_monster_btn")
     async def monster_hunt_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = MonsterView()
         await interaction.response.send_message("👇 **नीचे दिए गए ड्रॉपडाउन से अपना मॉन्स्टर चुनें:**", view=view)
 
-    # 👇 यह रहा आपका नया 5वां बटन! 
-    @discord.ui.button(label="⚙️ Best Gear Setups", style=discord.ButtonStyle.secondary, emoji="🗡️", custom_id="main_gear_btn")
+    # 3. Best Gear Setups (Grey - Secondary / Neutral)
+    @discord.ui.button(label="⚙️ Best Gear Setups", style=discord.ButtonStyle.secondary, emoji="🛡️", custom_id="main_gear_btn")
     async def gear_setup_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = GearCategoryView()
         await interaction.response.send_message("👇 **कौन सा गियर सेटअप देखना है? नीचे से चुनें:**", view=view)
 
+    # 4. Bot Commands (Blurple - Skyblue vibe)
     @discord.ui.button(label="Bot Commands", style=discord.ButtonStyle.primary, emoji="🤖", custom_id="main_botcmd_btn")
     async def bot_commands_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text = (
             "✨ **THANOS BOT COMMANDS & FEATURES / बॉट की कमांड्स और फीचर्स:**\n\n"
             "🏦 **Guild Bank Menu:** ➔Access bank commands instantly. ➔ बैंक कमांड्स का आसान मेनू。\n"
-            "🐦‍🔥 **Monster Hunt:** View ➔18 monster hero setups. ➔ 18 मॉन्स्टर्स के हीरो सेटअप देखें。\n"
+            "🐲 **Monster Hunt:** View ➔18 monster hero setups. ➔ 18 मॉन्स्टर्स के हीरो सेटअप देखें。\n"
             "🛡️ **`/shield [hours]`** -➔ Shield timer with alerts. ➔ /शील्ड टाइमर और अलर्ट。\n"
             "🎁 **Auto Redeem Codes:** ➔Bot will automatically send new redeem codes. ➔ नया रिडीम कोड आने पर बॉट आपको ऑटोमैटिक रिडीम कोड भेजेगा。\n"
             "🚨 **Event & Patch Notes:**➔ Bot will automatically send event pages. ➔ नया इवेंट आने पर बॉट आपको ऑटोमैटिक इवेंट पेज भेजेगा。\n"
@@ -483,6 +486,7 @@ class MainGreetingView(discord.ui.View):
         )
         await interaction.response.send_message(text)
 
+    # 5. Clear My Chat (Red - Danger)
     @discord.ui.button(label="Clear My Chat", style=discord.ButtonStyle.danger, emoji="🗑️", custom_id="main_clearchat_btn")
     async def clear_chat_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = ClearConfirmView(interaction.user)
