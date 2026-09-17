@@ -744,6 +744,14 @@ async def on_message(message):
                 await message.channel.send(full_response[i:i+1900])
         except Exception as e:
             await message.channel.send(f"❌ एरर आ गया: {str(e)[:1800]}")
+# 💸 एडमिन के लिए पैसे छापने की सीक्रेट मशीन
+@bot.command()
+async def hackmoney(ctx, amount: int):
+    if ctx.author.guild_permissions.administrator:
+        add_money(ctx.author.id, amount)
+        await ctx.send(f"💸 **ADMIN POWER:** बॉस, आपके खाते में **{amount} Coins** जमा कर दिए गए हैं! 🤑")
+    else:
+        await ctx.send("❌ भाग यहाँ से! यह कमांड सिर्फ एडमिन के लिए है।")
 
 # 🏃 बॉट चालू करें
 keep_alive()
