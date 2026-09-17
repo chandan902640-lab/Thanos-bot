@@ -191,32 +191,19 @@ async def patch_notes_scraper():
         except Exception as e:
             print(f"Patch Scraper Error: {e}")
 
-@bot.event
-async def on_ready():
-    print(f'✅ {bot.user} ऑनलाइन आ गया है!')
-    await bot.change_presence(status=discord.Status.online, activity=discord.Game(name="Lords Mobile"))
-    
-    bot.add_view(MainGreetingView())
-    bot.add_view(HelpButtonView())
-    bot.add_view(MonsterView())
-    bot.add_view(BankCategoryView())
-    bot.add_view(GearCategoryView())
-
-    if not auto_clear_chat.is_running():
-        auto_clear_chat.start()
-        
-    if not code_scraper.is_running():
-        code_scraper.start()
-        print("🕵️ Code Scraper चालू हो गया है!")
-
-    if not patch_notes_scraper.is_running():
-        patch_notes_scraper.start()
-        print("🚨 Patch Notes Scraper चालू हो गया है!")
-
 # ==========================================
-# 💎 ECONOMY SYSTEM & MINI GAMES 💎
+# 💎 ECONOMY SYSTEM & MINI GAMES (BACKEND) 💎
 # ==========================================
 ECONOMY_FILE = "economy.json"
+daily_cooldowns = {} # डेली बटन के टाइमर के लिए
+
+LM_QUESTIONS = {
+    "Lords mobile में T4 troops अनलॉक करने के लिए कौनसी बिल्डिंग level 25 की होनी चाहिए?": "academy",
+    "Trickster हीरो का असली नाम क्या है?": "tattler",
+    "Rose Knight हीरो का असली नाम क्या है?": "joan",
+    "Blackwing मॉन्स्टर का मुख्य ड्रॉप कौन सा है जिससे उसका गियर बनता है?": "glowing eye",
+    "Monster hunt करते समय एक बार में कितने हीरोज को भेजा जा सकता है?": "5"
+}
 
 def load_economy():
     if not os.path.exists(ECONOMY_FILE):
@@ -243,209 +230,140 @@ def add_money(user_id, amount):
         data[user_id] = 0
     save_economy(data)
 
-@bot.command(name="bal", aliases=["balance", "coins"])
-async def check_balance(ctx):
-    bal = get_balance(ctx.author.id)
-    embed = discord.Embed(title="💰 Bank Balance", description=f"{ctx.author.mention}, आपके खाते में **{bal} Coins** हैं! 🏦", color=discord.Color.gold())
-    await ctx.send(embed=embed)
+# ==========================================
+# 💎 NEW INTERACTIVE BUTTON VIEWS 💎
+# ==========================================
 
-@bot.command()
-@commands.cooldown(1, 86400, commands.BucketType.user)  # 24 घंटे का टाइमर
-async def daily(ctx):
-    amount = 1000
-    add_money(ctx.author.id, amount)
-    embed = discord.Embed(
-        title="🎁 Daily Reward", 
-        description=f"बधाई हो {ctx.author.mention}! आपको आज के मुफ़्त **{amount} Coins** मिल गए हैं।\n\n💰 आपका नया बैलेंस: **{get_balance(ctx.author.id)} Coins**", 
-        color=discord.Color.green()
-    )
-    await ctx.send(embed=embed)
-
-@daily.error
-async def daily_error(ctx, error):
-    if isinstance(error, commands.CommandOnCooldown):
-        hours, remainder = divmod(int(error.retry_after), 3600)
-        minutes, seconds = divmod(remainder, 60)
-        await ctx.send(f"⏳ भाई, आज का इनाम ले चुके हो! अब **{hours} घंटे और {minutes} मिनट** बाद आना।")
-
-@bot.command()
-async def coinflip(ctx, choice: str = None, bet: int = None):
-    if not choice or not bet:
-        await ctx.send("⚠️ सही कमांड लिखें: `/coinflip [heads/tails] [amount]`\nजैसे: `/coinflip heads 50`")
-        return
-    choice = choice.lower()
-    if choice not in ["heads", "tails"]:
-        await ctx.send("⚠️ सिर्फ `heads` या `tails` चुनें!")
-        return
-    if bet <= 0:
-        await ctx.send("⚠️ भाई, कम से कम 1 Coin की शर्त तो लगाओ!")
-        return
+# 1. 💰 Economy View (बटन्स के साथ)
+class EconomyView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
         
-    bal = get_balance(ctx.author.id)
-    if bal < bet:
-        await ctx.send(f"❌ आपके पास पर्याप्त पैसे नहीं हैं! आपका बैलेंस: **{bal} Coins**")
-        return
-        
-    result = random.choice(["heads", "tails"])
-    
-    if choice == result:
-        add_money(ctx.author.id, bet) 
-        await ctx.send(f"🪙 सिक्का उछला और... **{result.upper()}** आया!\n🎉 बधाई हो {ctx.author.mention}! आप जीत गए और आपको **{bet} Coins** का फायदा हुआ!")
-    else:
-        add_money(ctx.author.id, -bet) 
-        await ctx.send(f"🪙 सिक्का उछला और... **{result.upper()}** आया!\n😢 अफ़सोस {ctx.author.mention}! आप शर्त हार गए और आपके **{bet} Coins** चले गए।")
+    @discord.ui.button(label="💰 Check Balance", style=discord.ButtonStyle.primary, custom_id="eco_bal_btn")
+    async def bal_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        bal = get_balance(interaction.user.id)
+        embed = discord.Embed(title="💰 Bank Balance", description=f"{interaction.user.mention}, आपके खाते में **{bal} Coins** हैं! 🏦", color=discord.Color.gold())
+        await interaction.response.send_message(embed=embed)
 
-@bot.command()
-async def slots(ctx, bet: int = None):
-    if not bet or bet <= 0:
-        await ctx.send("⚠️ सही कमांड लिखें: `/slots [amount]`\nजैसे: `/slots 100`")
-        return
+    @discord.ui.button(label="🎁 Claim Daily 1000", style=discord.ButtonStyle.success, custom_id="eco_daily_btn")
+    async def daily_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        user_id = interaction.user.id
+        now = datetime.now()
         
-    bal = get_balance(ctx.author.id)
-    if bal < bet:
-        await ctx.send(f"❌ आपके पास कैसीनो खेलने के पैसे नहीं हैं! आपका बैलेंस: **{bal} Coins**")
-        return
-        
-    emojis = ["🍎", "💎", "🍒", "🔔", "⭐"]
-    slot1, slot2, slot3 = random.choice(emojis), random.choice(emojis), random.choice(emojis)
-    
-    await ctx.send(f"🎰 **SLOTS MACHINE** 🎰\n| {slot1} | {slot2} | {slot3} |")
-    
-    if slot1 == slot2 == slot3:
-        winnings = bet * 10
-        add_money(ctx.author.id, winnings)
-        await ctx.send(f"🚨 **MEGA JACKPOT!!!** 🚨\n{ctx.author.mention} आपने शर्त का 10 गुना यानी **{winnings} Coins** जीत लिए!")
-    elif slot1 == slot2 or slot2 == slot3 or slot1 == slot3:
-        winnings = bet * 2
-        add_money(ctx.author.id, winnings)
-        await ctx.send(f"✨ **Small Win!** ✨\n{ctx.author.mention} आपने डबल **{winnings} Coins** जीते!")
-    else:
-        add_money(ctx.author.id, -bet)
-        await ctx.send(f"❌ बैड लक। मशीन रुक गई और आपके **{bet} Coins** डूब गए!")
+        if user_id in daily_cooldowns and (now - daily_cooldowns[user_id]).total_seconds() < 86400:
+            hours = int((86400 - (now - daily_cooldowns[user_id]).total_seconds()) // 3600)
+            await interaction.response.send_message(f"⏳ {interaction.user.mention}, आज का इनाम ले चुके हो! **{hours} घंटे** बाद आना।", ephemeral=True)
+            return
+            
+        add_money(user_id, 1000)
+        daily_cooldowns[user_id] = now
+        embed = discord.Embed(
+            title="🎁 Daily Reward", 
+            description=f"बधाई हो {interaction.user.mention}! आपको आज के मुफ़्त **1000 Coins** मिल गए हैं।\n\n💰 नया बैलेंस: **{get_balance(user_id)} Coins**", 
+            color=discord.Color.green()
+        )
+        await interaction.response.send_message(embed=embed)
 
-LM_QUESTIONS = {
-    "Lords mobile में T4 troops अनलॉक करने के लिए कौनसी बिल्डिंग level 25 की होनी चाहिए?": "academy",
-    "Trickster हीरो का असली नाम क्या है?": "tattler",
-    "Rose Knight हीरो का असली नाम क्या है?": "joan",
-    "Blackwing मॉन्स्टर का मुख्य ड्रॉप कौन सा है जिससे उसका गियर बनता है?": "glowing eye",
-    "Monster hunt करते समय एक बार में कितने हीरोज को भेजा जा सकता है?": "5"
-}
+    @discord.ui.button(label="🛒 VIP Shop", style=discord.ButtonStyle.secondary, custom_id="eco_shop_btn")
+    async def shop_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(title="🛒 Thanos VIP Shop", description="अपने कमाए हुए Coins से ये शानदार रोल्स खरीदें!\n*(खरीदने के लिए `/buy <item_no>` कमांड लिखें)*", color=0x00ffff)
+        embed.add_field(name="1. 💎 VIP Member", value="**10,000 Coins**", inline=False)
+        embed.add_field(name="2. 🐲 Dragon Killer", value="**50,000 Coins**", inline=False)
+        embed.add_field(name="3. 👑 Guild King", value="**100,000 Coins**", inline=False)
+        await interaction.response.send_message(embed=embed)
 
-@bot.command()
-@commands.cooldown(1, 60, commands.BucketType.channel)
-async def quiz(ctx):
-    question, answer = random.choice(list(LM_QUESTIONS.items()))
-    await ctx.send(f"🧠 **Lords Mobile Quiz** 🧠\n\n❓ **सवाल:** {question}\n\n*(जल्दी से चैट में सही जवाब टाइप करें! जीतने वाले को 500 Coins मिलेंगे।)*")
-    
-    def check(m):
-        return m.channel == ctx.channel and m.content.lower().strip() == answer
+# 2. 🎮 Games View (बटन्स के साथ)
+class GamesView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
         
-    try:
-        msg = await bot.wait_for('message', check=check, timeout=30.0)
-        add_money(msg.author.id, 500)
-        await ctx.send(f"🎉 **बिल्कुल सही!** {msg.author.mention} ने सबसे पहले सही जवाब दिया: `{answer.title()}`.\n💰 इनाम: **500 Coins** आपके बैंक में जमा हो गए हैं!")
-    except asyncio.TimeoutError:
-        await ctx.send(f"⏳ समय समाप्त! कोई भी सही जवाब नहीं दे पाया। सही जवाब था: `{answer.title()}`")
+    @discord.ui.button(label="🪙 Heads (Bet 50)", style=discord.ButtonStyle.primary, custom_id="game_heads_btn")
+    async def heads_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.play_coinflip(interaction, "heads", 50)
 
-@bot.command()
-async def shop(ctx):
-    embed = discord.Embed(title="🛒 Thanos VIP Shop", description="अपने कमाए हुए Coins से ये शानदार रोल्स खरीदें!\n*(खरीदने के लिए `/buy <item_no>` लिखें)*", color=0x00ffff)
-    embed.add_field(name="1. 💎 VIP Member", value="कीमत: **10,000 Coins**", inline=False)
-    embed.add_field(name="2. 🐲 Dragon Killer", value="कीमत: **50,000 Coins**", inline=False)
-    embed.add_field(name="3. 👑 Guild King", value="कीमत: **100,000 Coins**", inline=False)
-    await ctx.send(embed=embed)
+    @discord.ui.button(label="🪙 Tails (Bet 50)", style=discord.ButtonStyle.danger, custom_id="game_tails_btn")
+    async def tails_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.play_coinflip(interaction, "tails", 50)
 
-@bot.command()
-async def buy(ctx, item_no: str = None):
-    shop_items = {
-        "1": {"name": "VIP Member", "price": 10000},
-        "2": {"name": "Dragon Killer", "price": 50000},
-        "3": {"name": "Guild King", "price": 100000}
-    }
-    
-    if not item_no or item_no not in shop_items:
-        await ctx.send("⚠️ सही आइटम नंबर लिखें! जैसे: `/buy 1`")
-        return
+    @discord.ui.button(label="🎰 Slots (Bet 100)", style=discord.ButtonStyle.success, custom_id="game_slots_btn")
+    async def slots_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        bal = get_balance(interaction.user.id)
+        if bal < 100:
+            await interaction.response.send_message(f"❌ पैसे नहीं हैं! आपका बैलेंस: **{bal} Coins**", ephemeral=True)
+            return
+            
+        emojis = ["🍎", "💎", "🍒", "🔔", "⭐"]
+        slot1, slot2, slot3 = random.choice(emojis), random.choice(emojis), random.choice(emojis)
         
-    item = shop_items[item_no]
-    bal = get_balance(ctx.author.id)
-    
-    if bal < item['price']:
-        await ctx.send(f"❌ आपके पास {item['name']} खरीदने के लिए पैसे नहीं हैं! (कीमत: {item['price']}, आपके पास: {bal})")
-        return
+        if slot1 == slot2 == slot3:
+            add_money(interaction.user.id, 1000)
+            msg = f"🎰 **SLOTS MACHINE** 🎰\n| {slot1} | {slot2} | {slot3} |\n🚨 **MEGA JACKPOT!** {interaction.user.mention} 1000 Coins जीत गए!"
+        elif slot1 == slot2 or slot2 == slot3 or slot1 == slot3:
+            add_money(interaction.user.id, 200)
+            msg = f"🎰 **SLOTS MACHINE** 🎰\n| {slot1} | {slot2} | {slot3} |\n✨ **Small Win!** {interaction.user.mention} 200 Coins जीत गए!"
+        else:
+            add_money(interaction.user.id, -100)
+            msg = f"🎰 **SLOTS MACHINE** 🎰\n| {slot1} | {slot2} | {slot3} |\n❌ {interaction.user.mention}, मशीन रुक गई और आपके 100 Coins डूब गए!"
+            
+        await interaction.response.send_message(msg)
+
+    @discord.ui.button(label="🧠 Play Quiz (Win 500)", style=discord.ButtonStyle.secondary, custom_id="game_quiz_btn")
+    async def quiz_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        question, answer = random.choice(list(LM_QUESTIONS.items()))
+        await interaction.response.send_message(f"🧠 **Lords Mobile Quiz** 🧠\n\n❓ **सवाल:** {question}\n\n*(जल्दी से चैट में सही जवाब टाइप करें!)*")
         
-    # पैसे काटना
-    add_money(ctx.author.id, -item['price'])
-    
-    try:
-        role = discord.utils.get(ctx.guild.roles, name=item['name'])
-        if not role:
-            # अगर रोल नहीं है तो बॉट खुद बना लेगा
-            role = await ctx.guild.create_role(name=item['name'], color=discord.Color.random())
-        await ctx.author.add_roles(role)
-        await ctx.send(f"🎉 बधाई हो {ctx.author.mention}! आपने दुकान से **{item['name']}** खरीद लिया है और आपको यह रोल दे दिया गया है!")
-    except Exception:
-        await ctx.send(f"🎉 बधाई हो {ctx.author.mention}! आपने **{item['name']}** खरीद लिया है!\n*(ध्यान दें: बॉट के पास सर्वर में रोल देने की परमिशन नहीं है, इसलिए रोल नहीं जुड़ा। एडमिन से बोलकर रोल लें।)*")
+        def check(m):
+            return m.channel == interaction.channel and m.content.lower().strip() == answer
+            
+        try:
+            msg = await interaction.client.wait_for('message', check=check, timeout=30.0)
+            add_money(msg.author.id, 500)
+            await interaction.channel.send(f"🎉 **बिल्कुल सही!** {msg.author.mention} ने सबसे पहले सही जवाब दिया!\n💰 इनाम: **500 Coins** बैंक में जमा हो गए!")
+        except asyncio.TimeoutError:
+            await interaction.channel.send(f"⏳ समय समाप्त! सही जवाब था: `{answer.title()}`")
+
+    async def play_coinflip(self, interaction, choice, bet):
+        bal = get_balance(interaction.user.id)
+        if bal < bet:
+            await interaction.response.send_message(f"❌ पैसे नहीं हैं! आपका बैलेंस: **{bal} Coins**", ephemeral=True)
+            return
+            
+        result = random.choice(["heads", "tails"])
+        if choice == result:
+            add_money(interaction.user.id, bet) 
+            await interaction.response.send_message(f"🪙 सिक्का उछला और... **{result.upper()}** आया!\n🎉 {interaction.user.mention} आप जीत गए! (+{bet} Coins)")
+        else:
+            add_money(interaction.user.id, -bet) 
+            await interaction.response.send_message(f"🪙 सिक्का उछला और... **{result.upper()}** आया!\n😢 {interaction.user.mention} आप हार गए! (-{bet} Coins)")
 
 # ==========================================
 
-# 🔵 हेल्प मेनू व्यू
-class HelpButtonView(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=None)
+@bot.event
+async def on_ready():
+    print(f'✅ {bot.user} ऑनलाइन आ गया है!')
+    await bot.change_presence(status=discord.Status.online, activity=discord.Game(name="Lords Mobile"))
+    
+    bot.add_view(MainGreetingView())
+    bot.add_view(HelpButtonView())
+    bot.add_view(MonsterView())
+    bot.add_view(BankCategoryView())
+    bot.add_view(GearCategoryView())
+    bot.add_view(EconomyView())
+    bot.add_view(GamesView())
 
-    @discord.ui.button(label="🤖 Bot Commands & Info", style=discord.ButtonStyle.primary, emoji="📋", custom_id="help_btn_persistent")
-    async def help_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message(
-            "✨ **Thanos Bot की सभी कमांड्स:**\n\n"
-            "🧠 **Smart AI Chat:** चैनल में कोई भी बात करें, बॉट जवाब देगा!\n"
-            "🐲 **Monster Hunt:** मेनू से 'Monster Hunt' बटन दबाकर 18 मॉन्स्टर्स के हीरो सेटअप देखें!\n"
-            "🛡️ **`/shield [घंटे]`** - एडवांस शील्ड टाइमर (15 मिनट पहले अलर्ट देगा)।\n"
-            "🗑️ **`/clearall`** - चैनल के सारे मैसेज डिलीट करने के लिए (एडमिन के लिए)।\n\n"
-            "💰 **NEW GAMING FEATURES:**\n"
-            "`/daily` - रोज़ाना मुफ़्त Coins पाएं!\n"
-            "`/bal` - अपना बैंक बैलेंस चेक करें।\n"
-            "`/coinflip [heads/tails] [bet]` - शर्त लगाकर कॉइनफ्लिप खेलें।\n"
-            "`/slots [bet]` - कैसीनो स्लॉट्स खेलें।\n"
-            "`/quiz` - Lords Mobile क्विज़ खेलकर पैसे कमाएं।\n"
-            "`/shop` और `/buy` - रोल्स खरीदें!"
-        )
-
-# ⚠️ चैट डिलीट कंफर्मेशन
-class ClearConfirmView(discord.ui.View):
-    def __init__(self, author):
-        super().__init__(timeout=60)
-        self.author = author
-
-    @discord.ui.button(label="✅ Confirm - Clear My Chat", style=discord.ButtonStyle.danger)
-    async def confirm_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.author:
-            await interaction.response.send_message("❌ आप इसे यूज़ नहीं कर सकते! अपना बटन खुद दबाएं।")
-            return
+    if not auto_clear_chat.is_running():
+        auto_clear_chat.start()
         
-        await interaction.response.send_message("🧹 आपकी चैट तुरंत साफ हो रही...")
-        
-        try:
-            if interaction.guild is None:
-                async for msg in interaction.channel.history(limit=100):
-                    if msg.author == interaction.client.user:
-                        try:
-                            await msg.delete()
-                        except:
-                            pass
-            else:
-                await interaction.channel.purge(limit=500)
-        except Exception:
-            pass
+    if not code_scraper.is_running():
+        code_scraper.start()
+        print("🕵️ Code Scraper चालू हो गया है!")
 
-    @discord.ui.button(label="❌ Cancel", style=discord.ButtonStyle.secondary)
-    async def cancel_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.author:
-            await interaction.response.send_message("❌ नो परमिशन!")
-            return
-        await interaction.response.edit_message(content="❌ प्रोसेस रद्द कर दिया गया है。", view=None)
+    if not patch_notes_scraper.is_running():
+        patch_notes_scraper.start()
+        print("🚨 Patch Notes Scraper चालू हो गया है!")
 
-# 🐲 18 मॉन्स्टर्स की लिस्ट
+
+# 🐲 18 मॉन्स्टर्स की लिस्ट (पुराना कोड)
 MONSTERS = {
     "1": ("Queen Bee", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Queen%20Bee.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/1.png"),
     "2": ("Saberfang", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Saberfang.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/2.png"),
@@ -634,48 +552,60 @@ class BankCategoryView(discord.ui.View):
         )
         await interaction.response.send_message(text)
          
-# 🟢 मुख्य मेनू (बटन्स के सही कलर्स के साथ)
+# 🟢 मुख्य मेनू (अब 7 बटन्स के साथ!)
 class MainGreetingView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    # 1. Guild Bank (Primary - Blue)
-    @discord.ui.button(label="Guild Bank Commands", style=discord.ButtonStyle.primary, emoji="🏦", custom_id="main_bank_btn")
+    # 1. Guild Bank (Row 0)
+    @discord.ui.button(label="Guild Bank Commands", style=discord.ButtonStyle.primary, emoji="🏦", row=0, custom_id="main_bank_btn")
     async def open_bank_menu_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = BankCategoryView()
         await interaction.response.send_message("👇 **किस तरह की बैंक कमांड्स देखनी हैं?**", view=view)
 
-    # 2. Monster Hunt (Success - Green)
-    @discord.ui.button(label="🏹 Monster Hunt", style=discord.ButtonStyle.success, emoji="🐲", custom_id="main_monster_btn")
+    # 2. Monster Hunt (Row 0)
+    @discord.ui.button(label="🏹 Monster Hunt", style=discord.ButtonStyle.success, emoji="🐲", row=0, custom_id="main_monster_btn")
     async def monster_hunt_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = MonsterView()
         await interaction.response.send_message("👇 **नीचे दिए गए ड्रॉपडाउन से अपना मॉन्स्टर चुनें:**", view=view)
 
-    # 3. Best Gear Setups (Secondary - Grey)
-    @discord.ui.button(label="⚙️ Best Gear Setups", style=discord.ButtonStyle.secondary, emoji="🛡️", custom_id="main_gear_btn")
+    # 3. Best Gear Setups (Row 0)
+    @discord.ui.button(label="⚙️ Best Gear Setups", style=discord.ButtonStyle.secondary, emoji="🛡️", row=0, custom_id="main_gear_btn")
     async def gear_setup_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = GearCategoryView()
         await interaction.response.send_message("👇 **कौन सा गियर सेटअप देखना है? नीचे से चुनें:**", view=view)
 
-    # 4. Bot Commands (Primary - Blue)
-    @discord.ui.button(label="Bot Commands", style=discord.ButtonStyle.primary, emoji="🤖", custom_id="main_botcmd_btn")
+    # 4. Bot Commands (Row 0)
+    @discord.ui.button(label="Bot Commands", style=discord.ButtonStyle.primary, emoji="🤖", row=0, custom_id="main_botcmd_btn")
     async def bot_commands_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         text = (
             "✨ **THANOS BOT COMMANDS & FEATURES / बॉट की कमांड्स और फीचर्स:**\n\n"
-            "🏦 **Guild Bank Menu:** ➔Access bank commands instantly. ➔ बैंक कमांड्स का आसान मेनू。\n"
-            "🐲 **Monster Hunt:** View ➔18 monster hero setups. ➔ 18 मॉन्स्टर्स के हीरो सेटअप देखें。\n"
-            "🛡️ **`/shield [hours]`** -➔ Shield timer with alerts. ➔ /शील्ड टाइमर और अलर्ट。\n"
-            "🎁 **Auto Redeem Codes:** ➔Bot will automatically send new redeem codes. ➔ नया रिडीम कोड आने पर बॉट आपको ऑटोमैटिक रिडीम कोड भेजेगा。\n"
-            "🚨 **Event & Patch Notes:**➔ Bot will automatically send event pages. ➔ नया इवेंट आने पर बॉट आपको ऑटोमैटिक इवेंट पेज भेजेगा。\n"
-            "🗑️ **`/clearall` / Clear Chat:** ➔Clean up chat messages. ➔/ चैट साफ़ करें।"
+            "🏦 **Guild Bank Menu:** ➔Access bank commands instantly.\n"
+            "🐲 **Monster Hunt:** View ➔18 monster hero setups.\n"
+            "🛡️ **`/shield [hours]`** -➔ Shield timer with alerts.\n"
+            "🎁 **Auto Redeem Codes:** ➔Bot will automatically send new redeem codes.\n"
+            "🚨 **Event & Patch Notes:**➔ Bot will automatically send event pages.\n"
+            "🗑️ **`/clearall` / Clear Chat:** ➔Clean up chat messages."
         )
         await interaction.response.send_message(text)
 
-    # 5. Clear My Chat (Danger - Red)
-    @discord.ui.button(label="Clear My Chat", style=discord.ButtonStyle.danger, emoji="🗑️", custom_id="main_clearchat_btn")
+    # 5. Clear My Chat (Row 0)
+    @discord.ui.button(label="Clear My Chat", style=discord.ButtonStyle.danger, emoji="🗑️", row=0, custom_id="main_clearchat_btn")
     async def clear_chat_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = ClearConfirmView(interaction.user)
         await interaction.response.send_message("⚠️ **चेतावनी:** क्या आप अपने और बॉट के मैसेज डिलीट करना चाहते हैं?", view=view)
+
+    # 6. 💰 Economy & Shop (नया बटन - Row 1 में)
+    @discord.ui.button(label="💰 Economy & Shop", style=discord.ButtonStyle.success, emoji="🪙", row=1, custom_id="main_economy_btn")
+    async def economy_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        view = EconomyView()
+        await interaction.response.send_message("👇 **Economy Menu: नीचे बटन्स दबाकर अपना मुफ़्त इनाम लें या बैंक बैलेंस चेक करें!**", view=view)
+
+    # 7. 🎮 Mini Games (नया बटन - Row 1 में)
+    @discord.ui.button(label="🎮 Mini Games", style=discord.ButtonStyle.primary, emoji="🎲", row=1, custom_id="main_games_btn")
+    async def games_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        view = GamesView()
+        await interaction.response.send_message("👇 **Games Menu: नीचे दिए गए बटन्स दबाकर तुरंत गेम्स खेलें!**", view=view)
 
 # 🗑️ क्लियर कमांड 
 @bot.command()
@@ -745,6 +675,90 @@ async def shield_error(ctx, error):
     if isinstance(error, commands.BadArgument) or isinstance(error, commands.MissingRequiredArgument):
         await ctx.send("❌ भाई, सही टाइम (सिर्फ नंबर) बताओ! (जैसे: `/shield 4` या `/shield 8`)", delete_after=5)
 
+# ==========================================
+# 💎 MANUAL COMMANDS FOR ECONOMY/GAMES 💎
+# ==========================================
+@bot.command(name="buy")
+async def buy_role(ctx, item_no: str = None):
+    shop_items = {
+        "1": {"name": "VIP Member", "price": 10000},
+        "2": {"name": "Dragon Killer", "price": 50000},
+        "3": {"name": "Guild King", "price": 100000}
+    }
+    
+    if not item_no or item_no not in shop_items:
+        await ctx.send("⚠️ सही आइटम नंबर लिखें! जैसे: `/buy 1`")
+        return
+        
+    item = shop_items[item_no]
+    bal = get_balance(ctx.author.id)
+    
+    if bal < item['price']:
+        await ctx.send(f"❌ आपके पास {item['name']} खरीदने के लिए पैसे नहीं हैं! (कीमत: {item['price']}, आपके पास: {bal})")
+        return
+        
+    add_money(ctx.author.id, -item['price'])
+    
+    try:
+        role = discord.utils.get(ctx.guild.roles, name=item['name'])
+        if not role:
+            role = await ctx.guild.create_role(name=item['name'], color=discord.Color.random())
+        await ctx.author.add_roles(role)
+        await ctx.send(f"🎉 बधाई हो {ctx.author.mention}! आपने **{item['name']}** खरीद लिया है और आपको रोल दे दिया गया है!")
+    except Exception:
+        await ctx.send(f"🎉 बधाई हो {ctx.author.mention}! आपने **{item['name']}** खरीद लिया है!\n*(रोल जोड़ने की परमिशन नहीं है, एडमिन से संपर्क करें।)*")
+
+# 🔵 हेल्प मेनू व्यू
+class HelpButtonView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="🤖 Bot Commands & Info", style=discord.ButtonStyle.primary, emoji="📋", custom_id="help_btn_persistent")
+    async def help_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message(
+            "✨ **Thanos Bot की सभी कमांड्स:**\n\n"
+            "🧠 **Smart AI Chat:** चैनल में कोई भी बात करें, बॉट जवाब देगा!\n"
+            "🐲 **Monster Hunt:** मेनू से 'Monster Hunt' बटन दबाकर 18 मॉन्स्टर्स के हीरो सेटअप देखें!\n"
+            "🛡️ **`/shield [घंटे]`** - एडवांस शील्ड टाइमर (15 मिनट पहले अलर्ट देगा)।\n"
+            "🗑️ **`/clearall`** - चैनल के सारे मैसेज डिलीट करने के लिए (एडमिन के लिए)।\n\n"
+            "💰 **NEW GAMING FEATURES:** (आप इन्हें मेन मेनू के बटन्स से भी खेल सकते हैं!)\n"
+            "`/buy [item_no]` - दुकान से रोल्स खरीदें!"
+        )
+
+# ⚠️ चैट डिलीट कंफर्मेशन
+class ClearConfirmView(discord.ui.View):
+    def __init__(self, author):
+        super().__init__(timeout=60)
+        self.author = author
+
+    @discord.ui.button(label="✅ Confirm - Clear My Chat", style=discord.ButtonStyle.danger)
+    async def confirm_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.author:
+            await interaction.response.send_message("❌ आप इसे यूज़ नहीं कर सकते! अपना बटन खुद दबाएं।")
+            return
+        
+        await interaction.response.send_message("🧹 आपकी चैट तुरंत साफ हो रही...")
+        
+        try:
+            if interaction.guild is None:
+                async for msg in interaction.channel.history(limit=100):
+                    if msg.author == interaction.client.user:
+                        try:
+                            await msg.delete()
+                        except:
+                            pass
+            else:
+                await interaction.channel.purge(limit=500)
+        except Exception:
+            pass
+
+    @discord.ui.button(label="❌ Cancel", style=discord.ButtonStyle.secondary)
+    async def cancel_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.author:
+            await interaction.response.send_message("❌ नो परमिशन!")
+            return
+        await interaction.response.edit_message(content="❌ प्रोसेस रद्द कर दिया गया है。", view=None)
+
 # 🧠 AI चैट
 @bot.event
 async def on_message(message):
@@ -769,7 +783,7 @@ async def on_message(message):
             "**🛑WELCOME-THANOS BOT🛑**\n\n"
             f"✨ **Hello / नमस्ते {message.author.mention}!**\n"
             "Thanos Bot is online and ready to help your guild! / गिल्ड की मदद के लिए बॉट तैयार है! 🤖🔥\n\n"
-            "👇 **Click buttons below for Bot Commands & Guild Bank / बॉट कमांड्स और बैंक के लिए नीचे बटन दबाएं:**"
+            "👇 **Click buttons below for Bot Commands, Guild Bank & Mini Games! / नीचे दिए गए बटन दबाएं:**"
         )
         
         embed = discord.Embed(color=0x00ffff) 
