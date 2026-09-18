@@ -4,91 +4,21 @@ import asyncio
 import os
 import threading
 import aiohttp
+import re  
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import discord
 from discord.ext import commands, tasks
 
-# ==========================================
-# 🧠 ADVANCED MEMORY / DATABASE FOR CASTLES
-# ==========================================
-# Yeh dictionary pichle scan ka data yaad rakhegi taaki shield drop type pata chal sake
-castle_database = {}
+GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
 
-# ==========================================
-# 🕵️‍♂️ HEADLESS BOT: SMART MAP SCANNER ENGINE
-# ==========================================
-DUMMY_SESSION_TOKEN = "[INSERT_YOUR_TOKEN_HERE]"  # <- LDPlayer se nikla hua token yahan dalega
-ENEMY_GUILDS = ["AAA", "XYZ", "BAD"]  # Jin guilds par nazar rakhni hai
-MIN_MIGHT_ALERT = 50000000  # 50 Million power se upar walon ka alert
-
-# 🌙 Anti-Detection Random Sleep Schedule
-def should_bot_sleep():
-    current_hour = datetime.now(timezone.utc).hour
-    random_sleep_start = random.randint(22, 1) 
-    random_wake_up = random.randint(5, 8)     
-
-    if random_sleep_start <= current_hour or current_hour <= random_wake_up:
-        return True 
-    return False
-
-@tasks.loop(minutes=3)
-async def smart_map_scanner():
-    if DUMMY_SESSION_TOKEN == "[INSERT_YOUR_TOKEN_HERE]":
-        return
-
-    # 1. Random Sleep Check
-    if should_bot_sleep():
-        print("💤 Bot is sleeping like a human today to avoid detection...")
-        return
-
-    # 2. Human-like Random Delay
-    human_delay = random.uniform(3.5, 7.8)
-    await asyncio.sleep(human_delay)
-
-    # 3. Tracker & Smart Analysis Logic
-    try:
-        # Jab map data aayega, hum har castle ke liye ye check karenge:
-        # c_key = f"{kingdom}_{x}_{y}"
-        # previous_state = castle_database.get(c_key, None)
-        # current_time = datetime.now(timezone.utc)
-        
-        # if previous_state:
-        #     was_shielded = previous_state['has_shield']
-        #     prev_timer = previous_state['timer'] # seconds bache the
-        #     
-        #     # Agar pehle shield thi aur ab nahi hai (Shield Dropped!)
-        #     if was_shielded and not has_shield:
-        #         drop_time_str = current_time.strftime("%H:%M:%S UTC")
-        #         
-        #         # Feature A: Manual vs Natural Check
-        #         if prev_timer > 1800: # Agar 30 minute se zyada bacha tha aur achanak hat gayi
-        #             drop_type = "⚠️ Manual Drop (Jaan-boojh kar hatayi gayi / Trap ho sakti hai!)"
-        #         else:
-        #             drop_type = "⌛ Natural Expiry (Shield ka waqt khatam ho gaya)"
-        #             
-        #         # Feature B: Drop Time & Offline Estimation Check
-        #         drop_hour = current_time.hour
-        #         if 22 <= drop_hour or drop_hour <= 6:
-        #             offline_status = "🌙 Raat ka waqt hai - Banda 100% Offline / Sone ki sambhavna hai!"
-        #         else:
-        #             offline_status = "☀️ Din ka waqt hai - Active ho sakta hai (Scout zaroor karein!)"
-        #             
-        #         # Yahan Discord channel par alert bhejne ka code aayega jisme ye sab details hongi!
-        
-        pass
-    except Exception as e:
-        print(f"Scanner Error: {e}")
-
-# ==========================================
-# 🌐 Render 24/7 Keep Alive Web Server
-# ==========================================
+# 🌐 Render को जगाए रखने के लिए 24/7 वेब सर्वर
 class DummyHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.send_header('Content-type', 'text/plain')
         self.end_headers()
-        self.wfile.write(b"Lords Mobile Tracker Bot is online 24/7!")
+        self.wfile.write(b"Thanos Bot is online and running 24/7!")
 
     def do_HEAD(self):
         self.send_response(200)
@@ -100,50 +30,764 @@ def keep_alive():
     server = HTTPServer(('0.0.0.0', port), DummyHandler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
 
-# ==========================================
-# 🤖 Discord Bot Setup
-# ==========================================
+# 🛠️ AI फंक्शन
+async def get_ai_response(prompt):
+    if not GEMINI_KEY:
+        return "⚠️ Gemini API Key सेट नहीं है!"
+        
+    url = f"https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={GEMINI_KEY}"
+    
+    headers = {'Content-Type': 'application/json'}
+    data = {"contents": [{"parts": [{"text": prompt}]}]}
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, headers=headers, json=data) as resp:
+            if resp.status == 200:
+                result = await resp.json()
+                try:
+                    return result['candidates'][0]['content']['parts'][0]['text']
+                except:
+                    return "⚠️ गूगल ने जवाब देने से मना कर दिया।"
+            else:
+                return "⚠️ गूगल AI अभी व्यस्त है या आपका मैसेज समझ नहीं पाया। कृपया थोड़ी देर बाद कोशिश करें।"
+
+# 📝 बॉट की डायरी (Saved Codes)
+CODES_FILE = "saved_codes.txt"
+
+def load_saved_codes():
+    if not os.path.exists(CODES_FILE):
+        return []
+    with open(CODES_FILE, "r") as f:
+        return f.read().splitlines()
+
+def save_new_code(code):
+    with open(CODES_FILE, "a") as f:
+        f.write(code + "\n")
+
+# 📝 पैच नोट्स की डायरी (Saved Patches)
+PATCH_FILE = "saved_patches.txt"
+
+def load_saved_patches():
+    if not os.path.exists(PATCH_FILE):
+        return set()
+    with open(PATCH_FILE, "r") as f:
+        return set(line.strip() for line in f if line.strip())
+
+def save_patch_id(post_id):
+    with open(PATCH_FILE, "a") as f:
+        f.write(f"{post_id}\n")
+
+# 🤖 Discord Bot सेटअप
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
+intents.presences = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 bot.remove_command('help')
 
+# 🧹 ऑटो चैट क्लियर
+@tasks.loop(minutes=30)
+async def auto_clear_chat():
+    for guild in bot.guilds:
+        for channel in guild.text_channels:
+            try:
+                now = datetime.now(timezone.utc)
+                deleted = await channel.purge(limit=200, check=lambda m: (now - m.created_at) > timedelta(hours=24))
+                if len(deleted) > 0:
+                    print(f"🧹 {channel.name} से {len(deleted)} पुराने मैसेज डिलीट किए गए।")
+            except Exception:
+                pass
+
+# 🕵️ रिडीम कोड स्क्रैपर (Reddit से ऑटोमैटिक कोड ढूंढने वाला फीचर)
+@tasks.loop(minutes=30)
+async def code_scraper():
+    url = "https://www.reddit.com/r/lordsmobile/new.json?limit=10"
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Bot'}
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.get(url, headers=headers) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    saved_codes = load_saved_codes()
+                    for post in data['data']['children']:
+                        title = post['data']['title'].upper()
+                        text = post['data'].get('selftext', '').upper()
+                        full_content = title + " " + text
+                        if "CODE" in full_content or "REDEEM" in full_content:
+                            possible_codes = re.findall(r'\b[A-Z0-9]{8,12}\b', full_content)
+                            for p_code in possible_codes:
+                                if p_code not in saved_codes and not p_code.isnumeric():
+                                    save_new_code(p_code)
+                                    for guild in bot.guilds:
+                                        for channel in guild.text_channels:
+                                            if channel.permissions_for(guild.me).send_messages:
+                                                try:
+                                                    await channel.send(
+                                                        f"🚨 **New Lords Mobile Code Found!** 🚨\n"
+                                                        f"🎁 **Code:** `{p_code}`\n"
+                                                        f"🔗 *Redeem here:* <https://lordsmobile.igg.com/project/gifts/>"
+                                                    )
+                                                except Exception:
+                                                    pass 
+        except Exception as e:
+            print(f"Scraper Error: {e}")
+
+# 🚨 पैच नोट्स स्क्रैपर (Reddit से अपडेट और इवेंट्स भेजने वाला फीचर)
+@tasks.loop(hours=1)
+async def patch_notes_scraper():
+    url = "https://www.reddit.com/r/lordsmobile/new.json?limit=10"
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Bot'}
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.get(url, headers=headers) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    saved_patches = load_saved_patches()
+                    for post in data['data']['children']:
+                        p_data = post['data']
+                        post_id = p_data['id']
+                        title = p_data['title']
+                        text = p_data.get('selftext', '')
+                        full_content = (title + " " + text).lower()
+                        if any(keyword in full_content for keyword in ["update", "patch", "maintenance", "notes", "event"]):
+                            if post_id not in saved_patches:
+                                save_patch_id(post_id)
+                                image_url = p_data.get('url', None)
+                                post_permalink = f"https://www.reddit.com{p_data.get('permalink', '')}"
+                                embed = discord.Embed(
+                                    title="🚨 New Lords Mobile Update & Patch Notes!",
+                                    description=f"**{title}**\n\n🔗 [Read full post on Reddit]({post_permalink})",
+                                    color=discord.Color.gold()
+                                )
+                                if image_url and any(image_url.endswith(ext) for ext in ['.jpg', '.png', '.jpeg']):
+                                    embed.set_image(url=image_url)
+                                for guild in bot.guilds:
+                                    for channel in guild.text_channels:
+                                        if channel.permissions_for(guild.me).send_messages:
+                                            try:
+                                                await channel.send(embed=embed)
+                                            except Exception:
+                                                pass
+                                break 
+        except Exception as e:
+            print(f"Patch Scraper Error: {e}")
+
+# ==========================================
+# 💎 ECONOMY SYSTEM & MINI GAMES (परमानेंट बैंक) 💎
+# ==========================================
+ECONOMY_FILE = "economy.json"
+daily_cooldowns = {} 
+
+LM_QUESTIONS = {
+    "Lords mobile में T4 troops अनलॉक करने के लिए कौनसी बिल्डिंग level 25 की होनी चाहिए?": "academy",
+    "Trickster हीरो का असली नाम क्या है?": "tattler",
+    "Rose Knight हीरो का असली नाम क्या है?": "joan",
+    "Blackwing मॉन्स्टर का मुख्य ड्रॉप कौन सा है जिससे उसका गियर बनता है?": "glowing eye",
+    "Monster hunt करते समय एक बार में कितने हीरोज को भेजा जा सकता है?": "5",
+    "Snow Beast मॉन्स्टर से कौन सा मुख्य मटेरियल मिलता है?": "horn",
+    "Noceros मॉन्स्टर का मुख्य हथियार क्या बनाने के काम आता है?": "wind path",
+    "Lords Mobile में गिल्ड हॉल (Guild Hall) का अधिकतम लेवल कितना होता है?": "25",
+    "कौन सा हीरो F2P खिलाड़ियों के लिए सबसे बेहतरीन मैजिक डैमेज देता है?": "incinerator",
+    "Colosseum में लड़ने के लिए कुल कितने हीरोज की टीम चुननी पड़ती है?": "5",
+    "Frostwing मॉन्स्टर से मिलने वाले रेयर मटेरियल का नाम क्या है?": "frostwing heart",
+    "Gryphon मॉन्स्टर से कौन सा गियर कम्पोनेंट मिलता है?": "gryphon claw",
+    "Hell Drider मॉन्स्टर का मुख्य ड्रॉप क्या है?": "spiked shell",
+    "Mega Maggot मॉन्स्टर से क्या प्राप्त होता है?": "blazing ember",
+    "Queen Bee मॉन्स्टर का मुख्य ड्रॉप क्या है?": "honeycomb",
+    "Saberfang मॉन्स्टर से कौन सा मटेरियल मिलता है?": "saberfang tooth",
+    "Gargantua मॉन्स्टर का मुख्य ड्रॉप क्या है?": "gargantua's eye",
+    "Bon Appeti मॉन्स्टर से क्या मिलता है?": "fleshy pivot",
+    "Jade Wyrm मॉन्स्टर से मिलने वाला मटेरियल कौन सा है?": "tongue",
+    "Mecha Trojan मॉन्स्टर का मुख्य ड्रॉप क्या है?": "electro core",
+    "Voodoo Shaman मॉन्स्टर से क्या प्राप्त होता है?": "voodoo mask",
+    "Grim Reaper मॉन्स्टर का मुख्य ड्रॉप क्या है?": "grim reaper's scythe",
+    "Hardrox मॉन्स्टर से कौन सा मटेरियल मिलता है?": "hardrox armor",
+    "Tidal Titan मॉन्स्टर का मुख्य ड्रॉप क्या है?": "tidal titan shell",
+    "Terrorthorn मॉन्स्टर से क्या मिलता है?": "root",
+    "Lords Mobile में कुल कितने प्रकार के बेसिक ट्रूप्स होते हैं?": "4",
+    "सबसे ताकतवर और एडवांस ट्रूप्स कौन से होते हैं?": "t4",
+    "क्या T5 ट्रूप्स को अनलॉक करने के लिए Wonder Battles लड़नी पड़ती है?": "yes",
+    "Lords Mobile में गिल्ड गिफ्ट्स ओपन करने पर क्या मिलता है?": "gems",
+    "क्या Colosseum में रैंक सुधारने पर हर दिन Gems मिलते हैं?": "yes",
+    "Lords Mobile में VIP लेवल अधिकतम कितना जा सकता है?": "15",
+    "क्या Mystery Box से बिना पैसे खर्च किए Speed-ups मिल सकते हैं?": "yes",
+    "Lords Mobile में कोलोजियम रीसेट होने का समय कितने घंटे में होता है?": "3",
+    "क्या Battle Hall में Rally कैपिसिटी आपके Hall के लेवल पर निर्भर करती है?": "yes",
+    "Prison में किसी दूसरे कैसल के लीडर को बंद रखने से क्या मिलता है?": "boost",
+    "Altar में लीडर को मारने पर कुछ समय के लिए सेना को क्या मिलता है?": "attack boost",
+    "Lords Mobile का सबसे पहला और बेसिक रिसोर्स कौन सा होता है?": "food",
+    "क्या Gold का उपयोग हीरो स्किल्स को अपग्रेड करने के लिए किया जाता है?": "yes",
+    "Lords Mobile में Shields कितने घंटे की सबसे बड़ी आती है?": "24",
+    "क्या KVK इवेंट में दूसरे किंगडम में जा सकते हैं?": "yes",
+    "Lords Mobile में कुल कितने रिसોર્स होते हैं?": "4",
+    "क्या बिना गिल्ड के मिस्ट्री बॉक्स क्लेम किया जा सकता है?": "yes",
+    "क्या बैटल हॉल को अपग्रेड करने के लिए War Books की जरूरत होती है?": "yes",
+    "क्या प्रिजन को अपग्रेड करने के लिए Shackles की जरूरत होती है?": "yes",
+    "क्या ट्रेजरी (Treasury) में जेम्स इन्वेस्ट करके मुनाफा कमाया जा सकता है?": "yes",
+    "Lords Mobile में ट्रेजरी खोलने के लिए कौन सी बिल्डिंग अपग्रेड करनी पड़ती है?": "vault",
+    "क्या शेल्फ पर रखे गए बूट्स (Boots) मार्च स्पीड बढ़ाते हैं?": "yes",
+    "क्या गिल्ड कॉइन से टैलेंट रिसेट आइटम खरीदा जा सकता है?": "yes",
+    "Lords Mobile में मैक्सिमम कितने हीरो रखे जा सकते हैं?": "50",
+    "क्या ट्रैप्स (Traps) कैसल की रक्षा करने में मदद करते हैं?": "yes",
+    "क्या नोटोरियस मॉन्स्टर इवेंट में लिमिटेड एडिशन गियर मिलते हैं?": "yes",
+    "क्या हीरो स्टेजेस नॉर्मल और एलीट दोनों मोड़ में खेली जाती हैं?": "yes",
+    "क्या एलीट हीरो स्टेजेस में मेडल मिलते हैं?": "yes",
+    "क्या रोज़ नाइट को फ्री में अनलॉक किया जा सकता है?": "yes",
+    "क्या ट्रैकर हीरो सिंगल टारगेट पर सबसे ज्यादा डैमेज देती है?": "yes",
+    "क्या इंसीनरेटर हीरो एरिया डैमेज (AoE) देती है?": "yes",
+    "क्या डीप वुड्स (Deep Woods) इवेंट में टोकन से जैकपॉट जीत सकते हैं?": "yes",
+    "क्या गिल्ड फेस्ट में अलग-अलग टियर के टास्क मिलते हैं?": "yes",
+    "क्या लैबरिंथ (Labyrinth) में गार्डियन को मारने पर स्टार मिलते हैं?": "yes",
+    "क्या फैमिलियर (Familiars) बैटल में मदद करते हैं?": "yes"
+}
+
+def load_economy():
+    if not os.path.exists(ECONOMY_FILE):
+        with open(ECONOMY_FILE, "w") as f:
+            json.dump({}, f)
+        return {}
+    try:
+        with open(ECONOMY_FILE, "r") as f:
+            return json.load(f)
+    except:
+        return {}
+
+def save_economy(data):
+    with open(ECONOMY_FILE, "w") as f:
+        json.dump(data, f, indent=4)
+
+def get_balance(user_id):
+    data = load_economy()
+    return data.get(str(user_id), 0)
+
+def add_money(user_id, amount):
+    data = load_economy()
+    user_id = str(user_id)
+    data[user_id] = data.get(user_id, 0) + amount
+    if data[user_id] < 0:
+        data[user_id] = 0
+    save_economy(data)
+
+# ==========================================
+# 🛒 MEGA VIP SHOP ITEMS (10 Items with Emojis & Use)
+# ==========================================
+SHOP_ITEMS = {
+    "1": {"name": "VIP Member", "price": 10000, "emoji": "💎", "desc": "चैट में नाम का रंग अलग दिखेगा और VIP चैनल में एंट्री मिलेगी।"},
+    "2": {"name": "Monster Hunter", "price": 25000, "emoji": "🏹", "desc": "हंटिंग टीम का स्पेशल रोल और मॉन्स्टर अलर्ट्स।"},
+    "3": {"name": "Casino Master", "price": 40000, "emoji": "🎰", "desc": "सर्वर के सबसे बड़े जुआरी का टैग और स्पेशल एक्सेस।"},
+    "4": {"name": "Dragon Killer", "price": 50000, "emoji": "🐲", "desc": "ड्रैगन हंटर्स के एलीट ग्रुप की पहचान और पावर।"},
+    "5": {"name": "Rally Leader", "price": 60000, "emoji": "⚔️", "desc": "डार्कनेस्ट रैली लीड करने वालों का खास रोल।"},
+    "6": {"name": "Bank Manager", "price": 75000, "emoji": "🏦", "desc": "गिल्ड बैंक की सिक्योरिटी और ट्रस्टेड मेंबर का टैग।"},
+    "7": {"name": "War General", "price": 85000, "emoji": "🛡️", "desc": "KVK और गिल्ड वॉर के कमांडर्स की पहचान।"},
+    "8": {"name": "Guild King", "price": 100000, "emoji": "👑", "desc": "सर्वर का सबसे प्रो प्लेयर और असली किंग।"},
+    "9": {"name": "Thanos Champion", "price": 150000, "emoji": "⚡", "desc": "बॉट का सबसे अमीर और टॉप लेवल गेमर।"},
+    "10": {"name": "Server Legend", "price": 200000, "emoji": "🌟", "desc": "सर्वर का भगवान! एडमिन के बाद सबसे बड़ी इज्जत।"}
+}
+
+# ==========================================
+# 💎 INTERACTIVE BUTTON VIEWS 💎
+# ==========================================
+
+class EconomyView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        
+    @discord.ui.button(label="💰 Check Balance", style=discord.ButtonStyle.primary, custom_id="eco_bal_btn")
+    async def bal_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        bal = get_balance(interaction.user.id)
+        embed = discord.Embed(title="💰 Bank Balance", description=f"{interaction.user.mention}, आपके खाते में **{bal} Coins** हैं! 🏦", color=discord.Color.gold())
+        await interaction.response.send_message(embed=embed)
+
+    @discord.ui.button(label="🎁 Claim Daily 2000", style=discord.ButtonStyle.success, custom_id="eco_daily_btn")
+    async def daily_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        user_id = interaction.user.id
+        now = datetime.now()
+        if user_id in daily_cooldowns and (now - daily_cooldowns[user_id]).total_seconds() < 86400:
+            hours = int((86400 - (now - daily_cooldowns[user_id]).total_seconds()) // 3600)
+            await interaction.response.send_message(f"⏳ {interaction.user.mention}, आज का इनाम ले चुके हो! **{hours} घंटे** बाद आना।", ephemeral=True)
+            return
+        add_money(user_id, 2000)
+        daily_cooldowns[user_id] = now
+        embed = discord.Embed(
+            title="🎁 Daily Reward", 
+            description=f"बधाई हो {interaction.user.mention}! आपको आज के मुफ़्त **2000 Coins** मिल गए हैं।\n\n💰 नया बैलेंस: **{get_balance(user_id)} Coins**\n\n*Type `!hackmoney 500000` to get unlimited coins directly into your account. Only the admin can use this! 🚀💰*", 
+            color=discord.Color.green()
+        )
+        await interaction.response.send_message(embed=embed)
+
+    @discord.ui.button(label="🛒 VIP Shop", style=discord.ButtonStyle.secondary, custom_id="eco_shop_btn")
+    async def shop_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(title="🛒 Thanos Mega VIP Shop", description="अपने कमाए हुए Coins से ये शानदार रोल्स खरीदें!\n*(खरीदने के लिए चैट में `!buy <item_no>` लिखें)*", color=0x00ffff)
+        for key, item in SHOP_ITEMS.items():
+            embed.add_field(name=f"{key}. {item['emoji']} {item['name']} (🪙 {item['price']:,})", value=f"*{item['desc']}*", inline=False)
+        await interaction.response.send_message(embed=embed)
+
+class GamesView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        
+    @discord.ui.button(label="🪙 Heads (Bet 50)", style=discord.ButtonStyle.primary, custom_id="game_heads_btn")
+    async def heads_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.play_coinflip(interaction, "heads", 50)
+
+    @discord.ui.button(label="🪙 Tails (Bet 50)", style=discord.ButtonStyle.danger, custom_id="game_tails_btn")
+    async def tails_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.play_coinflip(interaction, "tails", 50)
+
+    @discord.ui.button(label="🎰 Slots (Bet 100)", style=discord.ButtonStyle.success, custom_id="game_slots_btn")
+    async def slots_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        bal = get_balance(interaction.user.id)
+        if bal < 100:
+            await interaction.response.send_message(f"❌ पैसे नहीं हैं! आपका बैलेंस: **{bal} Coins**", ephemeral=True)
+            return
+        emojis = ["🍎", "💎", "🍒", "🔔", "⭐"]
+        slot1, slot2, slot3 = random.choice(emojis), random.choice(emojis), random.choice(emojis)
+        if slot1 == slot2 == slot3:
+            add_money(interaction.user.id, 1000)
+            msg = f"🎰 **SLOTS MACHINE** 🎰\n| {slot1} | {slot2} | {slot3} |\n🚨 **MEGA JACKPOT!** {interaction.user.mention} 1000 Coins जीत गए!"
+        elif slot1 == slot2 or slot2 == slot3 or slot1 == slot3:
+            add_money(interaction.user.id, 200)
+            msg = f"🎰 **SLOTS MACHINE** 🎰\n| {slot1} | {slot2} | {slot3} |\n✨ **Small Win!** {interaction.user.mention} 200 Coins जीत गए!"
+        else:
+            add_money(interaction.user.id, -100)
+            msg = f"🎰 **SLOTS MACHINE** 🎰\n| {slot1} | {slot2} | {slot3} |\n❌ {interaction.user.mention}, मशीन रुक गई और आपके 100 Coins डूब गए!"
+        await interaction.response.send_message(msg)
+
+    @discord.ui.button(label="🧠 Play Quiz (Win 500)", style=discord.ButtonStyle.secondary, custom_id="game_quiz_btn")
+    async def quiz_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        question, answer = random.choice(list(LM_QUESTIONS.items()))
+        await interaction.response.send_message(f"🧠 **Lords Mobile Quiz** 🧠\n\n❓ **सवाल:** {question}\n\n*(जल्दी से चैट में सही जवाब टाइप करें!)*")
+        def check(m):
+            return m.channel == interaction.channel and m.content.lower().strip() == answer
+        try:
+            msg = await interaction.client.wait_for('message', check=check, timeout=30.0)
+            add_money(msg.author.id, 500)
+            await interaction.channel.send(f"🎉 **बिल्कुल सही!** {msg.author.mention} ने सबसे पहले सही जवाब दिया!\n💰 इनाम: **500 Coins** बैंक में जमा हो गए!")
+        except asyncio.TimeoutError:
+            await interaction.channel.send(f"⏳ समय समाप्त! सही जवाब था: `{answer.title()}`")
+
+    async def play_coinflip(self, interaction, choice, bet):
+        bal = get_balance(interaction.user.id)
+        if bal < bet:
+            await interaction.response.send_message(f"❌ पैसे नहीं हैं! आपका बैलेंस: **{bal} Coins**", ephemeral=True)
+            return
+        result = random.choice(["heads", "tails"])
+        if choice == result:
+            add_money(interaction.user.id, bet) 
+            await interaction.response.send_message(f"🪙 सिक्का उछला और... **{result.upper()}** आया!\n🎉 {interaction.user.mention} आप जीत गए! (+{bet} Coins)")
+        else:
+            add_money(interaction.user.id, -bet) 
+            await interaction.response.send_message(f"🪙 सिक्का उछला और... **{result.upper()}** आया!\n😢 {interaction.user.mention} आप हार गए! (-{bet} Coins)")
+
+# ==========================================
+
 @bot.event
 async def on_ready():
-    print(f'✅ Tracker Bot ({bot.user}) online aa gaya hai!')
-    await bot.change_presence(status=discord.Status.online, activity=discord.Game(name="Scanning Map..."))
+    print(f'✅ {bot.user} ऑनलाइन आ गया है!')
+    await bot.change_presence(status=discord.Status.online, activity=discord.Game(name="Lords Mobile"))
     
-    if not smart_map_scanner.is_running():
-        smart_map_scanner.start()
+    bot.add_view(MainGreetingView())
+    bot.add_view(HelpButtonView())
+    bot.add_view(MonsterView())
+    bot.add_view(BankCategoryView())
+    bot.add_view(GearCategoryView())
+    bot.add_view(EconomyView())
+    bot.add_view(GamesView())
 
-# 🛡️ Shield Timer Command
+    if not auto_clear_chat.is_running():
+        auto_clear_chat.start()
+    if not code_scraper.is_running():
+        code_scraper.start()
+    if not patch_notes_scraper.is_running():
+        patch_notes_scraper.start()
+
+# 🐲 18 मॉन्स्टर्स की लिस्ट
+MONSTERS = {
+    "1": ("Queen Bee", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Queen%20Bee.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/1.png"),
+    "2": ("Saberfang", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Saberfang.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/2.png"),
+    "3": ("Gryphon", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Gryphon.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/3.png"),
+    "4": ("Mecha Trojan", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Mecha%20Trojan.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/4.png"),
+    "5": ("Jade Wyrm", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Jade%20Wyrm.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/5.png"),
+    "6": ("Bon Appeti", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Bon%20Appeti.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/6.png"),
+    "7": ("Gargantua", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Gargantua.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/7.png"),
+    "8": ("Frostwing", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Frostwing.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/8.png"),
+    "9": ("Hell Drider", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Hell%20Drider.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/9.png"),
+    "10": ("Snow Beast", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Snow%20Beast.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/10.png"),
+    "11": ("Tidal Titan", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Tidal%20Titan.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/11.png"),
+    "12": ("Terrorthorn", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Terrorthorn.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/12.png"),
+    "13": ("Noceros", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Noceros.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/13.png"),
+    "14": ("Mega Maggot", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Mega%20Maggot.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/14.png"),
+    "15": ("Blackwing", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Blackwing.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/15.png"),
+    "16": ("Voodoo Shaman", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Voodoo%20Shaman.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/16.png"),
+    "17": ("Grim Reaper", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Grim%20Reaper.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/17.png"),
+    "18": ("Hardrox", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Hardrox.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/18.png"),
+}
+
+class MonsterSelect(discord.ui.Select):
+    def __init__(self):
+        options = [
+            discord.SelectOption(label=f"{num}. {name}", value=num)
+            for num, (name, monster_url, setup_url) in MONSTERS.items()
+        ]
+        super().__init__(placeholder="🎯 Select a Monster (1 to 18)...", min_values=1, max_values=1, options=options, custom_id="monster_select_dropdown")
+
+    async def callback(self, interaction: discord.Interaction):
+        selected_num = self.values[0]
+        name, monster_url, setup_url = MONSTERS[selected_num]
+        embed1 = discord.Embed(title=f"👾 Monster: {name}", color=discord.Color.green())
+        embed1.set_image(url=monster_url)
+        embed2 = discord.Embed(title=f"⚔️ Recommended Hero Setup for {name}", color=discord.Color.blue())
+        embed2.set_image(url=setup_url)
+        await interaction.response.send_message(embeds=[embed1, embed2])
+
+class MonsterView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        self.add_item(MonsterSelect())
+
+# 🟢 गियर मेनू
+class GearCategoryView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+    @discord.ui.button(label="Mix ATK", style=discord.ButtonStyle.primary, emoji="🛡️", custom_id="gear_mix_btn")
+    async def mix_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(title="🛡️ Best Mix ATK Gear Setup", color=discord.Color.gold())
+        embed.set_image(url="https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/mixatk.jpg")
+        await interaction.response.send_message(embed=embed)
+    @discord.ui.button(label="Infantry ATK", style=discord.ButtonStyle.secondary, emoji="⚔️", custom_id="gear_inf_btn")
+    async def inf_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(title="⚔️ Best Infantry ATK Gear Setup", color=discord.Color.blue())
+        embed.set_image(url="https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/infatk.png")
+        await interaction.response.send_message(embed=embed)
+    @discord.ui.button(label="Ranged ATK", style=discord.ButtonStyle.success, emoji="🏹", custom_id="gear_range_btn")
+    async def range_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(title="🏹 Best Ranged ATK Gear Setup", color=discord.Color.green())
+        embed.set_image(url="https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/rangeatk.jpg")
+        await interaction.response.send_message(embed=embed)
+    @discord.ui.button(label="Cavalry ATK", style=discord.ButtonStyle.danger, emoji="🐎", custom_id="gear_cav_btn")
+    async def cav_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(title="🐎 Best Cavalry ATK Gear Setup", color=discord.Color.red())
+        embed.set_image(url="https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/cavatk.png")
+        await interaction.response.send_message(embed=embed)
+
+# 🟡 बैंक मेनू (फुल-डिटेल वाला)
+class BankCategoryView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="Tips", style=discord.ButtonStyle.secondary, emoji="💡", custom_id="bank_tips_btn")
+    async def tips_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        text = "**💡 BANK TIPS & TRICKS:**\n\nUse underscore ('!setacc Player_1').\nHero Stages: Bank will not respond during long hero stages."
+        await interaction.response.send_message(text)
+
+    @discord.ui.button(label="General", style=discord.ButtonStyle.success, emoji="📌", custom_id="bank_general_btn")
+    async def general_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        text1 = (
+            "**📌 GENERAL COMMANDS:**\n\n"
+            "**📋 ALL BANK COMMANDS (Part 1):**\n\n"
+            "`!payransom` ➡️ The ransom for the accounts leader is paid\n"
+            "`!clearboard` ➡️ All quests are deleted\n"
+            "`!ess` ➡️ Mails the status of transmutation lab\n"
+            "`!stats` ➡️ Report of all Guild Gifts for yourself\n"
+            "`!stats all` ➡️ Summary of your guilds purchase/monsters\n"
+            "`!pstats [Player]` ➡️ Report of the Guild Gift stats for a player\n"
+            "`!gryphon` ➡️ Uses the Gryphon familiar skill\n"
+            "`!reguser` ➡️ Bind your ID for using commands\n"
+            "`!unreguser` ➡️ Unbind your ID\n"
+            "`!pos` ➡️ Reports the exact location of the Bank\n"
+            "`!shield` ➡️ Report of when the Bank shield drops\n"
+            "`!shield deploy` ➡️ Shield is activated on the bank\n"
+            "`!relocate [X] [Y]` ➡️ Relocates the bank to X Y\n"
+            "`!relocate rand` ➡️ Relocate the bank to a random position\n"
+            "`!relocatekvk [K]` ➡️ Randomly relocates into the target kingdom\n"
+            "`!migrate [K][X][Y]` ➡️ Migrate to target Kingdom\n"
+            "`!recall` ➡️ Recall all troops to your castle\n"
+            "`!buildspam [amt] [delay]` ➡️ The bank will spam helps\n"
+            "`!buildspam stop` ➡️ Cancel build in progress\n"
+            "`!hunt [x] [y]` ➡️ Hunts the specified monster\n"
+            "`!hunt [on/off]` ➡️ Disable or enable hunting\n"
+            "`!addtitle [player] [title]` ➡️ The bank will give a title\n"
+            "`!deltitle [title]` ➡️ The bank will remove the title\n"
+        )
+        text2 = (
+            "**📋 ALL BANK COMMANDS (Part 2):**\n\n"
+            "`!whitelist [player] [Rank]` ➡️ Accepts a player and sets Rank\n"
+            "`!blacklist [player]` ➡️ Rejects a player\n"
+            "`!unlistwhite [player]` ➡️ Removes player from whitelist\n"
+            "`!unlistblack [player]` ➡️ Removes player from blacklist\n"
+            "`!purge` ➡️ The Guild Chat will be cleared\n"
+            "`!abort` ➡️ All queued RSS will be canceled\n"
+            "`!yell [msg]` ➡️ Writes a message to the guild chat\n"
+            "`!quest` ➡️ Mails player the guild fest status\n"
+            "`!guild [tag]` ➡️ Leaves guild and joins a new one\n"
+            "`!camp [x] [y]` ➡️ Sends a camp to x/y\n"
+            "`!setgather [on/off]` ➡️ Disable or enable gathering\n"
+            "`!snowbeast` ➡️ Snowbeast familiars skill is activated\n"
+            "`!stop [time]` ➡️ Account will go offline for x seconds\n"
+            "`!reloadacc` ➡️ Resets the account\n"
+            "`!members` ➡️ Member information is refreshed\n"
+            "`!busrank` ➡️ Promotes members who completed hunting\n"
+            "`!resetstats` ➡️ The gift stats have been reset\n"
+            "`!joingvg` ➡️ Join Guild Expedition\n"
+            "`!leavegvg` ➡️ Leave Guild Expedition\n"
+            "`!joinca` ➡️ Joins the Chaos Arena Event\n"
+            "`!leaveca` ➡️ Leaves the Chaos Arena Event\n"
+            "`!joinda` ➡️ Joins Dragon Arena for your guild\n"
+            "`!leaveda` ➡️ Leaves Dragon Arena for your guild\n"
+        )
+        await interaction.response.send_message(text1)
+        await interaction.followup.send(text2)
+
+    @discord.ui.button(label="Search", style=discord.ButtonStyle.primary, emoji="🔍", custom_id="bank_search_btn")
+    async def search_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        text = (
+            "**🔍 SEARCH COMMANDS:**\n\n"
+            "`!findtile [type] [level]` ➡️ Search for specific resource tiles around the bank\n"
+            "`!findtile any [level]` ➡️ Search for any resource tiles around the bank\n"
+            "`!findtilelocal [type] [lvl]` ➡️ Search for resource tiles around your castle\n"
+            "`!findmonster [name] [lvl]` ➡️ Search for a specific monster around the bank\n"
+            "`!findmonster any [lvl]` ➡️ Search for any monster around the bank\n"
+            "`!findmonsterlocal [name] [lvl]` ➡️ Search for a monster around your castle\n"
+            "`!findnest [level]` ➡️ Search for a Darknest around the bank\n"
+            "`!findnestlocal [level]` ➡️ Search for a Darknest around your castle\n\n"
+            "*(Note: The bank will send all search results directly to your in-game mail!)*"
+        )
+        await interaction.response.send_message(text)
+        
+    @discord.ui.button(label="Balance", style=discord.ButtonStyle.secondary, emoji="⚖️", custom_id="bank_balance_btn")
+    async def balance_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        text = (
+            "**⚖️ BALANCE COMMANDS:**\n\n"
+            "`!bal` ➡️ Checks your personal RSS balance\n"
+            "`!adminbal` ➡️ Checks the RSS balance of the Bank\n"
+            "`!adminbal [player]` ➡️ Checks the balance of a specific player\n"
+            "`!adminbag` ➡️ Checks the RSS balance of the Bank's bag\n"
+            "`!setbal [player] [type] [amt]` ➡️ Manually sets the RSS balance for an account\n"
+            "`!setacc [player]` ➡️ Credits all your sent balance to another account\n"
+            "`!transfer [player] [type] [amt]` ➡️ Transfers your balance to another player\n"
+            "`!setrsslimit [type] [amt]` ➡️ Sets a minimum RSS limit the bank won't go below\n"
+        )
+        await interaction.response.send_message(text)
+
+    @discord.ui.button(label="Resource", style=discord.ButtonStyle.danger, emoji="💰", custom_id="bank_resource_btn")
+    async def resource_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        text = (
+            "**💰 RESOURCE COMMANDS:**\n\n"
+            "`![type] [amount]` ➡️ Sends one specific RSS (e.g., `!food 5M`)\n"
+            "`!rss [F] [S] [W] [O] [G]` ➡️ Sends all types of RSS (e.g., `!rss 5M 5M 5M 5M 0`)\n"
+            "`!donate[type] [player] [amt]` ➡️ Sends specific RSS to a player (e.g., `!donatefood Shark 5M`)\n"
+            "`!admin[type] [player] [amt]` ➡️ Admin command to send specific RSS to a player\n"
+            "`!adminrss [F] [S] [W] [O] [G] [player]` ➡️ Admin sends all types of RSS to a player\n"
+        )
+        await interaction.response.send_message(text)
+
+# 🟢 मुख्य मेनू
+class MainGreetingView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="Guild Bank Commands", style=discord.ButtonStyle.primary, emoji="🏦", row=0, custom_id="main_bank_btn")
+    async def open_bank_menu_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        view = BankCategoryView()
+        await interaction.response.send_message("👇 **किस तरह की बैंक कमांड्स देखनी हैं?**", view=view)
+
+    @discord.ui.button(label="🏹 Monster Hunt", style=discord.ButtonStyle.success, emoji="🐲", row=0, custom_id="main_monster_btn")
+    async def monster_hunt_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        view = MonsterView()
+        await interaction.response.send_message("👇 **नीचे दिए गए ड्रॉपडाउन से अपना मॉन्स्टर चुनें:**", view=view)
+
+    @discord.ui.button(label="⚙️ Best Gear Setups", style=discord.ButtonStyle.secondary, emoji="🛡️", row=0, custom_id="main_gear_btn")
+    async def gear_setup_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        view = GearCategoryView()
+        await interaction.response.send_message("👇 **कौन सा गियर सेटअप देखना है? नीचे से चुनें:**", view=view)
+
+    @discord.ui.button(label="Bot Commands", style=discord.ButtonStyle.primary, emoji="🤖", row=0, custom_id="main_botcmd_btn")
+    async def bot_commands_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        text = (
+            "✨ **THANOS BOT - ALL COMMANDS & FEATURES / सभी कमांड्स और फीचर्स (Total: 12+ Features):**\n\n"
+            "👑 **`!99`** ➔ सर्वर का पूरा **कंट्रोल पैनल** ओपन करता है (बैंक, मॉन्स्टर, गेम्स और मेनू के लिए)। / Opens the main Control Panel.\n"
+            "🏦 **Guild Bank Menu** ➔ बैंक कमांड्स (General, Search, Balance, Resource, Tips) की पूरी लिस्ट दिखाता है। / Shows all Guild Bank commands category-wise.\n"
+            "🐲 **`!monster [नाम]` या Monster Hunt Menu** ➔ 18 मॉन्स्टर्स के बेस्ट हीरोज और F2P/P2P सेटअप दिखाता है। / Shows best hero setups for 18 monsters.\n"
+            "🛡️ **`!shield [घंटे]`** ➔ शील्ड टाइमर सेट करता है और खत्म होने से 15 मिनट पहले अलर्ट भेजता है। / Sets shield timer with 15-min alerts.\n"
+            "🎁 **Auto Redeem Codes** ➔ Reddit से नए Lords Mobile रिडीम कोड्स अपने-आप ढूंढकर चैनल पर भेजता है। / Automatically scrapes and sends new redeem codes.\n"
+            "🚨 **Event & Patch Notes** ➔ गेम के नए अपडेट और इवेंट्स की जानकारी फोटो के साथ ऑटोमैटिक भेजता है। / Auto sends patch notes & events with photos.\n"
+            "🪙 **Economy & Daily 2000** ➔ रोज के मुफ़्त **2000 Coins** क्लेम करें और बैंक बैलेंस चेक करें। / Claim daily 2000 free coins and check balance.\n"
+            "🛒 **`!buy <नंबर>` / VIP Shop** ➔ कमाए हुए कॉइन्स से Guild King या Server Legend जैसे रोल्स खरीदें। / Buy VIP roles using earned coins.\n"
+            "💸 **`!hackmoney [अमाउंट]`** ➔ सिर्फ एडमिन के लिए खाते में अनलिमिटेड कॉइन्स जोड़ने की सीक्रेट मशीन। / Admin command to add coins.\n"
+            "🎲 **Mini Games (Quiz, Slots, Coinflip)** ➔ क्विज़ खेलें (500 Coins जीतें), स्लॉट्स मशीन और हेड/टेल खेलें। / Play Quiz, Slots, and Coinflip to win coins.\n"
+            "⚙️ **Best Gear Setups** ➔ Mix, Infantry, Ranged और Cavalry ATK के बेस्ट गियर सेटअप देखें। / View best gear setups.\n"
+            "🗑️ **`!clearall` / Clear Chat** ➔ सर्वर की चैट और पुराने मैसेज को तुरंत साफ़ करता है। / Cleans up chat messages."
+        )
+        await interaction.response.send_message(text)
+
+    @discord.ui.button(label="Clear My Chat", style=discord.ButtonStyle.danger, emoji="🗑️", row=0, custom_id="main_clearchat_btn")
+    async def clear_chat_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        view = ClearConfirmView(interaction.user)
+        await interaction.response.send_message("⚠️ **चेतावनी:** क्या आप अपने और बॉट के मैसेज डिलीट करना चाहते हैं?", view=view)
+
+    @discord.ui.button(label="💰 Economy & Shop", style=discord.ButtonStyle.success, emoji="🪙", row=1, custom_id="main_economy_btn")
+    async def economy_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        view = EconomyView()
+        await interaction.response.send_message("👇 **Economy Menu: नीचे बटन्स दबाकर अपना मुफ़्त इनाम लें या बैंक बैलेंस चेक करें!**", view=view)
+
+    @discord.ui.button(label="🎮 Mini Games", style=discord.ButtonStyle.primary, emoji="🎲", row=1, custom_id="main_games_btn")
+    async def games_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        view = GamesView()
+        await interaction.response.send_message("👇 **Games Menu: नीचे दिए गए बटन्स दबाकर तुरंत गेम्स खेलें!**", view=view)
+
+# 🗑️ क्लियर कमांड 
+@bot.command(name="clearall")
+async def clearall(ctx):
+    view = ClearConfirmView(ctx.author)
+    await ctx.send("⚠️ **चेतावनी:** क्या आप अपने और बॉट के मैसेज डिलीट करना चाहते हैं?", view=view)
+
+# 👑 99 कमांड (कंट्रोल पैनल मंगाने के लिए)
+@bot.command(name="99")
+async def panel_99(ctx):
+    if not ctx.author.guild_permissions.administrator:
+        await ctx.send("❌ आपके पास एडमिन परमिशन नहीं है!", delete_after=5)
+        return
+    view = MainGreetingView()
+    await ctx.send(
+        "👑 **THANOS BOT - CONTROL PANEL** 👑\n\n"
+        "👇 सर्वर के सभी फीचर्स, बैंक कमांड्स और मॉन्स्टर हंट के लिए नीचे दिए गए बटन्स का इस्तेमाल करें:",
+        view=view
+    )
+
+# 🐲 मॉन्स्टर कमांड
+@bot.command(name="monster")
+async def monster(ctx, *, monster_name: str = None):
+    if not monster_name:
+        await ctx.send("⚠️ भाई, किसी मॉन्स्टर का नाम तो बताओ! या मेनू में जाकर 'Monster Hunt' बटन दबाएं।")
+        return
+    prompt = f"Lords Mobile game में '{monster_name}' monster को मारने के लिए Best F2P और P2P heroes की लिस्ट बताओ. जवाब हिंदी और इंग्लिश मिक्स में बुलेट पॉइंट्स में देना."
+    async with ctx.typing():
+        try:
+            ai_text = await get_ai_response(prompt)
+            full_response = f"👾 **{monster_name.title()}** को मारने के बेस्ट हीरोज:\n{ai_text}"
+            for i in range(0, len(full_response), 1900):
+                await ctx.send(full_response[i:i+1900])
+        except Exception as e:
+            await ctx.send(f"❌ एरर आ गया: {str(e)[:1800]}")
+
+# 🛡️ शील्ड कमांड
 @bot.command(name="shield")
 async def shield(ctx, hours: int):
     if hours <= 0:
-        await ctx.send("❌ Bhai, sahi time batao! Jaise: `!shield 8`")
+        await ctx.send("❌ भाई, सही टाइम बताओ! (जैसे 4, 8, 24)")
         return
     total_seconds = hours * 3600
     warning_seconds = total_seconds - 900 
-    await ctx.send(f"🛡️ {ctx.author.mention}, **{hours} ghante** ki shield set kar di gayi hai. 15 minute pehle alert aa jayega!")
-    
+    await ctx.send(f"🛡️ {ctx.author.mention}, मैंने **{hours} घंटे** का शील्ड टाइमर सेट कर दिया है। 15 मिनट पहले अलर्ट आ जाएगा! ⏰")
     if warning_seconds > 0:
         await asyncio.sleep(warning_seconds)
         try:
-            await ctx.author.send(f"🚨 **Cheतावनी:** Bhai! Tumhari shield mein sirf **15 minute** bache hain!")
+            await ctx.author.send(f"🚨 **चेतावनी:** भाई! तुम्हारी शील्ड में सिर्फ **15 मिनट** बचे हैं!")
         except discord.Forbidden:
-            await ctx.send(f"🚨 {ctx.author.mention}, tumhari shield 15 minute mein khatam hone wali hai!")
+            await ctx.send(f"🚨 {ctx.author.mention}, तुम्हारी शील्ड 15 मिनट में खत्म होने वाली है!")
         await asyncio.sleep(900)
     else:
         await asyncio.sleep(total_seconds)
     try:
-        await ctx.author.send(f"⚠️ **Alert:** Shield **khatam ho chuki hai!** 🏰")
+        await ctx.author.send(f"⚠️ **अलर्ट:** शील्ड **खत्म हो चुकी है!** 🏰")
     except discord.Forbidden:
-        await ctx.send(f"⚠️ {ctx.author.mention}, tumhari shield **khatam ho chuki hai!** 🏰")
+        await ctx.send(f"⚠️ {ctx.author.mention}, तुम्हारी शील्ड **खत्म हो चुकी है!** 🏰")
+
+@shield.error
+async def shield_error(ctx, error):
+    if isinstance(error, commands.BadArgument) or isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send("❌ भाई, सही टाइम (सिर्फ नंबर) बताओ! (जैसे: `!shield 4` या `!shield 8`)", delete_after=5)
 
 # ==========================================
-# 🏃 Run Bot
+# 💎 MANUAL COMMANDS FOR ECONOMY/GAMES 💎
 # ==========================================
+@bot.command(name="buy")
+async def buy_role(ctx, item_no: str = None):
+    if not item_no or item_no not in SHOP_ITEMS:
+        await ctx.send("⚠️ सही आइटम नंबर लिखें! जैसे: `!buy 1`")
+        return
+    item = SHOP_ITEMS[item_no]
+    bal = get_balance(ctx.author.id)
+    if bal < item['price']:
+        await ctx.send(f"❌ आपके पास {item['name']} खरीदने के लिए पैसे नहीं हैं! (कीमत: {item['price']}, आपके पास: {bal})")
+        return
+    add_money(ctx.author.id, -item['price'])
+    try:
+        role = discord.utils.get(ctx.guild.roles, name=item['name'])
+        if not role:
+            # hoist=True से रोल अपने आप मेंबर लिस्ट में अलग दिखने लगेगा
+            role = await ctx.guild.create_role(name=item['name'], color=discord.Color.random(), hoist=True)
+        else:
+            if not role.hoist:
+                await role.edit(hoist=True)
+        await ctx.author.add_roles(role)
+        await ctx.send(f"🎉 बधाई हो {ctx.author.mention}! आपने **{item['emoji']} {item['name']}** खरीद लिया है और आपको रोल दे दिया गया है!")
+    except Exception as e:
+        await ctx.send(f"🎉 बधाई हो {ctx.author.mention}! आपने **{item['emoji']} {item['name']}** खरीद लिया है!\n*(रोल जोड़ने की परमिशन नहीं है या बॉट का रोल ऊपर होना चाहिए।)*")
+
+# 💸 एडमिन के लिए पैसे छापने की सीक्रेट मशीन
+@bot.command(name="hackmoney")
+async def hackmoney(ctx, amount: int):
+    if ctx.author.guild_permissions.administrator:
+        add_money(ctx.author.id, amount)
+        await ctx.send(f"💸 **ADMIN POWER:** बॉस, आपके खाते में **{amount} Coins** जमा कर दिए गए हैं! 🤑")
+    else:
+        await ctx.send("❌ भाग यहाँ से! यह कमांड सिर्फ एडमिन के लिए है।")
+
+class HelpButtonView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+    @discord.ui.button(label="🤖 Bot Commands & Info", style=discord.ButtonStyle.primary, emoji="📋", custom_id="help_btn_persistent")
+    async def help_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("✨ **Thanos Bot की सभी कमांड्स:**\n\n`!99`, `!shield`, `!buy`, `!clearall`, `!hackmoney` और बाकी सब बटन्स में उपलब्ध हैं!")
+
+class ClearConfirmView(discord.ui.View):
+    def __init__(self, author):
+        super().__init__(timeout=60)
+        self.author = author
+    @discord.ui.button(label="✅ Confirm - Clear My Chat", style=discord.ButtonStyle.danger)
+    async def confirm_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.author:
+            await interaction.response.send_message("❌ नो परमिशन!")
+            return
+        await interaction.response.send_message("🧹 आपकी चैट तुरंत साफ हो रही...")
+        try:
+            if interaction.guild is None:
+                async for msg in interaction.channel.history(limit=100):
+                    if msg.author == interaction.client.user:
+                        try:
+                            await msg.delete()
+                        except:
+                            pass
+            else:
+                await interaction.channel.purge(limit=500)
+        except Exception:
+            pass
+    @discord.ui.button(label="❌ Cancel", style=discord.ButtonStyle.secondary)
+    async def cancel_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.author:
+            await interaction.response.send_message("❌ नो परमिशन!")
+            return
+        await interaction.response.edit_message(content="❌ प्रोसेस रद्द कर दिया गया है。", view=None)
+
+# 🟢 ऑन-मैसेज इवेंट: 'hi', 'hello' या '@bot' करने पर बॉट जवाब देगा
+@bot.event
+async def on_message(message):
+    if message.author.bot:
+        return
+
+    content_lower = message.content.lower().strip()
+    
+    if content_lower in ["hi", "hello", "hey"] or bot.user.mentioned_in(message):
+        view = MainGreetingView()
+        await message.channel.send(
+            f"👑 **Hello {message.author.mention}!** Thanos Bot ऑनलाइन है।\n👇 सर्वर के सभी फीचर्स और कमांड्स के लिए नीचे दिए गए बटन्स का इस्तेमाल करें (या `!99` लिखें):",
+            view=view
+        )
+
+    await bot.process_commands(message)
+
+# 🏃 बॉट चालू करें
 keep_alive()
 token = os.environ.get("DISCORD_TOKEN")
 if token:
