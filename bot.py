@@ -10,43 +10,72 @@ import discord
 from discord.ext import commands, tasks
 
 # ==========================================
+# 🧠 ADVANCED MEMORY / DATABASE FOR CASTLES
+# ==========================================
+# Yeh dictionary pichle scan ka data yaad rakhegi taaki shield drop type pata chal sake
+castle_database = {}
+
+# ==========================================
 # 🕵️‍♂️ HEADLESS BOT: SMART MAP SCANNER ENGINE
 # ==========================================
-DUMMY_SESSION_TOKEN = "[INSERT_YOUR_TOKEN_HERE]"  # <- LDPlayer से निकाला हुआ टोकन यहाँ डलेगा
-ENEMY_GUILDS = ["AAA", "XYZ", "BAD"]  # जिन गिल्ड्स पर नज़र रखनी है उनके टैग्स
-MIN_MIGHT_ALERT = 50000000  # 50 Million पावर से ऊपर वालों का ही अलर्ट आएगा
+DUMMY_SESSION_TOKEN = "[INSERT_YOUR_TOKEN_HERE]"  # <- LDPlayer se nikla hua token yahan dalega
+ENEMY_GUILDS = ["AAA", "XYZ", "BAD"]  # Jin guilds par nazar rakhni hai
+MIN_MIGHT_ALERT = 50000000  # 50 Million power se upar walon ka alert
 
-# 🌙 हर दिन सोने और जगने का समय रैंडम तय करने वाला फंक्शन (100% Anti-Detection)
+# 🌙 Anti-Detection Random Sleep Schedule
 def should_bot_sleep():
     current_hour = datetime.now(timezone.utc).hour
-    
-    # रात 10 से रात 1 बजे के बीच कभी भी सोना शुरू करेगा (हर दिन अलग समय)
     random_sleep_start = random.randint(22, 1) 
-    # सुबह 5 से 8 बजे के बीच कभी भी उठेगा (हर दिन अलग समय)
     random_wake_up = random.randint(5, 8)     
 
     if random_sleep_start <= current_hour or current_hour <= random_wake_up:
-        return True # इस दौरान बॉट सोएगा
+        return True 
     return False
 
 @tasks.loop(minutes=3)
 async def smart_map_scanner():
     if DUMMY_SESSION_TOKEN == "[INSERT_YOUR_TOKEN_HERE]":
-        # जब तक टोकन नहीं डलेगा, बॉट शांति से बैठा रहेगा
         return
 
-    # 1. Human-like Random Sleep Check (यहाँ रैंडम स्लीप चेक हो रहा है)
+    # 1. Random Sleep Check
     if should_bot_sleep():
         print("💤 Bot is sleeping like a human today to avoid detection...")
         return
 
-    # 2. Human-like Delay (रोबोटिक स्पीड से बचने के लिए रैंडम ब्रेक)
+    # 2. Human-like Random Delay
     human_delay = random.uniform(3.5, 7.8)
     await asyncio.sleep(human_delay)
 
-    # 3. Tracker Logic (जब पैकेट स्निफिंग/API कनेक्ट होगी)
+    # 3. Tracker & Smart Analysis Logic
     try:
-        # यहाँ मैप डेटा फेच करके शील्ड चेक होगी और Discord पर alert भेजा जाएगा
+        # Jab map data aayega, hum har castle ke liye ye check karenge:
+        # c_key = f"{kingdom}_{x}_{y}"
+        # previous_state = castle_database.get(c_key, None)
+        # current_time = datetime.now(timezone.utc)
+        
+        # if previous_state:
+        #     was_shielded = previous_state['has_shield']
+        #     prev_timer = previous_state['timer'] # seconds bache the
+        #     
+        #     # Agar pehle shield thi aur ab nahi hai (Shield Dropped!)
+        #     if was_shielded and not has_shield:
+        #         drop_time_str = current_time.strftime("%H:%M:%S UTC")
+        #         
+        #         # Feature A: Manual vs Natural Check
+        #         if prev_timer > 1800: # Agar 30 minute se zyada bacha tha aur achanak hat gayi
+        #             drop_type = "⚠️ Manual Drop (Jaan-boojh kar hatayi gayi / Trap ho sakti hai!)"
+        #         else:
+        #             drop_type = "⌛ Natural Expiry (Shield ka waqt khatam ho gaya)"
+        #             
+        #         # Feature B: Drop Time & Offline Estimation Check
+        #         drop_hour = current_time.hour
+        #         if 22 <= drop_hour or drop_hour <= 6:
+        #             offline_status = "🌙 Raat ka waqt hai - Banda 100% Offline / Sone ki sambhavna hai!"
+        #         else:
+        #             offline_status = "☀️ Din ka waqt hai - Active ho sakta hai (Scout zaroor karein!)"
+        #             
+        #         # Yahan Discord channel par alert bhejne ka code aayega jisme ye sab details hongi!
+        
         pass
     except Exception as e:
         print(f"Scanner Error: {e}")
@@ -82,7 +111,7 @@ bot.remove_command('help')
 
 @bot.event
 async def on_ready():
-    print(f'✅ Tracker Bot ({bot.user}) ऑनलाइन आ गया है!')
+    print(f'✅ Tracker Bot ({bot.user}) online aa gaya hai!')
     await bot.change_presence(status=discord.Status.online, activity=discord.Game(name="Scanning Map..."))
     
     if not smart_map_scanner.is_running():
@@ -92,25 +121,25 @@ async def on_ready():
 @bot.command(name="shield")
 async def shield(ctx, hours: int):
     if hours <= 0:
-        await ctx.send("❌ भाई, सही टाइम बताओ! जैसे: `!shield 8`")
+        await ctx.send("❌ Bhai, sahi time batao! Jaise: `!shield 8`")
         return
     total_seconds = hours * 3600
     warning_seconds = total_seconds - 900 
-    await ctx.send(f"🛡️ {ctx.author.mention}, **{hours} घंटे** की शील्ड सेट कर दी गई है। 15 मिनट पहले अलर्ट आ जाएगा!")
+    await ctx.send(f"🛡️ {ctx.author.mention}, **{hours} ghante** ki shield set kar di gayi hai. 15 minute pehle alert aa jayega!")
     
     if warning_seconds > 0:
         await asyncio.sleep(warning_seconds)
         try:
-            await ctx.author.send(f"🚨 **चेतावनी:** भाई! तुम्हारी शील्ड में सिर्फ **15 मिनट** बचे हैं!")
+            await ctx.author.send(f"🚨 **Cheतावनी:** Bhai! Tumhari shield mein sirf **15 minute** bache hain!")
         except discord.Forbidden:
-            await ctx.send(f"🚨 {ctx.author.mention}, तुम्हारी शील्ड 15 मिनट में खत्म होने वाली है!")
+            await ctx.send(f"🚨 {ctx.author.mention}, tumhari shield 15 minute mein khatam hone wali hai!")
         await asyncio.sleep(900)
     else:
         await asyncio.sleep(total_seconds)
     try:
-        await ctx.author.send(f"⚠️ **अलर्ट:** शील्ड **खत्म हो चुकी है!** 🏰")
+        await ctx.author.send(f"⚠️ **Alert:** Shield **khatam ho chuki hai!** 🏰")
     except discord.Forbidden:
-        await ctx.send(f"⚠️ {ctx.author.mention}, तुम्हारी शील्ड **खत्म हो चुकी है!** 🏰")
+        await ctx.send(f"⚠️ {ctx.author.mention}, tumhari shield **khatam ho chuki hai!** 🏰")
 
 # ==========================================
 # 🏃 Run Bot
