@@ -13,12 +13,21 @@ from discord.ext import commands, tasks
 # 🕵️‍♂️ HEADLESS BOT: SMART MAP SCANNER ENGINE
 # ==========================================
 DUMMY_SESSION_TOKEN = "[INSERT_YOUR_TOKEN_HERE]"  # <- LDPlayer से निकाला हुआ टोकन यहाँ डलेगा
-ENEMY_GUILDS = ["AAA", "XYZ", "BAD"]  # जिन गिल्ड्स पर नज़र रखनी है उनके टैग्स
+ENEMY_GUILDS = ["AAA", "XYZ", "BAD"]  # जिन गिल्ड्स पर नज़र रखनी है उनके टैग्स
 MIN_MIGHT_ALERT = 50000000  # 50 Million पावर से ऊपर वालों का ही अलर्ट आएगा
 
-# इंसानों की तरह सोने का रूटीन (UTC Time के हिसाब से)
-SLEEP_START_HOUR = 20 
-SLEEP_END_HOUR = 2    
+# 🌙 हर दिन सोने और जगने का समय रैंडम तय करने वाला फंक्शन (100% Anti-Detection)
+def should_bot_sleep():
+    current_hour = datetime.now(timezone.utc).hour
+    
+    # रात 10 से रात 1 बजे के बीच कभी भी सोना शुरू करेगा (हर दिन अलग समय)
+    random_sleep_start = random.randint(22, 1) 
+    # सुबह 5 से 8 बजे के बीच कभी भी उठेगा (हर दिन अलग समय)
+    random_wake_up = random.randint(5, 8)     
+
+    if random_sleep_start <= current_hour or current_hour <= random_wake_up:
+        return True # इस दौरान बॉट सोएगा
+    return False
 
 @tasks.loop(minutes=3)
 async def smart_map_scanner():
@@ -26,10 +35,9 @@ async def smart_map_scanner():
         # जब तक टोकन नहीं डलेगा, बॉट शांति से बैठा रहेगा
         return
 
-    # 1. Human Sleep Logic (सोने का समय)
-    current_hour = datetime.now(timezone.utc).hour
-    if SLEEP_START_HOUR <= current_hour or current_hour <= SLEEP_END_HOUR:
-        print("💤 Bot is sleeping like a human to avoid detection...")
+    # 1. Human-like Random Sleep Check (यहाँ रैंडम स्लीप चेक हो रहा है)
+    if should_bot_sleep():
+        print("💤 Bot is sleeping like a human today to avoid detection...")
         return
 
     # 2. Human-like Delay (रोबोटिक स्पीड से बचने के लिए रैंडम ब्रेक)
