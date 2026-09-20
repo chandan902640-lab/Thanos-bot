@@ -346,20 +346,33 @@ def handle_query(call):
         bot.send_message(cid, "⚠️ कुछ गड़बड़ हुई है, कृपया फिर से ट्राई करें।")
 
 # ==========================================
-# 🔄 Background Auto-Checker Loop (Testing Mode)
+# 🔄 Background Auto-Checker Loop (Sending Old Events/Codes for Testing)
 # ==========================================
 def auto_checker_loop():
     time.sleep(5)  # Bot online hone ka thoda wait
     try:
-        test_msg = "🧪 **TEST ALERT:** Auto-checker loop is successfully running and active!"
-        bot.send_message(TARGET_CHAT_ID, test_msg, parse_mode='Markdown')
-        print("✅ Test message sent successfully!")
+        # Purane test ya sample codes jo aap test karne ke liye bhejna chahte hain
+        old_events = [
+            "🎁 **Lords Mobile Test Code 1:** LORDS2026",
+            "🎁 **Lords Mobile Test Code 2:** THANOS99",
+            "🎉 **Event Update:** Guild Fest is about to start! Check your bank and prepare."
+        ]
+        
+        seen = load_seen_updates()
+        
+        for event in old_events:
+            if event not in seen:
+                bot.send_message(TARGET_CHAT_ID, event, parse_mode='Markdown')
+                save_seen_update(event)
+                time.sleep(2) # Thoda gap dekar ek-ek karke bhejega
+                
+        print("✅ Old events/codes sent successfully for testing!")
     except Exception as e:
-        print(f"Test Message Error: {e}")
+        print(f"Old Events Error: {e}")
 
     while True:
         try:
-            # Yahan baad mein naye codes/events check karne ka logic aayega
+            # Yahan aage naye codes/events check hote rahenge har 10 minute me
             pass
         except Exception as e:
             print(f"Auto Checker Error: {e}")
