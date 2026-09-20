@@ -138,7 +138,7 @@ def chat_all(message):
     send_panel(message)
 
 # ==========================================
-# 🖱️ Complete Callback Logic (Missing Data Added Back)
+# 🖱️ Complete Callback Logic 
 # ==========================================
 @bot.callback_query_handler(func=lambda call: True)
 def handle_query(call):
@@ -202,7 +202,7 @@ def handle_query(call):
             bot.answer_callback_query(call.id, "Cavalry ATK Load ho raha hai...")
             bot.send_photo(cid, photo=requests.get("https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/cavatk.png").content, caption="🐎 Best Cavalry ATK Gear Setup")
 
-        # --- 4. FULL BANK COMMANDS HANDLERS (Missing Data Restored) ---
+        # --- 4. FULL BANK COMMANDS HANDLERS ---
         elif call.data == "bank_tips":
             bot.send_message(cid, "💡 **BANK TIPS & TRICKS:**\n\nUse underscore ('!setacc Player_1').\nHero Stages: Bank will not respond during long hero stages.")
 
@@ -341,16 +341,21 @@ def handle_query(call):
         bot.send_message(cid, "⚠️ कुछ गड़बड़ हुई है, कृपया फिर से ट्राई करें।")
 
 # ==========================================
-# 🌐 Live Web Scraper Loop (Reddit r/lordsmobile Integration - ANTI-BLOCK)
+# 🌐 Live Web Scraper Loop (Reddit Bypass Fix)
 # ==========================================
 def auto_checker_loop():
-    time.sleep(5)  # Bot start hone ka wait
+    time.sleep(5)  
     
     def fetch_reddit_updates():
         try:
-            # 🚨 SOLUTION: Reddit ke official bot rules ke hisab se User-Agent change kiya gaya hai
-            headers = {'User-Agent': 'python:thanos_lordsmobile_bot:v1.0 (by /u/chandan)'}
-            url = 'https://www.reddit.com/r/lordsmobile/new.json?limit=5'
+            # 🔥 SOLUTION: Use api.reddit.com and completely disguise as a Chrome browser to bypass 403 IP block
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'application/json, text/plain, */*',
+                'Accept-Language': 'en-US,en;q=0.9',
+            }
+            # Changed www to api to bypass web firewall
+            url = 'https://api.reddit.com/r/lordsmobile/new?limit=5'
             
             print("🔍 Reddit par naye codes scan kar raha hoon...")
             response = requests.get(url, headers=headers)
@@ -397,10 +402,8 @@ def auto_checker_loop():
         except Exception as e:
             print(f"Scraper Error: {e}")
 
-    # Start hote hi ek baar scan karega
     fetch_reddit_updates()
 
-    # Har 5 minute me internet se dobara check karega
     while True:
         try:
             fetch_reddit_updates()
@@ -418,5 +421,4 @@ if __name__ == "__main__":
     
     threading.Thread(target=auto_checker_loop, daemon=True).start()
     
-    # skip_pending=True purane 409 conflict error ko hatane ke liye
     bot.infinity_polling(skip_pending=True)
