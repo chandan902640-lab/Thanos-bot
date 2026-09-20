@@ -346,33 +346,36 @@ def handle_query(call):
         bot.send_message(cid, "⚠️ कुछ गड़बड़ हुई है, कृपया फिर से ट्राई करें।")
 
 # ==========================================
-# 🔄 Background Auto-Checker Loop (Sending Old Events/Codes for Testing)
+# 🔄 Background Auto-Checker Loop (With Photo Support)
 # ==========================================
 def auto_checker_loop():
     time.sleep(5)  # Bot online hone ka thoda wait
     try:
-        # Purane test ya sample codes jo aap test karne ke liye bhejna chahte hain
+        # Yahan aap koi bhi photo ka link aur caption de sakte hain
+        # Jaise hum koi bhi event photo ya mixatk.jpg ka link de sakte hain:
+        photo_url = "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/mixatk.jpg"
+        
         old_events = [
-            "🎁 **Lords Mobile Test Code 1:** LORDS2026",
-            "🎁 **Lords Mobile Test Code 2:** THANOS99",
-            "🎉 **Event Update:** Guild Fest is about to start! Check your bank and prepare."
+            ("🎁 **Lords Mobile Test Code 1:** LORDS2026", photo_url),
+            ("🎉 **Event Update:** Guild Fest is about to start! Check your bank and prepare.", photo_url)
         ]
         
         seen = load_seen_updates()
         
-        for event in old_events:
-            if event not in seen:
-                bot.send_message(TARGET_CHAT_ID, event, parse_mode='Markdown')
-                save_seen_update(event)
-                time.sleep(2) # Thoda gap dekar ek-ek karke bhejega
+        for text_msg, img_url in old_events:
+            if text_msg not in seen:
+                # Ab yeh photo aur caption dono ek sath bhejega
+                bot.send_photo(TARGET_CHAT_ID, photo=requests.get(img_url).content, caption=text_msg, parse_mode='Markdown')
+                save_seen_update(text_msg)
+                time.sleep(3) # Thoda gap dekar bhejega
                 
-        print("✅ Old events/codes sent successfully for testing!")
+        print("✅ Events with photos sent successfully!")
     except Exception as e:
-        print(f"Old Events Error: {e}")
+        print(f"Events Photo Error: {e}")
 
     while True:
         try:
-            # Yahan aage naye codes/events check hote rahenge har 10 minute me
+            # Yahan aage naye codes/events check hote rahenge
             pass
         except Exception as e:
             print(f"Auto Checker Error: {e}")
