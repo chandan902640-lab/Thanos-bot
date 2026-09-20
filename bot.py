@@ -2,6 +2,7 @@ import os
 import json
 import random
 import threading
+import time
 import requests
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
@@ -32,6 +33,28 @@ def keep_alive():
 # ==========================================
 BOT_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 bot = telebot.TeleBot(BOT_TOKEN)
+
+# Auto-Checker Configuration
+TARGET_CHAT_ID = "8569573547" 
+SEEN_UPDATES_FILE = "seen_updates.json"
+
+def load_seen_updates():
+    if not os.path.exists(SEEN_UPDATES_FILE):
+        with open(SEEN_UPDATES_FILE, "w") as f:
+            json.dump([], f)
+        return []
+    try:
+        with open(SEEN_UPDATES_FILE, "r") as f:
+            return json.load(f)
+    except:
+        return []
+
+def save_seen_update(update_id):
+    seen = load_seen_updates()
+    if update_id not in seen:
+        seen.append(update_id)
+        with open(SEEN_UPDATES_FILE, "w") as f:
+            json.dump(seen, f, indent=4)
 
 # ==========================================
 # 💎 Economy System (Bank)
@@ -297,7 +320,7 @@ def handle_query(call):
             else:
                 add_money(uid, 2000)
                 daily_cooldowns[uid] = now
-                bot.answer_callback_query(call.id, "🎁 बधाई हो! आपके खाते में 2000 Coins जुड़ गए हैं।", show_alert=True)
+                bot.answer_callback_query(call.id, "🎁 बधाई हो! आपके खाते में 2000 Coins जुड़ गए हैं।", show_alert=True)
                 
         elif call.data == "eco_slots":
             bal = get_balance(uid)
@@ -320,7 +343,28 @@ def handle_query(call):
 
     except Exception as e:
         print(f"Error: {e}")
-        bot.send_message(cid, "⚠️ कुछ गड़बड़ हुई है, कृपया फिर से ट्राई करें।")
+        bot.send_message(cid, "⚠️ कुछ गड़बड़ हुई है, कृपया फिर से ट्राई करें।")
+
+# ==========================================
+# 🔄 Background Auto-Checker Loop (Testing Mode)
+# ==========================================
+def auto_checker_loop():
+    time.sleep(5)  # Bot online hone ka thoda wait
+    try:
+        test_msg = "🧪 **TEST ALERT:** Auto-checker loop is successfully running and active!"
+        bot.send_message(TARGET_CHAT_ID, test_msg, parse_mode='Markdown')
+        print("✅ Test message sent successfully!")
+    except Exception as e:
+        print(f"Test Message Error: {e}")
+
+    while True:
+        try:
+            # Yahan baad mein naye codes/events check karne ka logic aayega
+            pass
+        except Exception as e:
+            print(f"Auto Checker Error: {e}")
+            
+        time.sleep(600)
 
 # ==========================================
 # 🏃 Server Start
@@ -328,4 +372,8 @@ def handle_query(call):
 if __name__ == "__main__":
     print("✅ Thanos Telegram Bot is Fully Active with ALL Features!")
     keep_alive()
+    
+    # Background Auto-Checker Thread start karein
+    threading.Thread(target=auto_checker_loop, daemon=True).start()
+    
     bot.infinity_polling()
