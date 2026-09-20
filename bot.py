@@ -29,12 +29,11 @@ def keep_alive():
     threading.Thread(target=server.serve_forever, daemon=True).start()
 
 # ==========================================
-# 🤖 Telegram Bot Setup (AI REMOVED)
+# 🤖 Telegram Bot Setup
 # ==========================================
 BOT_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# Auto-Checker Configuration
 TARGET_CHAT_ID = "8569573547" 
 SEEN_UPDATES_FILE = "seen_updates.json"
 
@@ -90,7 +89,7 @@ def add_money(user_id, amount):
     save_economy(data)
 
 # ==========================================
-# 🐲 FULL 18 Monsters Data
+# 🐲 Monsters Data
 # ==========================================
 MONSTERS = {
     "1": ("Queen Bee", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Queen%20Bee.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/1.png"),
@@ -134,16 +133,10 @@ def send_panel(message):
     )
     bot.send_message(message.chat.id, welcome_text, reply_markup=markup, parse_mode='Markdown')
 
-# ==========================================
-# 💬 MAGIC HANDLER: Any Text Opens Menu
-# ==========================================
 @bot.message_handler(func=lambda m: True)
 def chat_all(message):
     send_panel(message)
 
-# ==========================================
-# 🖱️ Button Clicks (Callback Logic)
-# ==========================================
 @bot.callback_query_handler(func=lambda call: True)
 def handle_query(call):
     cid = call.message.chat.id
@@ -151,13 +144,12 @@ def handle_query(call):
     uid = call.from_user.id
     
     try:
-        # --- 1. MAIN MENUS ---
         if call.data == "menu_bank":
             markup = InlineKeyboardMarkup()
             markup.row(InlineKeyboardButton("💡 Tips", callback_data="bank_tips"), InlineKeyboardButton("📌 General", callback_data="bank_gen"))
             markup.row(InlineKeyboardButton("🔍 Search", callback_data="bank_search"), InlineKeyboardButton("⚖️ Balance", callback_data="bank_bal"))
             markup.row(InlineKeyboardButton("💰 Resource", callback_data="bank_res"))
-            bot.edit_message_text("🏦 **Guild Bank Commands:**\nकिस तरह की बैंक कमांड्स देखनी हैं?", cid, mid, reply_markup=markup, parse_mode='Markdown')
+            bot.edit_message_text("🏦 **Guild Bank Commands:**", cid, mid, reply_markup=markup, parse_mode='Markdown')
             
         elif call.data == "menu_monster":
             markup = InlineKeyboardMarkup()
@@ -170,71 +162,62 @@ def handle_query(call):
             markup.row(InlineKeyboardButton("13. Noceros", callback_data="mon_13"), InlineKeyboardButton("14. Mega Maggot", callback_data="mon_14"))
             markup.row(InlineKeyboardButton("15. Blackwing", callback_data="mon_15"), InlineKeyboardButton("16. Voodoo Shaman", callback_data="mon_16"))
             markup.row(InlineKeyboardButton("17. Grim Reaper", callback_data="mon_17"), InlineKeyboardButton("18. Hardrox", callback_data="mon_18"))
-            bot.edit_message_text("🐲 **Monster Hunt:**\nजिस मॉन्स्टर की टीम देखनी है, उस पर क्लिक करें:", cid, mid, reply_markup=markup, parse_mode='Markdown')
+            bot.edit_message_text("🐲 **Monster Hunt:**", cid, mid, reply_markup=markup, parse_mode='Markdown')
             
         elif call.data == "menu_gear":
             markup = InlineKeyboardMarkup()
             markup.row(InlineKeyboardButton("🛡️ Mix ATK", callback_data="gear_mix"), InlineKeyboardButton("⚔️ Infantry", callback_data="gear_inf"))
             markup.row(InlineKeyboardButton("🏹 Ranged", callback_data="gear_rng"), InlineKeyboardButton("🐎 Cavalry", callback_data="gear_cav"))
-            bot.edit_message_text("⚙️ **Best Gear Setups:**\nकौन सा गियर सेटअप देखना है? नीचे से चुनें:", cid, mid, reply_markup=markup, parse_mode='Markdown')
+            bot.edit_message_text("⚙️ **Best Gear Setups:**", cid, mid, reply_markup=markup, parse_mode='Markdown')
             
         elif call.data == "menu_economy":
             markup = InlineKeyboardMarkup()
             markup.row(InlineKeyboardButton("💰 Balance", callback_data="eco_bal"), InlineKeyboardButton("🎁 Daily 2000", callback_data="eco_daily"))
             markup.row(InlineKeyboardButton("🎰 Slots (Bet 100)", callback_data="eco_slots"))
-            bot.edit_message_text("🪙 **Economy & Games:**\nपैसे कमाएं, बैलेंस चेक करें और गेम्स खेलें!", cid, mid, reply_markup=markup, parse_mode='Markdown')
+            bot.edit_message_text("🪙 **Economy & Games:**", cid, mid, reply_markup=markup, parse_mode='Markdown')
 
-        # --- 2. MONSTERS HANDLERS ---
         elif call.data.startswith("mon_"):
             mon_id = call.data.split("_")[1]
             name, m_url, s_url = MONSTERS[mon_id]
             bot.answer_callback_query(call.id, f"{name} की टीम ढूँढ रहा हूँ...")
             bot.send_photo(cid, photo=requests.get(m_url).content, caption=f"👾 **Monster: {name}**")
-            bot.send_photo(cid, photo=requests.get(s_url).content, caption=f"⚔️ **Recommended Hero Setup for {name}**")
+            bot.send_photo(cid, photo=requests.get(s_url).content, caption=f"⚔️ **Hero Setup for {name}**")
 
-        # --- 3. GEAR HANDLERS ---
         elif call.data == "gear_mix":
-            bot.answer_callback_query(call.id, "Mix ATK Load ho raha hai...")
-            bot.send_photo(cid, photo=requests.get("https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/mixatk.jpg").content, caption="🛡️ Best Mix ATK Gear Setup")
+            bot.send_photo(cid, photo=requests.get("https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/mixatk.jpg").content, caption="🛡️ Best Mix ATK Gear")
         elif call.data == "gear_inf":
-            bot.answer_callback_query(call.id, "Infantry ATK Load ho raha hai...")
-            bot.send_photo(cid, photo=requests.get("https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/infatk.png").content, caption="⚔️ Best Infantry ATK Gear Setup")
+            bot.send_photo(cid, photo=requests.get("https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/infatk.png").content, caption="⚔️ Best Infantry ATK Gear")
         elif call.data == "gear_rng":
-            bot.answer_callback_query(call.id, "Ranged ATK Load ho raha hai...")
-            bot.send_photo(cid, photo=requests.get("https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/rangeatk.jpg").content, caption="🏹 Best Ranged ATK Gear Setup")
+            bot.send_photo(cid, photo=requests.get("https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/rangeatk.jpg").content, caption="🏹 Best Ranged ATK Gear")
         elif call.data == "gear_cav":
-            bot.answer_callback_query(call.id, "Cavalry ATK Load ho raha hai...")
-            bot.send_photo(cid, photo=requests.get("https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/cavatk.png").content, caption="🐎 Best Cavalry ATK Gear Setup")
+            bot.send_photo(cid, photo=requests.get("https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/cavatk.png").content, caption="🐎 Best Cavalry ATK Gear")
 
-        # --- 4. BANK COMMANDS ---
         elif call.data == "bank_tips":
-            bot.send_message(cid, "💡 **BANK TIPS & TRICKS:**\n\nUse underscore ('!setacc Player_1').\nHero Stages: Bank will not respond during long hero stages.")
+            bot.send_message(cid, "💡 **BANK TIPS:**\nUse underscore ('!setacc Player_1').")
         elif call.data == "bank_gen":
-            text1 = "📌 **GENERAL COMMANDS (Part 1):**\n\n!payransom ➡️ Paid\n!clearboard ➡️ Deleted\n!stats ➡️ Report gifts\n!gryphon ➡️ Gryphon skill"
-            bot.send_message(cid, text1)
+            bot.send_message(cid, "📌 **GENERAL:**\n!payransom, !clearboard, !stats")
         elif call.data == "bank_search":
-            bot.send_message(cid, "🔍 **SEARCH COMMANDS:**\n\n!findtile [type] [level]\n!findmonster [name] [lvl]")
+            bot.send_message(cid, "🔍 **SEARCH:**\n!findtile, !findmonster")
         elif call.data == "bank_bal":
-            bot.send_message(cid, "⚖️ **BALANCE COMMANDS:**\n\n!bal ➡️ Personal RSS\n!adminbal ➡️ Bank RSS")
+            bot.send_message(cid, "⚖️ **BALANCE:**\n!bal, !adminbal")
         elif call.data == "bank_res":
-            bot.send_message(cid, "💰 **RESOURCE COMMANDS:**\n\n![type] [amount]\n!rss [F] [S] [W] [O] [G]")
+            bot.send_message(cid, "💰 **RESOURCE:**\n![type] [amount], !rss")
 
-        # --- 5. ECONOMY ---
         elif call.data == "eco_bal":
             bal = get_balance(uid)
-            bot.answer_callback_query(call.id, f"🏦 आपके खाते में {bal} Coins हैं!", show_alert=True)
+            bot.answer_callback_query(call.id, f"🏦 Balance: {bal} Coins", show_alert=True)
         elif call.data == "eco_daily":
             now = datetime.now()
             if uid in daily_cooldowns and (now - daily_cooldowns[uid]).total_seconds() < 86400:
-                bot.answer_callback_query(call.id, f"⏳ आज का इनाम ले चुके हो!", show_alert=True)
+                bot.answer_callback_query(call.id, "⏳ Inam mil chuka hai!", show_alert=True)
             else:
                 add_money(uid, 2000)
                 daily_cooldowns[uid] = now
-                bot.answer_callback_query(call.id, "🎁 2000 Coins जुड़ गए!", show_alert=True)
+                bot.answer_callback_query(call.id, "🎁 +2000 Coins added!", show_alert=True)
         elif call.data == "eco_slots":
             bal = get_balance(uid)
             if bal < 100:
-                bot.answer_callback_query(call.id, "❌ बैलेंस कम है!", show_alert=True)
+                bot.answer_callback_query(call.id, "❌ Balance kam hai!", show_alert=True)
                 return
             emojis = ["🍎", "💎", "🍒", "🔔", "⭐"]
             s1, s2, s3 = random.choice(emojis), random.choice(emojis), random.choice(emojis)
@@ -250,38 +233,63 @@ def handle_query(call):
 
     except Exception as e:
         print(f"Error: {e}")
-        bot.send_message(cid, "⚠️ कुछ गड़बड़ हुई है।")
 
 # ==========================================
-# 🔄 Multi-Source Scanner & Auto-Checker Loop
+# 🌐 Live Web Scraper Loop (Reddit r/lordsmobile Integration)
 # ==========================================
 def auto_checker_loop():
-    time.sleep(5)  # Bot online hone ka wait
-    try:
-        # Multi-source historical testing items with designated event images
-        sample_scans = [
-            ("🎁 **Lords Mobile Old Code Found:** LORDS25K", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/mixatk.jpg"),
-            ("🎉 **Event Tracked:** Lords Mobile Guild Fest Rewards & Setup", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/1.png")
-        ]
-        
-        seen = load_seen_updates()
-        
-        for text_msg, img_url in sample_scans:
-            if text_msg not in seen:
-                bot.send_photo(TARGET_CHAT_ID, photo=requests.get(img_url).content, caption=text_msg, parse_mode='Markdown')
-                save_seen_update(text_msg)
-                time.sleep(3)
+    time.sleep(5)  # Bot start hone ka wait
+    
+    # Live internet scraping function
+    def fetch_reddit_updates():
+        try:
+            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+            url = 'https://www.reddit.com/r/lordsmobile/hot.json?limit=10'
+            response = requests.get(url, headers=headers)
+            
+            if response.status_code == 200:
+                data = response.json()
+                posts = data['data']['children']
+                seen = load_seen_updates()
                 
-        print("✅ Multi-source scan completed successfully!")
-    except Exception as e:
-        print(f"Multi-Source Error: {e}")
+                for post in posts:
+                    p_data = post['data']
+                    title = p_data.get('title', '')
+                    permalink = p_data.get('permalink', '')
+                    post_id = p_data.get('id', '')
+                    image_url = p_data.get('url', '')
+                    
+                    # Agar post mein code ya event jaisa kuch keyword hai aur wo pehle nahi dekha
+                    if post_id not in seen:
+                        # Check if it looks like an image URL or text update
+                        if image_url and (image_url.endswith('.jpg') or image_url.endswith('.png') or image_url.endswith('.jpeg')):
+                            caption = f"🔥 **Live Reddit Update / Code:**\n\n{title}\n\n🔗 https://reddit.com{permalink}"
+                            try:
+                                bot.send_photo(TARGET_CHAT_ID, photo=requests.get(image_url).content, caption=caption, parse_mode='Markdown')
+                                save_seen_update(post_id)
+                                time.sleep(4)
+                            except Exception as img_err:
+                                print(f"Image send error: {img_err}")
+                        else:
+                            # Agar sirf text post hai
+                            text_msg = f"📌 **Live Reddit Update:**\n\n{title}\n\n🔗 https://reddit.com{permalink}"
+                            bot.send_message(TARGET_CHAT_ID, text_msg, parse_mode='Markdown')
+                            save_seen_update(post_id)
+                            time.sleep(3)
+                            
+                print("✅ Reddit scrape check completed successfully!")
+        except Exception as e:
+            print(f"Scraper Error: {e}")
 
+    # Pehle ek baar start hote hi purane/live posts scan karke check karega
+    fetch_reddit_updates()
+
+    # Har 10 minute me internet se dobara check karega
     while True:
         try:
-            # Yahan aage real web scraping ya API tracking logic aayega
-            pass
+            fetch_reddit_updates()
         except Exception as e:
-            print(f"Auto Checker Error: {e}")
+            print(f"Auto Checker Loop Error: {e}")
             
         time.sleep(600)
 
@@ -289,7 +297,7 @@ def auto_checker_loop():
 # 🏃 Server Start
 # ==========================================
 if __name__ == "__main__":
-    print("✅ Thanos Telegram Bot is Fully Active with ALL Features!")
+    print("✅ Thanos Telegram Bot is Fully Active with Web Scraper!")
     keep_alive()
     
     threading.Thread(target=auto_checker_loop, daemon=True).start()
