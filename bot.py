@@ -341,69 +341,68 @@ def handle_query(call):
         bot.send_message(cid, "⚠️ कुछ गड़बड़ हुई है, कृपया फिर से ट्राई करें।")
 
 # ==========================================
-# 🌐 Live Web Scraper Loop (Reddit Bypass Fix)
+# 🌐 Live Web Scraper Loop (RSS2JSON - 100% 403 BYPASS)
 # ==========================================
 def auto_checker_loop():
     time.sleep(5)  
     
     def fetch_reddit_updates():
         try:
-            # 🔥 SOLUTION: Use api.reddit.com and completely disguise as a Chrome browser to bypass 403 IP block
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'application/json, text/plain, */*',
-                'Accept-Language': 'en-US,en;q=0.9',
-            }
-            # Changed www to api to bypass web firewall
-            url = 'https://api.reddit.com/r/lordsmobile/new?limit=5'
+            # 🔥 SOLUTION: Reddit की IP Block से बचने के लिए हमने RSS Feed API का इस्तेमाल किया है
+            rss_url = "https://www.reddit.com/r/lordsmobile/new.rss"
+            api_url = f"https://api.rss2json.com/v1/api.json?rss_url={rss_url}"
             
-            print("🔍 Reddit par naye codes scan kar raha hoon...")
-            response = requests.get(url, headers=headers)
+            print("🔍 Reddit (RSS) से नए Lords Mobile कोड स्कैन कर रहा हूँ...")
+            response = requests.get(api_url)
             
             if response.status_code == 200:
                 data = response.json()
-                posts = data['data']['children']
-                seen = load_seen_updates()
-                found_new = False
                 
-                for post in posts:
-                    p_data = post['data']
-                    title = p_data.get('title', '')
-                    permalink = p_data.get('permalink', '')
-                    post_id = p_data.get('id', '')
-                    image_url = p_data.get('url', '')
+                if data.get("status") == "ok":
+                    posts = data.get("items", [])
+                    seen = load_seen_updates()
+                    found_new = False
                     
-                    if post_id not in seen:
-                        found_new = True
-                        if image_url and (image_url.endswith('.jpg') or image_url.endswith('.png') or image_url.endswith('.jpeg')):
-                            caption = f"🔥 **Lords Mobile Update / Code:**\n\n{title}\n\n🔗 https://reddit.com{permalink}"
-                            try:
-                                bot.send_photo(TARGET_CHAT_ID, photo=requests.get(image_url).content, caption=caption, parse_mode='Markdown')
-                                save_seen_update(post_id)
-                                time.sleep(4)
-                            except Exception as img_err:
-                                print(f"Image send error: {img_err}")
-                        else:
-                            text_msg = f"📌 **Lords Mobile Update:**\n\n{title}\n\n🔗 https://reddit.com{permalink}"
-                            try:
-                                bot.send_message(TARGET_CHAT_ID, text_msg, parse_mode='Markdown')
-                                save_seen_update(post_id)
-                                time.sleep(3)
-                            except Exception as txt_err:
-                                print(f"Text send error: {txt_err}")
-                
-                if found_new:
-                    print("✅ Reddit se naye posts bhej diye gaye!")
+                    for post in posts:
+                        title = post.get("title", "")
+                        permalink = post.get("link", "")
+                        post_id = post.get("guid", "")
+                        image_url = post.get("thumbnail", "")
+                        
+                        if post_id not in seen:
+                            found_new = True
+                            if image_url and (image_url.endswith('.jpg') or image_url.endswith('.png') or image_url.endswith('.jpeg')):
+                                caption = f"🔥 **Lords Mobile Code / Update:**\n\n{title}\n\n🔗 {permalink}"
+                                try:
+                                    bot.send_photo(TARGET_CHAT_ID, photo=requests.get(image_url).content, caption=caption, parse_mode='Markdown')
+                                    save_seen_update(post_id)
+                                    time.sleep(4)
+                                except Exception as img_err:
+                                    print(f"Image send error: {img_err}")
+                            else:
+                                text_msg = f"📌 **Lords Mobile Code / Update:**\n\n{title}\n\n🔗 {permalink}"
+                                try:
+                                    bot.send_message(TARGET_CHAT_ID, text_msg, parse_mode='Markdown')
+                                    save_seen_update(post_id)
+                                    time.sleep(3)
+                                except Exception as txt_err:
+                                    print(f"Text send error: {txt_err}")
+                    
+                    if found_new:
+                        print("✅ Reddit से नए पोस्ट्स भेज दिए गए!")
+                    else:
+                        print("⚠️ कोई नया कोड या पोस्ट नहीं मिला।")
                 else:
-                    print("⚠️ Koi naya code ya post nahi mila.")
+                    print(f"❌ RSS API Error: {data.get('message')}")
             else:
-                print(f"❌ Reddit API Error: Status Code {response.status_code}")
+                print(f"❌ Network Error: Status Code {response.status_code}")
                 
         except Exception as e:
             print(f"Scraper Error: {e}")
 
     fetch_reddit_updates()
 
+    # हर 5 मिनट में चेक करेगा
     while True:
         try:
             fetch_reddit_updates()
