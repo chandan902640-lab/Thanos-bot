@@ -341,14 +341,13 @@ def handle_query(call):
         bot.send_message(cid, "⚠️ कुछ गड़बड़ हुई है, कृपया फिर से ट्राई करें।")
 
 # ==========================================
-# 🌐 Live Web Scraper Loop (RSS2JSON - 100% 403 BYPASS)
+# 🌐 Live Web Scraper Loop (ERROR 400 FIXED)
 # ==========================================
 def auto_checker_loop():
     time.sleep(5)  
     
     def fetch_reddit_updates():
         try:
-            # 🔥 SOLUTION: Reddit की IP Block से बचने के लिए हमने RSS Feed API का इस्तेमाल किया है
             rss_url = "https://www.reddit.com/r/lordsmobile/new.rss"
             api_url = f"https://api.rss2json.com/v1/api.json?rss_url={rss_url}"
             
@@ -371,18 +370,20 @@ def auto_checker_loop():
                         
                         if post_id not in seen:
                             found_new = True
+                            
+                            # 🚨 SOLUTION: parse_mode='Markdown' हटा दिया गया है ताकि 400 Error ना आये!
                             if image_url and (image_url.endswith('.jpg') or image_url.endswith('.png') or image_url.endswith('.jpeg')):
-                                caption = f"🔥 **Lords Mobile Code / Update:**\n\n{title}\n\n🔗 {permalink}"
+                                caption = f"🔥 Lords Mobile Code / Update:\n\n{title}\n\n🔗 {permalink}"
                                 try:
-                                    bot.send_photo(TARGET_CHAT_ID, photo=requests.get(image_url).content, caption=caption, parse_mode='Markdown')
+                                    bot.send_photo(TARGET_CHAT_ID, photo=requests.get(image_url).content, caption=caption)
                                     save_seen_update(post_id)
                                     time.sleep(4)
                                 except Exception as img_err:
                                     print(f"Image send error: {img_err}")
                             else:
-                                text_msg = f"📌 **Lords Mobile Code / Update:**\n\n{title}\n\n🔗 {permalink}"
+                                text_msg = f"📌 Lords Mobile Code / Update:\n\n{title}\n\n🔗 {permalink}"
                                 try:
-                                    bot.send_message(TARGET_CHAT_ID, text_msg, parse_mode='Markdown')
+                                    bot.send_message(TARGET_CHAT_ID, text_msg)
                                     save_seen_update(post_id)
                                     time.sleep(3)
                                 except Exception as txt_err:
