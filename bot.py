@@ -2,7 +2,6 @@ import os
 import json
 import random
 import threading
-import requests
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -28,10 +27,9 @@ def keep_alive():
     threading.Thread(target=server.serve_forever, daemon=True).start()
 
 # ==========================================
-# 🤖 Telegram Bot & API Setup
+# 🤖 Telegram Bot Setup (AI REMOVED 🚀)
 # ==========================================
 BOT_TOKEN = os.environ.get("TELEGRAM_TOKEN")
-GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
 bot = telebot.TeleBot(BOT_TOKEN)
 
 # ==========================================
@@ -68,27 +66,32 @@ def add_money(user_id, amount):
     save_economy(data)
 
 # ==========================================
-# 🧠 AI Function (Gemini)
+# 🐲 18 Monsters Data
 # ==========================================
-def get_ai_response(prompt):
-    if not GEMINI_KEY:
-        return "⚠️ Gemini API Key सेट नहीं है!"
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_KEY}"
-    headers = {'Content-Type': 'application/json'}
-    data = {"contents": [{"parts": [{"text": prompt}]}]}
-    try:
-        response = requests.post(url, headers=headers, json=data)
-        if response.status_code == 200:
-            return response.json()['candidates'][0]['content']['parts'][0]['text']
-        else:
-            return "⚠️ गूगल AI अभी व्यस्त है।"
-    except Exception as e:
-        return f"⚠️ Error: {e}"
+MONSTERS = {
+    "1": ("Queen Bee", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Queen%20Bee.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/1.png"),
+    "2": ("Saberfang", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Saberfang.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/2.png"),
+    "3": ("Gryphon", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Gryphon.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/3.png"),
+    "4": ("Mecha Trojan", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Mecha%20Trojan.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/4.png"),
+    "5": ("Jade Wyrm", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Jade%20Wyrm.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/5.png"),
+    "6": ("Bon Appeti", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Bon%20Appeti.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/6.png"),
+    "7": ("Gargantua", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Gargantua.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/7.png"),
+    "8": ("Frostwing", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Frostwing.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/8.png"),
+    "9": ("Hell Drider", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Hell%20Drider.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/9.png"),
+    "10": ("Snow Beast", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Snow%20Beast.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/10.png"),
+    "11": ("Tidal Titan", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Tidal%20Titan.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/11.png"),
+    "12": ("Terrorthorn", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Terrorthorn.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/12.png"),
+    "13": ("Noceros", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Noceros.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/13.png"),
+    "14": ("Mega Maggot", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Mega%20Maggot.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/14.png"),
+    "15": ("Blackwing", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Blackwing.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/15.png"),
+    "16": ("Voodoo Shaman", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Voodoo%20Shaman.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/16.png"),
+    "17": ("Grim Reaper", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Grim%20Reaper.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/17.png"),
+    "18": ("Hardrox", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/Hardrox.png", "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/18.png")
+}
 
 # ==========================================
-# 👑 Main Control Panel (!99 or Start)
+# 👑 Main Control Panel 
 # ==========================================
-@bot.message_handler(commands=['start', '99', 'menu'])
 def send_panel(message):
     markup = InlineKeyboardMarkup()
     markup.row(
@@ -108,6 +111,14 @@ def send_panel(message):
     bot.send_message(message.chat.id, welcome_text, reply_markup=markup, parse_mode='Markdown')
 
 # ==========================================
+# 💬 MAGIC HANDLER: Any Text Opens Menu
+# ==========================================
+@bot.message_handler(func=lambda m: True)
+def chat_all(message):
+    # User kuch bhi type karega (hi, hello, 99, abcd), panel khul jayega!
+    send_panel(message)
+
+# ==========================================
 # 🖱️ Button Clicks (Callback Logic)
 # ==========================================
 @bot.callback_query_handler(func=lambda call: True)
@@ -125,7 +136,15 @@ def handle_query(call):
         bot.edit_message_text("🏦 **Guild Bank Commands:**\nकिस तरह की बैंक कमांड्स देखनी हैं?", cid, mid, reply_markup=markup, parse_mode='Markdown')
         
     elif call.data == "menu_monster":
-        bot.send_message(cid, "🐲 **Monster Hunt:**\nकिसी भी मॉन्स्टर की बेस्ट टीम जानने के लिए टाइप करें:\n`/monster [मॉन्स्टर का नाम]`\n*(उदाहरण: `/monster Queen Bee`)*", parse_mode='Markdown')
+        # AI hatane ke baad 18 Monsters ka Direct Photo Menu!
+        markup = InlineKeyboardMarkup()
+        # Row 1
+        markup.row(InlineKeyboardButton("🐝 Queen Bee", callback_data="mon_1"), InlineKeyboardButton("🐅 Saberfang", callback_data="mon_2"))
+        # Row 2
+        markup.row(InlineKeyboardButton("🦅 Gryphon", callback_data="mon_3"), InlineKeyboardButton("🤖 Mecha Trojan", callback_data="mon_4"))
+        # Row 3
+        markup.row(InlineKeyboardButton("🐉 Jade Wyrm", callback_data="mon_5"), InlineKeyboardButton("💀 Grim Reaper", callback_data="mon_17"))
+        bot.edit_message_text("🐲 **Monster Hunt:**\nनीचे दिए गए मॉन्स्टर्स में से चुनें (More coming soon):", cid, mid, reply_markup=markup, parse_mode='Markdown')
         
     elif call.data == "menu_gear":
         markup = InlineKeyboardMarkup()
@@ -139,7 +158,15 @@ def handle_query(call):
         markup.row(InlineKeyboardButton("🎰 Slots (Bet 100)", callback_data="eco_slots"))
         bot.edit_message_text("🪙 **Economy & Games:**\nपैसे कमाएं, बैलेंस चेक करें और गेम्स खेलें!", cid, mid, reply_markup=markup, parse_mode='Markdown')
 
-    # --- 2. GEAR HANDLERS (Photo Sender) ---
+    # --- 2. MONSTERS HANDLERS (Direct Photo) ---
+    elif call.data.startswith("mon_"):
+        mon_id = call.data.split("_")[1]
+        name, m_url, s_url = MONSTERS[mon_id]
+        bot.answer_callback_query(call.id, f"Finding setups for {name}...")
+        bot.send_photo(cid, m_url, caption=f"👾 **Monster: {name}**")
+        bot.send_photo(cid, s_url, caption=f"⚔️ **Recommended Hero Setup for {name}**")
+
+    # --- 3. GEAR HANDLERS (Photo Sender) ---
     elif call.data == "gear_mix":
         bot.send_photo(cid, "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/mixatk.jpg", caption="🛡️ Best Mix ATK Gear Setup")
     elif call.data == "gear_inf":
@@ -149,14 +176,13 @@ def handle_query(call):
     elif call.data == "gear_cav":
         bot.send_photo(cid, "https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/cavatk.png", caption="🐎 Best Cavalry ATK Gear Setup")
 
-    # --- 3. FULL BANK COMMANDS HANDLERS ---
+    # --- 4. FULL BANK COMMANDS HANDLERS ---
     elif call.data == "bank_tips":
-        text = "💡 BANK TIPS & TRICKS:\n\nUse underscore ('!setacc Player_1').\nHero Stages: Bank will not respond during long hero stages."
-        bot.send_message(cid, text)
+        bot.send_message(cid, "💡 **BANK TIPS & TRICKS:**\n\nUse underscore ('!setacc Player_1').\nHero Stages: Bank will not respond during long hero stages.")
 
     elif call.data == "bank_gen":
         text1 = (
-            "📌 GENERAL COMMANDS (Part 1):\n\n"
+            "📌 **GENERAL COMMANDS (Part 1):**\n\n"
             "!payransom ➡️ The ransom for the accounts leader is paid\n"
             "!clearboard ➡️ All quests are deleted\n"
             "!ess ➡️ Mails the status of transmutation lab\n"
@@ -181,38 +207,11 @@ def handle_query(call):
             "!addtitle [player] [title] ➡️ The bank will give a title\n"
             "!deltitle [title] ➡️ The bank will remove the title\n"
         )
-        text2 = (
-            "📌 GENERAL COMMANDS (Part 2):\n\n"
-            "!whitelist [player] [Rank] ➡️ Accepts a player and sets Rank\n"
-            "!blacklist [player] ➡️ Rejects a player\n"
-            "!unlistwhite [player] ➡️ Removes player from whitelist\n"
-            "!unlistblack [player] ➡️ Removes player from blacklist\n"
-            "!purge ➡️ The Guild Chat will be cleared\n"
-            "!abort ➡️ All queued RSS will be canceled\n"
-            "!yell [msg] ➡️ Writes a message to the guild chat\n"
-            "!quest ➡️ Mails player the guild fest status\n"
-            "!guild [tag] ➡️ Leaves guild and joins a new one\n"
-            "!camp [x] [y] ➡️ Sends a camp to x/y\n"
-            "!setgather [on/off] ➡️ Disable or enable gathering\n"
-            "!snowbeast ➡️ Snowbeast familiars skill is activated\n"
-            "!stop [time] ➡️ Account will go offline for x seconds\n"
-            "!reloadacc ➡️ Resets the account\n"
-            "!members ➡️ Member information is refreshed\n"
-            "!busrank ➡️ Promotes members who completed hunting\n"
-            "!resetstats ➡️ The gift stats have been reset\n"
-            "!joingvg ➡️ Join Guild Expedition\n"
-            "!leavegvg ➡️ Leave Guild Expedition\n"
-            "!joinca ➡️ Joins the Chaos Arena Event\n"
-            "!leaveca ➡️ Leaves the Chaos Arena Event\n"
-            "!joinda ➡️ Joins Dragon Arena for your guild\n"
-            "!leaveda ➡️ Leaves Dragon Arena for your guild\n"
-        )
         bot.send_message(cid, text1)
-        bot.send_message(cid, text2)
 
     elif call.data == "bank_search":
         text = (
-            "🔍 SEARCH COMMANDS:\n\n"
+            "🔍 **SEARCH COMMANDS:**\n\n"
             "!findtile [type] [level] ➡️ Search for specific resource tiles around the bank\n"
             "!findtile any [level] ➡️ Search for any resource tiles around the bank\n"
             "!findtilelocal [type] [lvl] ➡️ Search for resource tiles around your castle\n"
@@ -227,7 +226,7 @@ def handle_query(call):
         
     elif call.data == "bank_bal":
         text = (
-            "⚖️ BALANCE COMMANDS:\n\n"
+            "⚖️ **BALANCE COMMANDS:**\n\n"
             "!bal ➡️ Checks your personal RSS balance\n"
             "!adminbal ➡️ Checks the RSS balance of the Bank\n"
             "!adminbal [player] ➡️ Checks the balance of a specific player\n"
@@ -241,7 +240,7 @@ def handle_query(call):
         
     elif call.data == "bank_res":
         text = (
-            "💰 RESOURCE COMMANDS:\n\n"
+            "💰 **RESOURCE COMMANDS:**\n\n"
             "![type] [amount] ➡️ Sends one specific RSS (e.g., !food 5M)\n"
             "!rss [F] [S] [W] [O] [G] ➡️ Sends all types of RSS (e.g., !rss 5M 5M 5M 5M 0)\n"
             "!donate[type] [player] [amt] ➡️ Sends specific RSS to a player (e.g., !donatefood Shark 5M)\n"
@@ -250,7 +249,7 @@ def handle_query(call):
         )
         bot.send_message(cid, text)
 
-    # --- 4. ECONOMY & GAMES HANDLERS ---
+    # --- 5. ECONOMY & GAMES HANDLERS ---
     elif call.data == "eco_bal":
         bal = get_balance(uid)
         bot.answer_callback_query(call.id, f"🏦 आपके खाते में {bal} Coins हैं!", show_alert=True)
@@ -285,38 +284,9 @@ def handle_query(call):
             bot.send_message(cid, f"🎰 **SLOTS MACHINE** 🎰\n| {s1} | {s2} | {s3} |\n❌ मशीन रुक गई और आपके 100 Coins डूब गए!")
 
 # ==========================================
-# 🐲 Monster AI Command
-# ==========================================
-@bot.message_handler(commands=['monster'])
-def monster_command(message):
-    text = message.text.replace('/monster', '').strip()
-    if not text:
-        bot.reply_to(message, "⚠️ भाई, किसी मॉन्स्टर का नाम तो बताओ! जैसे: `/monster Queen Bee`")
-        return
-        
-    bot.reply_to(message, f"⏳ **{text}** की बेस्ट टीम ढूँढ रहा हूँ, थोड़ा इंतज़ार करें...")
-    prompt = f"Lords Mobile game में '{text}' monster को मारने के लिए Best F2P और P2P heroes की लिस्ट बताओ. जवाब हिंदी और इंग्लिश मिक्स में बुलेट पॉइंट्स में देना."
-    ai_reply = get_ai_response(prompt)
-    bot.send_message(message.chat.id, f"👾 **{text.title()}** को मारने के बेस्ट हीरोज:\n\n{ai_reply}")
-
-# ==========================================
-# 💬 Normal AI Chat (Smart Reply)
-# ==========================================
-@bot.message_handler(func=lambda m: True)
-def chat_ai(message):
-    text = message.text.lower()
-    if text in ['hi', 'hello', 'hey']:
-        send_panel(message)
-    else:
-        bot.send_chat_action(message.chat.id, 'typing')
-        prompt = f"Act like a helpful Lords Mobile Bot named Thanos. Reply in Hinglish. User says: {message.text}"
-        ai_reply = get_ai_response(prompt)
-        bot.reply_to(message, ai_reply)
-
-# ==========================================
 # 🏃 Server Start
 # ==========================================
 if __name__ == "__main__":
-    print("✅ Thanos Telegram Bot is Fully Active with All Commands!")
+    print("✅ Thanos Telegram Bot is Fully Active with ZERO AI!")
     keep_alive()
     bot.infinity_polling()
