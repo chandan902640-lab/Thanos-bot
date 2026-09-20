@@ -2,6 +2,7 @@ import os
 import json
 import random
 import threading
+import requests
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -116,7 +117,8 @@ def send_panel(message):
 @bot.message_handler(func=lambda m: True)
 def chat_all(message):
     send_panel(message)
-    # ==========================================
+
+# ==========================================
 # 🖱️ Button Clicks (Callback Logic)
 # ==========================================
 @bot.callback_query_handler(func=lambda call: True)
@@ -160,23 +162,27 @@ def handle_query(call):
             markup.row(InlineKeyboardButton("🎰 Slots (Bet 100)", callback_data="eco_slots"))
             bot.edit_message_text("🪙 **Economy & Games:**\nपैसे कमाएं, बैलेंस चेक करें और गेम्स खेलें!", cid, mid, reply_markup=markup, parse_mode='Markdown')
 
-        # --- 2. MONSTERS HANDLERS (Direct Photo) ---
+        # --- 2. MONSTERS HANDLERS (Direct Download Fix) ---
         elif call.data.startswith("mon_"):
             mon_id = call.data.split("_")[1]
             name, m_url, s_url = MONSTERS[mon_id]
-            bot.answer_callback_query(call.id, f"Finding setups for {name}...")
-            bot.send_photo(cid, photo=m_url, caption=f"👾 **Monster: {name}**")
-            bot.send_photo(cid, photo=s_url, caption=f"⚔️ **Recommended Hero Setup for {name}**")
+            bot.answer_callback_query(call.id, f"{name} की टीम ढूँढ रहा हूँ...")
+            bot.send_photo(cid, photo=requests.get(m_url).content, caption=f"👾 **Monster: {name}**")
+            bot.send_photo(cid, photo=requests.get(s_url).content, caption=f"⚔️ **Recommended Hero Setup for {name}**")
 
-        # --- 3. GEAR HANDLERS (Photo Sender) ---
+        # --- 3. GEAR HANDLERS (Direct Download Fix) ---
         elif call.data == "gear_mix":
-            bot.send_photo(cid, photo="https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/mixatk.jpg", caption="🛡️ Best Mix ATK Gear Setup")
+            bot.answer_callback_query(call.id, "Mix ATK Load ho raha hai...")
+            bot.send_photo(cid, photo=requests.get("https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/mixatk.jpg").content, caption="🛡️ Best Mix ATK Gear Setup")
         elif call.data == "gear_inf":
-            bot.send_photo(cid, photo="https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/infatk.png", caption="⚔️ Best Infantry ATK Gear Setup")
+            bot.answer_callback_query(call.id, "Infantry ATK Load ho raha hai...")
+            bot.send_photo(cid, photo=requests.get("https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/infatk.png").content, caption="⚔️ Best Infantry ATK Gear Setup")
         elif call.data == "gear_rng":
-            bot.send_photo(cid, photo="https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/rangeatk.jpg", caption="🏹 Best Ranged ATK Gear Setup")
+            bot.answer_callback_query(call.id, "Ranged ATK Load ho raha hai...")
+            bot.send_photo(cid, photo=requests.get("https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/rangeatk.jpg").content, caption="🏹 Best Ranged ATK Gear Setup")
         elif call.data == "gear_cav":
-            bot.send_photo(cid, photo="https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/cavatk.png", caption="🐎 Best Cavalry ATK Gear Setup")
+            bot.answer_callback_query(call.id, "Cavalry ATK Load ho raha hai...")
+            bot.send_photo(cid, photo=requests.get("https://raw.githubusercontent.com/chandan902640-lab/Thanos-bot/main/cavatk.png").content, caption="🐎 Best Cavalry ATK Gear Setup")
 
         # --- 4. FULL BANK COMMANDS HANDLERS ---
         elif call.data == "bank_tips":
@@ -311,10 +317,10 @@ def handle_query(call):
             else:
                 add_money(uid, -100)
                 bot.send_message(cid, f"🎰 **SLOTS MACHINE** 🎰\n| {s1} | {s2} | {s3} |\n❌ मशीन रुक गई और आपके 100 Coins डूब गए!")
-    
+
     except Exception as e:
-        print(f"Error handling query: {e}")
-        bot.answer_callback_query(call.id, "⚠️ नेटवर्क इशू, कृपया फिर से प्रयास करें।", show_alert=True)
+        print(f"Error: {e}")
+        bot.send_message(cid, "⚠️ कुछ गड़बड़ हुई है, कृपया फिर से ट्राई करें।")
 
 # ==========================================
 # 🏃 Server Start
@@ -323,4 +329,3 @@ if __name__ == "__main__":
     print("✅ Thanos Telegram Bot is Fully Active with ALL Features!")
     keep_alive()
     bot.infinity_polling()
-    
