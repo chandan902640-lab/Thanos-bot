@@ -341,7 +341,7 @@ def handle_query(call):
         bot.send_message(cid, "⚠️ कुछ गड़बड़ हुई है, कृपया फिर से ट्राई करें।")
 
 # ==========================================
-# 🌐 Live Web Scraper Loop (BULLETPROOF TEXT CLEANER)
+# 🌐 Live Web Scraper Loop (Polling Mode)
 # ==========================================
 def auto_checker_loop():
     time.sleep(5)  
@@ -364,8 +364,6 @@ def auto_checker_loop():
                     
                     for post in posts:
                         raw_title = post.get("title", "")
-                        
-                        # 🚨 SOLUTION: Title को पूरी तरह Clean कर दिया गया है ताकि Telegram क्रैश ना हो
                         safe_title = raw_title.replace("_", " ").replace("*", " ").replace("[", "(").replace("]", ")").replace("`", "'")
                         
                         permalink = post.get("link", "")
@@ -378,7 +376,6 @@ def auto_checker_loop():
                             if image_url and (image_url.endswith('.jpg') or image_url.endswith('.png') or image_url.endswith('.jpeg')):
                                 caption = f"🔥 Lords Mobile Code / Update:\n\n{safe_title}\n\n🔗 {permalink}"
                                 try:
-                                    # Explicitly setting parse_mode=None just to be 100% sure
                                     bot.send_photo(TARGET_CHAT_ID, photo=requests.get(image_url).content, caption=caption, parse_mode=None)
                                     save_seen_update(post_id)
                                     time.sleep(4)
@@ -407,7 +404,6 @@ def auto_checker_loop():
 
     fetch_reddit_updates()
 
-    # हर 5 मिनट में चेक करेगा
     while True:
         try:
             fetch_reddit_updates()
@@ -420,9 +416,10 @@ def auto_checker_loop():
 # 🏃 Server Start
 # ==========================================
 if __name__ == "__main__":
-    print("✅ Thanos Telegram Bot is Fully Active with Web Scraper!")
+    print("✅ Thanos Telegram Bot is Fully Active with Polling & Web Scraper!")
     keep_alive()
     
     threading.Thread(target=auto_checker_loop, daemon=True).start()
     
+    # skip_pending=True purane conflicts ko avoid karne ke liye
     bot.infinity_polling(skip_pending=True)
