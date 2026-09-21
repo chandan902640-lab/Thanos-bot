@@ -127,11 +127,11 @@ def send_panel(message):
     )
     
     welcome_text = (
-        "👑 **THANOS BOT - CONTROL PANEL** 👑\n\n"
+        "👑 THANOS BOT - CONTROL PANEL 👑\n\n"
         f"Hello {message.from_user.first_name}!\n"
         "👇 IGG/Lords Mobile के सभी फीचर्स के लिए नीचे दिए गए बटन्स का इस्तेमाल करें:"
     )
-    bot.send_message(message.chat.id, welcome_text, reply_markup=markup, parse_mode='Markdown')
+    bot.send_message(message.chat.id, welcome_text, reply_markup=markup)
 
 @bot.message_handler(func=lambda m: True)
 def chat_all(message):
@@ -153,7 +153,7 @@ def handle_query(call):
             markup.row(InlineKeyboardButton("💡 Tips", callback_data="bank_tips"), InlineKeyboardButton("📌 General", callback_data="bank_gen"))
             markup.row(InlineKeyboardButton("🔍 Search", callback_data="bank_search"), InlineKeyboardButton("⚖️ Balance", callback_data="bank_bal"))
             markup.row(InlineKeyboardButton("💰 Resource", callback_data="bank_res"))
-            bot.edit_message_text("🏦 **Guild Bank Commands:**\nकिस तरह की बैंक कमांड्स देखनी हैं?", cid, mid, reply_markup=markup, parse_mode='Markdown')
+            bot.edit_message_text("🏦 Guild Bank Commands:\nकिस तरह की बैंक कमांड्स देखनी हैं?", cid, mid, reply_markup=markup)
             
         elif call.data == "menu_monster":
             markup = InlineKeyboardMarkup()
@@ -166,27 +166,27 @@ def handle_query(call):
             markup.row(InlineKeyboardButton("13. Noceros", callback_data="mon_13"), InlineKeyboardButton("14. Mega Maggot", callback_data="mon_14"))
             markup.row(InlineKeyboardButton("15. Blackwing", callback_data="mon_15"), InlineKeyboardButton("16. Voodoo Shaman", callback_data="mon_16"))
             markup.row(InlineKeyboardButton("17. Grim Reaper", callback_data="mon_17"), InlineKeyboardButton("18. Hardrox", callback_data="mon_18"))
-            bot.edit_message_text("🐲 **Monster Hunt:**\nजिस मॉन्स्टर की टीम देखनी है, उस पर क्लिक करें:", cid, mid, reply_markup=markup, parse_mode='Markdown')
+            bot.edit_message_text("🐲 Monster Hunt:\nजिस मॉन्स्टर की टीम देखनी है, उस पर क्लिक करें:", cid, mid, reply_markup=markup)
             
         elif call.data == "menu_gear":
             markup = InlineKeyboardMarkup()
             markup.row(InlineKeyboardButton("🛡️ Mix ATK", callback_data="gear_mix"), InlineKeyboardButton("⚔️ Infantry", callback_data="gear_inf"))
             markup.row(InlineKeyboardButton("🏹 Ranged", callback_data="gear_rng"), InlineKeyboardButton("🐎 Cavalry", callback_data="gear_cav"))
-            bot.edit_message_text("⚙️ **Best Gear Setups:**\nकौन सा गियर सेटअप देखना है? नीचे से चुनें:", cid, mid, reply_markup=markup, parse_mode='Markdown')
+            bot.edit_message_text("⚙️ Best Gear Setups:\nकौन सा गियर सेटअप देखना है? नीचे से चुनें:", cid, mid, reply_markup=markup)
             
         elif call.data == "menu_economy":
             markup = InlineKeyboardMarkup()
             markup.row(InlineKeyboardButton("💰 Balance", callback_data="eco_bal"), InlineKeyboardButton("🎁 Daily 2000", callback_data="eco_daily"))
             markup.row(InlineKeyboardButton("🎰 Slots (Bet 100)", callback_data="eco_slots"))
-            bot.edit_message_text("🪙 **Economy & Games:**\nपैसे कमाएं, बैलेंस चेक करें और गेम्स खेलें!", cid, mid, reply_markup=markup, parse_mode='Markdown')
+            bot.edit_message_text("🪙 Economy & Games:\nपैसे कमाएं, बैलेंस चेक करें और गेम्स खेलें!", cid, mid, reply_markup=markup)
 
         # --- 2. MONSTERS HANDLERS ---
         elif call.data.startswith("mon_"):
             mon_id = call.data.split("_")[1]
             name, m_url, s_url = MONSTERS[mon_id]
             bot.answer_callback_query(call.id, f"{name} की टीम ढूँढ रहा हूँ...")
-            bot.send_photo(cid, photo=requests.get(m_url).content, caption=f"👾 **Monster: {name}**")
-            bot.send_photo(cid, photo=requests.get(s_url).content, caption=f"⚔️ **Recommended Hero Setup for {name}**")
+            bot.send_photo(cid, photo=requests.get(m_url).content, caption=f"👾 Monster: {name}")
+            bot.send_photo(cid, photo=requests.get(s_url).content, caption=f"⚔️ Recommended Hero Setup for {name}")
 
         # --- 3. GEAR HANDLERS ---
         elif call.data == "gear_mix":
@@ -204,11 +204,11 @@ def handle_query(call):
 
         # --- 4. FULL BANK COMMANDS HANDLERS ---
         elif call.data == "bank_tips":
-            bot.send_message(cid, "💡 **BANK TIPS & TRICKS:**\n\nUse underscore ('!setacc Player_1').\nHero Stages: Bank will not respond during long hero stages.")
+            bot.send_message(cid, "💡 BANK TIPS & TRICKS:\n\nUse underscore ('!setacc Player_1').\nHero Stages: Bank will not respond during long hero stages.")
 
         elif call.data == "bank_gen":
             text1 = (
-                "📌 **GENERAL COMMANDS (Part 1):**\n\n"
+                "📌 GENERAL COMMANDS (Part 1):\n\n"
                 "!payransom ➡️ The ransom for the accounts leader is paid\n"
                 "!clearboard ➡️ All quests are deleted\n"
                 "!ess ➡️ Mails the status of transmutation lab\n"
@@ -234,7 +234,7 @@ def handle_query(call):
                 "!deltitle [title] ➡️ The bank will remove the title\n"
             )
             text2 = (
-                "📌 **GENERAL COMMANDS (Part 2):**\n\n"
+                "📌 GENERAL COMMANDS (Part 2):\n\n"
                 "!whitelist [player] [Rank] ➡️ Accepts a player and sets Rank\n"
                 "!blacklist [player] ➡️ Rejects a player\n"
                 "!unlistwhite [player] ➡️ Removes player from whitelist\n"
@@ -264,7 +264,7 @@ def handle_query(call):
 
         elif call.data == "bank_search":
             text = (
-                "🔍 **SEARCH COMMANDS:**\n\n"
+                "🔍 SEARCH COMMANDS:\n\n"
                 "!findtile [type] [level] ➡️ Search for specific resource tiles around the bank\n"
                 "!findtile any [level] ➡️ Search for any resource tiles around the bank\n"
                 "!findtilelocal [type] [lvl] ➡️ Search for resource tiles around your castle\n"
@@ -273,13 +273,13 @@ def handle_query(call):
                 "!findmonsterlocal [name] [lvl] ➡️ Search for a monster around your castle\n"
                 "!findnest [level] ➡️ Search for a Darknest around the bank\n"
                 "!findnestlocal [level] ➡️ Search for a Darknest around your castle\n\n"
-                "*(Note: The bank will send all search results directly to your in-game mail!)*"
+                "(Note: The bank will send all search results directly to your in-game mail!)"
             )
             bot.send_message(cid, text)
             
         elif call.data == "bank_bal":
             text = (
-                "⚖️ **BALANCE COMMANDS:**\n\n"
+                "⚖️ BALANCE COMMANDS:\n\n"
                 "!bal ➡️ Checks your personal RSS balance\n"
                 "!adminbal ➡️ Checks the RSS balance of the Bank\n"
                 "!adminbal [player] ➡️ Checks the balance of a specific player\n"
@@ -293,7 +293,7 @@ def handle_query(call):
             
         elif call.data == "bank_res":
             text = (
-                "💰 **RESOURCE COMMANDS:**\n\n"
+                "💰 RESOURCE COMMANDS:\n\n"
                 "![type] [amount] ➡️ Sends one specific RSS (e.g., !food 5M)\n"
                 "!rss [F] [S] [W] [O] [G] ➡️ Sends all types of RSS (e.g., !rss 5M 5M 5M 5M 0)\n"
                 "!donate[type] [player] [amt] ➡️ Sends specific RSS to a player (e.g., !donatefood Shark 5M)\n"
@@ -328,20 +328,20 @@ def handle_query(call):
             
             if s1 == s2 == s3:
                 add_money(uid, 1000)
-                bot.send_message(cid, f"🎰 **SLOTS MACHINE** 🎰\n| {s1} | {s2} | {s3} |\n🚨 **MEGA JACKPOT!** आप 1000 Coins जीत गए!")
+                bot.send_message(cid, f"🎰 SLOTS MACHINE 🎰\n| {s1} | {s2} | {s3} |\n🚨 MEGA JACKPOT! आप 1000 Coins जीत गए!")
             elif s1 == s2 or s2 == s3 or s1 == s3:
                 add_money(uid, 200)
-                bot.send_message(cid, f"🎰 **SLOTS MACHINE** 🎰\n| {s1} | {s2} | {s3} |\n✨ **Small Win!** आप 200 Coins जीत गए!")
+                bot.send_message(cid, f"🎰 SLOTS MACHINE 🎰\n| {s1} | {s2} | {s3} |\n✨ Small Win! आप 200 Coins जीत गए!")
             else:
                 add_money(uid, -100)
-                bot.send_message(cid, f"🎰 **SLOTS MACHINE** 🎰\n| {s1} | {s2} | {s3} |\n❌ मशीन रुक गई और आपके 100 Coins डूब गए!")
+                bot.send_message(cid, f"🎰 SLOTS MACHINE 🎰\n| {s1} | {s2} | {s3} |\n❌ मशीन रुक गई और आपके 100 Coins डूब गए!")
 
     except Exception as e:
         print(f"Error: {e}")
         bot.send_message(cid, "⚠️ कुछ गड़बड़ हुई है, कृपया फिर से ट्राई करें।")
 
 # ==========================================
-# 🌐 Live Web Scraper Loop (ERROR 400 FIXED)
+# 🌐 Live Web Scraper Loop (BULLETPROOF TEXT CLEANER)
 # ==========================================
 def auto_checker_loop():
     time.sleep(5)  
@@ -363,7 +363,11 @@ def auto_checker_loop():
                     found_new = False
                     
                     for post in posts:
-                        title = post.get("title", "")
+                        raw_title = post.get("title", "")
+                        
+                        # 🚨 SOLUTION: Title को पूरी तरह Clean कर दिया गया है ताकि Telegram क्रैश ना हो
+                        safe_title = raw_title.replace("_", " ").replace("*", " ").replace("[", "(").replace("]", ")").replace("`", "'")
+                        
                         permalink = post.get("link", "")
                         post_id = post.get("guid", "")
                         image_url = post.get("thumbnail", "")
@@ -371,19 +375,19 @@ def auto_checker_loop():
                         if post_id not in seen:
                             found_new = True
                             
-                            # 🚨 SOLUTION: parse_mode='Markdown' हटा दिया गया है ताकि 400 Error ना आये!
                             if image_url and (image_url.endswith('.jpg') or image_url.endswith('.png') or image_url.endswith('.jpeg')):
-                                caption = f"🔥 Lords Mobile Code / Update:\n\n{title}\n\n🔗 {permalink}"
+                                caption = f"🔥 Lords Mobile Code / Update:\n\n{safe_title}\n\n🔗 {permalink}"
                                 try:
-                                    bot.send_photo(TARGET_CHAT_ID, photo=requests.get(image_url).content, caption=caption)
+                                    # Explicitly setting parse_mode=None just to be 100% sure
+                                    bot.send_photo(TARGET_CHAT_ID, photo=requests.get(image_url).content, caption=caption, parse_mode=None)
                                     save_seen_update(post_id)
                                     time.sleep(4)
                                 except Exception as img_err:
                                     print(f"Image send error: {img_err}")
                             else:
-                                text_msg = f"📌 Lords Mobile Code / Update:\n\n{title}\n\n🔗 {permalink}"
+                                text_msg = f"📌 Lords Mobile Code / Update:\n\n{safe_title}\n\n🔗 {permalink}"
                                 try:
-                                    bot.send_message(TARGET_CHAT_ID, text_msg)
+                                    bot.send_message(TARGET_CHAT_ID, text_msg, parse_mode=None)
                                     save_seen_update(post_id)
                                     time.sleep(3)
                                 except Exception as txt_err:
