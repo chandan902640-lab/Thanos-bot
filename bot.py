@@ -56,6 +56,29 @@ def save_seen_update(update_id):
             json.dump(seen, f, indent=4)
 
 # ==========================================
+# 👥 NEW: User Tracking System
+# ==========================================
+USERS_FILE = "users.json"
+
+def load_users():
+    if not os.path.exists(USERS_FILE):
+        with open(USERS_FILE, "w") as f:
+            json.dump([], f)
+        return []
+    try:
+        with open(USERS_FILE, "r") as f:
+            return json.load(f)
+    except:
+        return []
+
+def save_user(user_id):
+    users = load_users()
+    if user_id not in users:
+        users.append(user_id)
+        with open(USERS_FILE, "w") as f:
+            json.dump(users, f, indent=4)
+
+# ==========================================
 # 💎 Economy System (Bank)
 # ==========================================
 ECONOMY_FILE = "economy.json"
@@ -116,6 +139,10 @@ MONSTERS = {
 # 👑 Main Control Panel 
 # ==========================================
 def send_panel(message):
+    uid = message.from_user.id
+    # NEW: यहाँ नया यूज़र आते ही उसका ID users.json में सेव हो जाएगा
+    save_user(uid)
+    
     markup = InlineKeyboardMarkup()
     markup.row(
         InlineKeyboardButton("🏦 Guild Bank", callback_data="menu_bank"),
@@ -133,6 +160,13 @@ def send_panel(message):
     )
     bot.send_message(message.chat.id, welcome_text, reply_markup=markup)
 
+# NEW: एडमिन कमांड बॉट के यूज़र्स देखने के लिए (इसे chat_all से ऊपर ही रखना है)
+@bot.message_handler(commands=['stats', 'users'])
+def show_bot_stats(message):
+    users = load_users()
+    total = len(users)
+    bot.reply_to(message, f"📊 **Bot Statistics**\n\n👥 आपके Thanos बॉट से अब तक कुल **{total}** यूज़र्स जुड़ चुके हैं!")
+
 @bot.message_handler(func=lambda m: True)
 def chat_all(message):
     send_panel(message)
@@ -145,6 +179,9 @@ def handle_query(call):
     cid = call.message.chat.id
     mid = call.message.message_id
     uid = call.from_user.id
+    
+    # जब यूज़र बटन दबाए, तब भी उसे सेव कर लो (सुरक्षा के लिए)
+    save_user(uid)
     
     try:
         # --- 1. MAIN MENUS ---
